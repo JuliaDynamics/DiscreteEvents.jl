@@ -2,46 +2,43 @@
 # a simple event logger
 #
 
-struct Record
-    time::Float64
-    A::AbstractString
-    name::AbstractString
-    q::AbstractString
-    σ::AbstractString
-    info::AbstractString
-end
-
 mutable struct Logger <: SEngine
     sim::Union{Clock,Number}
     state::SState
-    last::Union{Record,Number}
+    last::Dict
     ltype::UInt64
+    lvars::Array{Symbol,1}
     df::DataFrame
 
-    Logger() = new(0, Undefined(), 0, 0,
-                   DataFrame(   time=Float64[],
-                                A=AbstractString[],
-                                name=AbstractString[],
-                                q=AbstractString[],
-                                σ=AbstractString[],
-                                info=AbstractString[],
-                            )
-                  )
+    Logger() = new(0, Undefined(), Dict(), 0, Symbol[], DataFrame())
 end
 
 function step!(A::Logger, ::Undefined, σ::Init)
     A.sim = σ.info
+    A.state = Empty()
+end
+
+function step!(A::Logger, ::Empty, σ::Setup)
+    A.lvars = σ.vars
+    A.df.time = Float64[]
+    for v ∈ A.lvars
+        A.df[!, v] = typeof(Core.eval(Main, v))[]
+    end
     A.state = Idle()
 end
 
 "Logging event"
 function step!(A::Logger, ::Idle, σ::Log)
-    r = A.last = Record(now(A.sim), repr(typeof(σ.A)), repr(σ.A.name),
-                        repr(typeof(σ.A.state)), repr(typeof(σ.σ)), repr(σ.info))
+    info = [(repr(v)[2:end], Core.eval(Main, v)) for v ∈ A.lvars]
+    pushfirst!(info, ("time", now(A.sim)))
+    A.last = Dict(info)
     if A.ltype == 1
-        println(r.time,del,r.A,del,r.aname,del,r.q,del,r.σ,del,info)
+        for i in info
+            print(i[1], ": ", i[2], "; ")
+        end
+        println()
     elseif A.ltype == 2
-        push!(A.df, (r.time, r.A, r.name, r.q, r.σ, r.info))
+        push!(A.df, [i[2] for i in info])
     end
 end
 
@@ -53,4 +50,20 @@ function step!(A::Logger, ::Idle, σ::Switch)
 end
 
 "Switch type of logging 0: none, 1: print, 2: store in log table."
-switch!(L::Logger, to::UInt64=0) = step!(L, L.state, Switch(to))
+switch!(L::Logger, to::Int64=0) = step!(L, L.state, Switch(to))
+
+"Initialize a Logger"
+init!(L::Logger, sim::Clock) = step!(L, L.state, Init(sim))
+
+"""
+    setup!(L::Logger, vars::Array{Symbol})
+
+Setup a logger with logging variables.
+
+# Arguments
+- `L::Logger`
+- `vars::Array{Symbol}`: An array of symbols, e.g. of global variables
+"""
+setup!(L::Logger, vars::Array{Symbol}) = step!(L, L.state, Setup(vars))
+
+record!(L::Logger) = step!(L, L.state, Log())

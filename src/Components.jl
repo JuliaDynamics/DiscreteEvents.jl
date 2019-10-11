@@ -11,6 +11,7 @@ abstract type SEvent end
 
 struct Undefined <: SState end
 struct Idle <: SState end
+struct Empty <: SState end
 struct Busy <: SState end
 struct Halted <: SState end
 
@@ -20,17 +21,17 @@ struct Init <: SEvent
     info::Any
 end
 
+struct Setup <: SEvent
+    vars::Array{Symbol,1}
+end
+
 "event `Switch(to)` for task switching"
 struct Switch <: SEvent
     to
 end
 
-"event `Log(A::Any,σ::SEvent,info)` for logging "
-struct Log <: SEvent
-    A::Any
-    σ::SEvent
-    info::Any
-end
+"event for logging "
+struct Log <: SEvent end
 
 "event for user interaction"
 struct Step <: SEvent end

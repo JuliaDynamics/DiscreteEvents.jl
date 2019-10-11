@@ -126,4 +126,4 @@ stop!(sim::Clock) = step!(sim, sim.state, Stop())
 resume!(sim::Clock) = step!(sim, sim.state, Resume())
 
 "initialize a clock"
-init!(sim::Clock) = step!(sim, sim.state, Init())
+init!(sim::Clock) = step!(sim, sim.state, Init(""))
