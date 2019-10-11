@@ -2,5 +2,6 @@ using Sim
 using Test
 
 @testset "Sim.jl" begin
-    # Write your own tests here.
+    println("... testing Clock.jl ...")
+    include("test_Clock.jl")
 end
