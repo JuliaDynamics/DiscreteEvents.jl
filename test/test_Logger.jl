@@ -8,9 +8,9 @@ L = Logger()
 init!(L, sim)
 setup!(L, [:a, :b, :c])
 record!(L)
-@test L.last[2] == ("a", a)
-@test L.last[3] == ("b", b)
-@test L.last[4] == ("c", c)
+@test L.last.a == a
+@test L.last.b == b
+@test L.last.c == c
 
 switch!(L, 1)
 record!(L)

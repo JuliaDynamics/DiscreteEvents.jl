@@ -5,12 +5,12 @@
 mutable struct Logger <: SEngine
     sim::Union{Clock,Number}
     state::SState
-    last::Array{Tuple}
+    last::NamedTuple
     ltype::UInt64
     lvars::Array{Symbol,1}
     df::DataFrame
 
-    Logger() = new(0, Undefined(), Tuple[], 0, Symbol[], DataFrame())
+    Logger() = new(0, Undefined(), NamedTuple(), 0, Symbol[], DataFrame())
 end
 
 function step!(A::Logger, ::Undefined, σ::Init)
@@ -28,21 +28,19 @@ function step!(A::Logger, ::Empty, σ::Setup)
 end
 
 function step!(A::Logger, ::Idle, ::Clear)
-    A.last = Tuple[];
+    A.last = NamedTuple();
     deleterows!(A.df, 1:size(A.df,1))
 end
 
 "Logging event"
 function step!(A::Logger, ::Idle, σ::Log)
-    A.last = [(repr(v)[2:end], Core.eval(Main, v)) for v ∈ A.lvars]
-    pushfirst!(A.last, ("time", now(A.sim)))
+    time = now(A.sim)
+    val = vcat([time], Array{Any}([Core.eval(Main,i) for i in A.lvars]))
+    A.last = NamedTuple{Tuple(vcat([:time],A.lvars))}(val)
     if A.ltype == 1
-        for i in A.last
-            print(i[1], ": ", i[2], "; ")
-        end
-        println()
+        println(A.last)
     elseif A.ltype == 2
-        push!(A.df, [i[2] for i in A.last])
+        push!(A.df, [i for i in A.last])
     end
 end
 
