@@ -6,7 +6,7 @@ include("Components.jl")
 include("Clock.jl")
 include("Logger.jl")
 
-export  Logger, Record, switch!, setup!, init!, record!,        # Logger.jl
+export  Logger, Record, switch!, setup!, init!, record!, clear!,  # Logger.jl
         Clock, now, event!, run!, stop!, resume!, step!
 
 Random.seed!(123)
