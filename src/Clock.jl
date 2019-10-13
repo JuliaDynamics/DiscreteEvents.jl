@@ -2,6 +2,8 @@
 # simulation routines for discrete event simulation
 #
 
+@enum Timing at after
+
 "Create a simulation event: an expression to be executed at an event time."
 mutable struct SimEvent
     "expression to be evaluated at event time"
@@ -47,7 +49,7 @@ Schedule an expression for execution at a given simulation time.
 # Arguments
 - `sim::Clock`: simulation clock
 - `expr::Expr`: an expression
-- `at::Float64`: simulation time
+- `t::Float64`: simulation time
 - `scope::Module=Main`: scope for the expression to be evaluated
 
 # returns
@@ -55,13 +57,37 @@ scheduled simulation time for that event, may return a different result from
 iterative applivations of `nextfloat(at)` if there were yet events scheduled
 for that time.
 """
-function event!(sim::Clock, expr::Expr, at::Number, scope::Module=Main)::Float64
-    while any(i->i==at, values(sim.events)) # in case an event at that time exists
-        at = nextfloat(float(at))                  # increment scheduled time
+function event!(sim::Clock, expr::Expr, t::Number; scope::Module=Main)::Float64
+    while any(i->i==t, values(sim.events)) # in case an event at that time exists
+        t = nextfloat(float(t))                  # increment scheduled time
     end
-    ev = SimEvent(expr, scope, at)
-    sim.events[ev] = at
-    return at
+    ev = SimEvent(expr, scope, t)
+    sim.events[ev] = t
+    return t
+end
+
+"""
+    event!(sim::Clock, expr::Expr, at::Number)
+
+Schedule an expression for execution at a given simulation time.
+
+# Arguments
+- `sim::Clock`: simulation clock
+- `expr::Expr`: an expression
+- `T::Timing`: a timing, `at` or `after`
+- `t::Float64`: simulation time
+- `scope::Module=Main`: scope for the expression to be evaluated
+
+# returns
+scheduled simulation time for that event, may return a different result from
+iterative applivations of `nextfloat(at)` if there were yet events scheduled
+for that time.
+"""
+function event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)
+    if T == after
+        t += sim.time
+    end
+    event!(sim, expr, t, scope=scope)
 end
 
 "initialize, startup logger"

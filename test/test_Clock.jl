@@ -10,11 +10,19 @@ sim = Clock(100)
 
 a = 0
 
-for i ∈ 1:10
-    at = i + now(sim)
-    @test event!(sim, :(a += 1), at) == at
+for i ∈ 1:4
+    t = i + now(sim)
+    @test event!(sim, :(a += 1), t) == t
 end
 
+for i ∈ 5:7
+    t = i + now(sim)
+    @test event!(sim, :(a += 1), at, t) == t
+end
+
+for i ∈ 8:10
+    @test event!(sim, :(a += 1), after, i) == 100+i
+end
 @test length(sim.events) == 10
 
 step!(sim)
@@ -35,11 +43,11 @@ resume!(sim)
 @test a == 10
 @test isempty(sim.events)
 
-at = 121.0
+t = 121.0
 for i ∈ 1:10
-    t = event!(sim, :(a += 1), 10 + now(sim))
-    @test t == at
-    global at = nextfloat(at)
+    _t = event!(sim, :(a += 1), 10 + now(sim))
+    @test t == _t
+    global t = nextfloat(_t)
 end
 run!(sim,14)
 @test now(sim) == 125

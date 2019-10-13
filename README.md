@@ -14,10 +14,14 @@ analysis or visualization.
 
 `Sim.jl` provides a **clock** for a virtual simulation time  (a `Float64`) with an arbitrary unit of time. **Events** are scheduled and dispatched in sequence on this time line.
 
-A Julia expression is scheduled as `event` and evaluated when we `step` or `run` through the simulation. It can at runtime create further events or chains of events to be scheduled and called during simulation.
+A Julia expression is scheduled as `event` and evaluated as we `step` or `run` through the simulation. It can at runtime create further events or chains of events to be scheduled and called during simulation.
 
 - `Clock(time::Number=0)`: create a new virtual clock
-- `event!(sim::Clock, expr::Expr, at::Float64)`: schedule an expression for evaluation at a given simulation time.
+- `event!(sim::Clock, expr::Expr, t::Float64)` or <nobr>`event!(sim, expr, at, t)`</nobr> or <nobr>`event!(sim, expr, after, t)`</nobr>: schedule an expression for evaluation at a given simulation time.
 - `run!(sim::Clock, duration::Number)`: Run a simulation for a given duration. Call all scheduled events in that timeframe.
 - `step!(sim::Clock)`: Take one simulation step, execute the next event.
 - `now(sim::Clock)`: Return the current simulation time.
+
+## Traffic light example
+
+A traffic light has three alternating lights: red, orange, green. If it has a failure, the red lamp blinks.
