@@ -1,4 +1,4 @@
-s = Sim.SimEvent(:(1+1), 10)
+s = Sim.SimEvent(:(1+1), Main, 10)
 @test eval(s.expr) == 2
 @test s.at == 10
 

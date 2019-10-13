@@ -4,8 +4,10 @@
 
 "Create a simulation event: an expression to be executed at an event time."
 mutable struct SimEvent
-    "expression to be executed at event time"
+    "expression to be evaluated at event time"
     expr::Expr
+    "evaluation scope"
+    scope::Module
     "event time"
     at::Float64
 end
@@ -44,19 +46,20 @@ Schedule an expression for execution at a given simulation time.
 
 # Arguments
 - `sim::Clock`: simulation clock
-- `expr::Expr`: an Expression
+- `expr::Expr`: an expression
 - `at::Float64`: simulation time
+- `scope::Module=Main`: scope for the expression to be evaluated
 
 # returns
 scheduled simulation time for that event, may return a different result from
 iterative applivations of `nextfloat(at)` if there were yet events scheduled
 for that time.
 """
-function event!(sim::Clock, expr::Expr, at::Number)::Float64
+function event!(sim::Clock, expr::Expr, at::Number, scope::Module=Main)::Float64
     while any(i->i==at, values(sim.events)) # in case an event at that time exists
         at = nextfloat(float(at))                  # increment scheduled time
     end
-    ev = SimEvent(expr, at)
+    ev = SimEvent(expr, scope, at)
     sim.events[ev] = at
     return at
 end
@@ -77,7 +80,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     if length(sim.events) ≥ 1
         ev = dequeue!(sim.events)
         sim.time = ev.at
-        Core.eval(Main, ev.expr)
+        Core.eval(ev.scope, ev.expr)
     else
         println(stderr, "step!: no event in queue!")
     end
