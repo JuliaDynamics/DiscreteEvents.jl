@@ -2,7 +2,7 @@
 # simulation routines for discrete event simulation
 #
 
-@enum Timing at after
+@enum Timing at after every
 
 "Create a simulation event: an expression to be executed at an event time."
 mutable struct SimEvent
@@ -11,7 +11,9 @@ mutable struct SimEvent
     "evaluation scope"
     scope::Module
     "event time"
-    at::Float64
+    t::Float64
+    "repeat time"
+    Δt::Float64
 end
 
 
@@ -51,43 +53,46 @@ Schedule an expression for execution at a given simulation time.
 - `expr::Expr`: an expression
 - `t::Float64`: simulation time
 - `scope::Module=Main`: scope for the expression to be evaluated
+- `cycle::Float64=0.0`: repeat cycle time for the event
 
 # returns
 scheduled simulation time for that event, may return a different result from
 iterative applivations of `nextfloat(at)` if there were yet events scheduled
 for that time.
 """
-function event!(sim::Clock, expr::Expr, t::Number; scope::Module=Main)::Float64
+function event!(sim::Clock, expr::Expr, t::Number;
+                scope::Module=Main, cycle::Number=0.0)::Float64
     while any(i->i==t, values(sim.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
     end
-    ev = SimEvent(expr, scope, t)
+    ev = SimEvent(expr, scope, t, cycle)
     sim.events[ev] = t
     return t
 end
 
 """
-    event!(sim::Clock, expr::Expr, at::Number)
+    event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)
 
 Schedule an expression for execution at a given simulation time.
 
 # Arguments
 - `sim::Clock`: simulation clock
 - `expr::Expr`: an expression
-- `T::Timing`: a timing, `at` or `after`
-- `t::Float64`: simulation time
+- `T::Timing`: a timing, `at`, `after` or `every`
+- `t::Float64`: time, time delay or repeat cycle depending on `T`
 - `scope::Module=Main`: scope for the expression to be evaluated
 
 # returns
-scheduled simulation time for that event, may return a different result from
-iterative applivations of `nextfloat(at)` if there were yet events scheduled
-for that time.
+scheduled simulation time for that event.
 """
 function event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)
     if T == after
-        t += sim.time
+        event!(sim, expr, t + sim.time, scope=scope)
+    elseif T == every
+        event!(sim, expr, now(sim), scope=scope, cycle=t)
+    else
+        event!(sim, expr, t, scope=scope)
     end
-    event!(sim, expr, t, scope=scope)
 end
 
 "initialize, startup logger"
@@ -105,8 +110,11 @@ end
 function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     if length(sim.events) ≥ 1
         ev = dequeue!(sim.events)
-        sim.time = ev.at
+        sim.time = ev.t
         Core.eval(ev.scope, ev.expr)
+        if ev.Δt > 0.0  # schedule repeat event
+            event!(sim, ev.expr, sim.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
+        end
     else
         println(stderr, "step!: no event in queue!")
     end
@@ -117,7 +125,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
     sim.counter = 0
     sim.state = Busy()
     while length(sim.events) > 0
-        if nextevent(sim).at ≤ sim.end_time
+        if nextevent(sim).t ≤ sim.end_time
             step!(sim, sim.state, Step())
             sim.counter += 1
         else

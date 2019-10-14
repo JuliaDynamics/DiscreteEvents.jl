@@ -12,16 +12,22 @@ Discrete event simulation in Julia:
 3. Variables can be logged over simulation time and then accessed for
 analysis or visualization.
 
-`Sim.jl` provides a **clock** for a virtual simulation time  (a `Float64`) with an arbitrary unit of time. **Events** are scheduled and dispatched in sequence on this time line.
-
-A Julia expression is scheduled as `event` and evaluated as we `step` or `run` through the simulation. It can at runtime create further events or chains of events to be scheduled and called during simulation.
+`Sim.jl` provides a **clock** for a virtual simulation time  (a `Float64`) with an arbitrary unit of time.
 
 - `Clock(time::Number=0)`: create a new virtual clock
-- `event!(sim::Clock, expr::Expr, t::Float64)` or <nobr>`event!(sim, expr, at, t)`</nobr> or <nobr>`event!(sim, expr, after, t)`</nobr>: schedule an expression for evaluation at a given simulation time.
-- `run!(sim::Clock, duration::Number)`: Run a simulation for a given duration. Call all scheduled events in that timeframe.
+
+Julia expressions are scheduled as **events** on this time line:
+
+- `event!(sim::Clock, expr::Expr, t::Float64)` or <nobr>`event!(sim, expr, at, t)`</nobr>: schedule an expression for evaluation at a given simulation time.
+- `event!(sim, expr, after, t):` schedule an expression for evaluation `t` after current simulation time.
+- `event!(sim, expr, every, Δt)`: schedule an expression for evaluation now and at every time step `Δt`.
+
+They are evaluated later as we `step` or `run` through the simulation. They may then at runtime create further events and thus cause chains of events to be scheduled and called during simulation.
+
+- `run!(sim::Clock, duration::Number)`: Run a simulation for a given duration. Call and evaluate all scheduled events in that timeframe.
 - `step!(sim::Clock)`: Take one simulation step, execute the next event.
 - `now(sim::Clock)`: Return the current simulation time.
 
 ## Traffic light example
 
-A traffic light has three alternating lights: red, orange, green. If it has a failure, the red lamp blinks.
+A traffic light has three alternating lights: red, orange, green. If it fails, the red lamp blinks.
