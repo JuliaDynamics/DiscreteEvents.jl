@@ -2,7 +2,7 @@
 # simulation routines for discrete event simulation
 #
 
-@enum Timing at after every
+@enum Timing at after every before
 
 "Create a simulation event: an expression to be executed at an event time."
 mutable struct SimEvent
@@ -26,15 +26,28 @@ Create a new simulation clock.
 - `time::Number`: start time for simulation.
 """
 mutable struct Clock
+    "clock state"
     state::SState
+    "clock time"
     time::Float64
+    "scheduled events"
     events::PriorityQueue{SimEvent,Float64}
+    "end time for simulation"
     end_time::Float64
-    counter::Int64
+    "event evcount"
+    evcount::Int64
+    "next tick time"
+    tick::Float64
+    "Array of expressions to evaluate at each tick"
+    tickexpr::Array{Expr}
+    "timestep between ticks"
+    timestep::Float64
+    "logger"               # do we need this anyway ?
     logger::SEngine
 
-    Clock(time::Number=0) =
-        new(Undefined(), time, PriorityQueue{SimEvent,Float64}(), 0, 0, Logger())
+    Clock(time::Number=0, timestep::Number=0) =
+        new(Undefined(), time, PriorityQueue{SimEvent,Float64}(), 0, 0,
+            0, Expr[], timestep, Logger())
 end
 
 "Return the current simulation time."
@@ -78,7 +91,7 @@ Schedule an expression for execution at a given simulation time.
 # Arguments
 - `sim::Clock`: simulation clock
 - `expr::Expr`: an expression
-- `T::Timing`: a timing, `at`, `after` or `every`
+- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`)
 - `t::Float64`: time, time delay or repeat cycle depending on `T`
 - `scope::Module=Main`: scope for the expression to be evaluated
 
@@ -107,6 +120,7 @@ function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
     step!(sim, sim.state, σ)
 end
 
+"step forward to next tick or scheduled event"
 function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     if length(sim.events) ≥ 1
         ev = dequeue!(sim.events)
@@ -122,12 +136,12 @@ end
 
 function step!(sim::Clock, ::Idle, σ::Run)
     sim.end_time = sim.time + σ.duration
-    sim.counter = 0
+    sim.evcount = 0
     sim.state = Busy()
     while length(sim.events) > 0
         if nextevent(sim).t ≤ sim.end_time
             step!(sim, sim.state, Step())
-            sim.counter += 1
+            sim.evcount += 1
         else
             break
         end
@@ -137,12 +151,12 @@ function step!(sim::Clock, ::Idle, σ::Run)
     end
     sim.time = sim.end_time
     sim.state = Idle()
-    println("Finished: ", sim.counter, " events, simulation time: ", sim.time)
+    println("Finished: ", sim.evcount, " events, simulation time: ", sim.time)
 end
 
 function step!(sim::Clock, ::Busy, ::Stop)
     sim.state = Halted()
-    println("Halted: ", sim.counter, " events, simulation time: ", sim.time)
+    println("Halted: ", sim.evcount, " events, simulation time: ", sim.time)
 end
 
 function step!(sim::Clock, ::Halted, ::Resume)

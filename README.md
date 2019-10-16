@@ -12,11 +12,11 @@ Discrete event simulation in Julia:
 3. Variables can be logged over simulation time and then accessed for
 analysis or visualization.
 
-`Sim.jl` provides a **clock** for a virtual simulation time  (a `Float64`) with an arbitrary unit of time.
+`Sim.jl` provides a **clock** for a simulation time  (a `Float64`) with an arbitrary unit of time.
 
-- `Clock(time::Number=0)`: create a new virtual clock
+- `Clock(time::Number=0)`: create a new clock
 
-Julia expressions are scheduled as **events** on this time line:
+Julia expressions are scheduled as **events** on the clock's time line:
 
 - `event!(sim::Clock, expr::Expr, t::Float64)` or <nobr>`event!(sim, expr, at, t)`</nobr>: schedule an expression for evaluation at a given simulation time.
 - `event!(sim, expr, after, t):` schedule an expression for evaluation `t` after current simulation time.
