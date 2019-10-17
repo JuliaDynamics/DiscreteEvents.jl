@@ -73,3 +73,7 @@ incr!(sim)
 run!(sim, 9)
 @test sim.time == 10
 @test b == 10
+sample_time!(sim, 0.5)
+run!(sim, 10)
+@test sim.time == 20
+@test b == 30

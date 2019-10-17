@@ -6,7 +6,7 @@ mutable struct Logger <: SEngine
     sim::Union{Clock,Number}
     state::SState
     last::NamedTuple
-    ltype::UInt64
+    ltype::Int64
     lvars::Array{Symbol,1}
     df::DataFrame
 
@@ -52,7 +52,7 @@ function step!(A::Logger, ::Idle, σ::Switch)
 end
 
 "Switch type of logging 0: none, 1: print, 2: store in log table."
-switch!(L::Logger, to::Int64=0) = step!(L, L.state, Switch(to))
+switch!(L::Logger, to::Number=0) = step!(L, L.state, Switch(to))
 
 "Initialize a Logger"
 init!(L::Logger, sim::Clock) = step!(L, L.state, Init(sim))

@@ -132,7 +132,7 @@ end
 "set the clock's sample time"
 function sample_time!(sim::Clock, Δt::Number)
     sim.Δt = Δt
-    sim.ts = sim.time + Δt
+    sim.tsa = sim.time + Δt
 end
 
 "enqueue an expression for sampling."
@@ -227,7 +227,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
         step!(sim, sim.state, Step())
         tend = nextfloat(tend)
     end
-    
+
     sim.time = sim.end_time
     sim.state = Idle()
     println("Finished: ", sim.evcount, " events, simulation time: ", sim.time)
