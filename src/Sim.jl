@@ -7,15 +7,11 @@ include("Clock.jl")
 include("Logger.jl")
 
 export  Logger, Record, switch!, setup!, init!, record!, clear!,  # Logger.jl
-        Clock, now, event!, run!, stop!, resume!, step!,
+
+        Clock, now, sample_time!, event!, sample!,                # Clock.jl
+        incr!, run!, stop!, resume!,
         Timing, at, after, every, before
 
 Random.seed!(123)
-
-"default transition for clock and logger"
-function step!(A::SEngine, q::SState, σ::SEvent)
-    println(stderr, "Warning: undefined transition ",
-            "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))")
-end
 
 end # module

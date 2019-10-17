@@ -1,9 +1,11 @@
 using Sim
 using Test
 
-@testset "Sim.jl" begin
-    println("... testing Clock.jl ...")
+println(".... testing Sim.jl .....")
+@testset "Clock.jl" begin
     include("test_Clock.jl")
-    println("... testing Logger.jl ...")
-    include("test_Logger.jl")
+end
+
+@testset "Logger.jl" begin
+        include("test_Logger.jl")
 end

@@ -1,7 +1,7 @@
 # Define components for simulation and logging machines
 # -------------------------------------------------------
 # I choose Sim.jl to be self sufficient and not to depend
-# on StateMachines.jl. 
+# on StateMachines.jl.
 #
 
 abstract type SEngine end
@@ -32,3 +32,10 @@ struct Start <: SEvent end
 struct Stop <: SEvent end
 struct Resume <: SEvent end
 struct Clear <: SEvent end
+
+
+"default transition for clock and logger"
+function step!(A::SEngine, q::SState, σ::SEvent)
+    println(stderr, "Warning: undefined transition ",
+            "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))")
+end
