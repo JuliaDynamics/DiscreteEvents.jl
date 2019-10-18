@@ -1,7 +1,7 @@
 # Documentation: https://github.com/JuliaCI/Appveyor.jl
 environment:
   matrix:
-  - julia_version: 1.0
+  - julia_version: 1.2
   - julia_version: nightly
 platform:
   - x86
@@ -26,6 +26,6 @@ build_script:
 test_script:
   - echo "%JL_TEST_SCRIPT%"
   - C:\julia\bin\julia -e "%JL_TEST_SCRIPT%"
-on_success:
-  - echo "%JL_CODECOV_SCRIPT%"
-  - C:\julia\bin\julia -e "%JL_CODECOV_SCRIPT%"
+# on_success:
+#   - echo "%JL_CODECOV_SCRIPT%"
+#   - C:\julia\bin\julia -e "%JL_CODECOV_SCRIPT%"
