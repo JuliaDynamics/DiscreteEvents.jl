@@ -19,19 +19,19 @@ switch!(L, 2)
 for i in 1:10
     global a = i
     global b = i^2
-    global c = factorial(i)
+    global c = i^3
     record!(L)
 end
 @test sum(L.df.a) == sum(1:10)
 @test sum(L.df.b) == sum((1:10).^2)
-@test sum(L.df.c) == sum(factorial.(1:10))
+@test sum(L.df.c) == sum((1:10).^3)
 
 clear!(L)
 @test length(L.last) == 0
 @test size(L.df, 1) == 0
 for i in 11:15
-    global c = factorial(i)
+    global c = i^3
     record!(L)
 end
 @test size(L.df,1) == 5
-@test L.df.c[end] == factorial(15)
+@test L.df.c[end] == 15^3
