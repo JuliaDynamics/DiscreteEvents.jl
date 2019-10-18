@@ -17,7 +17,7 @@ analysis or visualization.
 `Sim.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time.
 
 - `Clock(Δt::Number=0; t0::Number=0)`: create a new clock with start time `t0` and sample time `Δt`.
-- `now(sim::Clock)`: Return the current simulation time.
+- `now(sim::Clock)`: return the current simulation time.
 - `sample_time!(sim::Clock, Δt::Number)`: set the clock's sample rate starting from `now(sim)`.
 
 If no Δt is given, the simulation doesn't tick with a fixed interval, but jumps from event to event.
@@ -35,20 +35,32 @@ Events are evaluated later as we `step` or `run` through the simulation. They ma
 
 ### Sampling expressions
 
-If we provided the clock with a time interval `Δt`, the clock ticks with a fixed sample rate. At each tick it will evaluate expressions, we give it with:
+If we provide the clock with a time interval `Δt`, the clock ticks with a fixed sample rate. At each tick it will evaluate expressions, we register with:
 
 - `sample!(sim::Clock, expr::Expr)`: enqueue an expression for sampling.
 
-Sampling expressions are evaluated at clock ticks in the sequence they were registered with `sample!`. They are evaluated before any events which may have been scheduled for the same time.
+Sampling expressions are evaluated at clock ticks in the sequence they were registered. They are evaluated before any events which may have been scheduled for the same time.
 
 ### Running the simulation
 
 Now, after we have setup a clock, scheduled expressions as events or registered them for sampling, we can step or run through a simulation, stop or resume it.
 
-- `run!(sim::Clock, duration::Number)`: Run a simulation for a given duration. Call and evaluate all ticks and scheduled events in that timeframe.
-- `step!(sim::Clock)`: Take one simulation step, execute the next tick or event.
-- `stop!(sim::Clock)`: Stop a simulation
-- `resume!(sim::Clock)`: Resume a halted simulation.
+- `run!(sim::Clock, duration::Number)`: run a simulation for a given duration. Call and evaluate all ticks and scheduled events in that timeframe.
+- `step!(sim::Clock)`: take one simulation step, execute the next tick or event.
+- `stop!(sim::Clock)`: stop a simulation
+- `resume!(sim::Clock)`: resume a halted simulation.
+
+Now we can evaluate the results.
+
+### Logging
+
+Logging enables us to trace variables over simulation time and such analyze their behaviour.
+
+- `L = Logger()`: create a new logger, providing the newest record `L.last`, a logging table `L.df` and a switch `L.ltype` between logging types.
+- `init!(L::Logger, sim::Clock)`:
+- `setup!(L::Logger, vars::Array{Symbol})`: setup `L`, providing it with an array of logging variables `[:a, :b, :c ...]`
+- `switch!(L::Logger, to::Number=0)`: switch between `0`: only keep the last record, `1`: print, `2`: write records to the table 
+- `record!(L::Logger)`: record the logging variables with current simulation time.
 
 ## Traffic light example
 

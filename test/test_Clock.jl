@@ -1,4 +1,4 @@
-println("... basic tests without sampling ...")
+println("... basic tests: only events  ...")
 s = Sim.SimEvent(:(1+1), Main, 10, 0)
 @test eval(s.expr) == 2
 @test s.t == 10
@@ -58,7 +58,7 @@ run!(sim,14)
 @test a == 46
 @test length(sim.events) == 1
 
-println("... basic tests with sampling ...")
+println("... basic tests: only sampling ...")
 sim = Clock(1)  # clock with sample rate 1
 @test sim.time == 0
 @test sim.tsa == 1
@@ -77,3 +77,20 @@ sample_time!(sim, 0.5)
 run!(sim, 10)
 @test sim.time == 20
 @test b == 30
+
+println("... basic tests: events and sampling ...")
+function foo()
+    global a += 1
+    event!(sim, :(foo()), after, rand())
+end
+function bar()
+    global b += 1
+end
+a = 0
+b = 0
+sim = Clock(0.5)
+event!(sim, :(foo()), at, rand())
+sample!(sim, :(bar()))
+run!(sim, 10000)
+@test a == sim.evcount
+@test b == 20000
