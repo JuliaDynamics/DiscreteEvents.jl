@@ -59,9 +59,9 @@ Logging enables us to trace variables over simulation time and such analyze thei
 - `L = Logger()`: create a new logger, providing the newest record `L.last`, a logging table `L.df` and a switch `L.ltype` between logging types.
 - `init!(L::Logger, sim::Clock)`:
 - `setup!(L::Logger, vars::Array{Symbol})`: setup `L`, providing it with an array of logging variables `[:a, :b, :c ...]`
-- `switch!(L::Logger, to::Number=0)`: switch between `0`: only keep the last record, `1`: print, `2`: write records to the table 
+- `switch!(L::Logger, to::Number=0)`: switch between `0`: only keep the last record, `1`: print, `2`: write records to the table
 - `record!(L::Logger)`: record the logging variables with current simulation time.
 
-## Traffic light example
+## Examples
 
-A traffic light has three alternating lights: red, orange, green. If it fails, the red lamp blinks.
+See `doc/examples` or `doc/notebooks`.
