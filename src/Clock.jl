@@ -2,6 +2,16 @@
 # simulation routines for discrete event simulation
 #
 
+"""
+    Timing
+
+Enumeration type for scheduling events and timed conditions:
+
+- `at`: schedule an event at agiven time
+- `after`: schedule an event a given time after current time
+- `every`: schedule an event every given time from now
+- `before`: a timed condition is true before a given time.
+"""
 @enum Timing at after every before
 
 "Create a simulation event: an expression to be executed at an event time."
