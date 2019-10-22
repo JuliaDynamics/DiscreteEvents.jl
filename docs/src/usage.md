@@ -55,7 +55,6 @@ julia> record!(l); # record the variables with the current clock time
 ### Types
 ```@docs
 Logger
-Record
 ```
 
 ### Functions
