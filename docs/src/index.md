@@ -2,8 +2,7 @@
 
 A Julia package for discrete event simulation.
 
-**Author:** Paul Bayer
-**License:** MIT
+`Sim.jl` introduces a `Clock` and allows to schedule and evaluate arbitrary Julia expressions at their scheduled time or at each tick.
 
 ## Installation
 
@@ -12,3 +11,6 @@ A Julia package for discrete event simulation.
 ```
 pkg> add("https://github.com/pbayer/Sim.jl")
 ```
+
+**Author:** Paul Bayer
+**License:** MIT

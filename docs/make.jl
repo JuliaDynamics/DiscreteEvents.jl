@@ -1,5 +1,6 @@
+push!(LOAD_PATH, "../src/")
+
 using Documenter, Sim
-push!(LOAD_PATH,"../src/")
 
 makedocs(
     modules = [Sim],

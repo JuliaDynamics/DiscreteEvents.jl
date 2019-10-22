@@ -2,6 +2,11 @@
 # a simple event logger
 #
 
+"""
+    Logger()
+
+Setup and return a logging variable. 
+"""
 mutable struct Logger <: SEngine
     sim::Union{Clock,Number}
     state::SState
@@ -68,6 +73,8 @@ Setup a logger with logging variables.
 """
 setup!(L::Logger, vars::Array{Symbol}) = step!(L, L.state, Setup(vars))
 
+"record the logging variables"
 record!(L::Logger) = step!(L, L.state, Log())
 
+"clear the logger's last record and data table"
 clear!(L::Logger) = step!(L, L.state, Clear())
