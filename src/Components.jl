@@ -33,9 +33,10 @@ struct Init <: SEvent
     info::Any
 end
 
-"`Setup(vars::Array{Symbol,1})`: setup a logger with an array of symbols"
+"`Setup(vars)`: setup a logger with some info for variables"
 struct Setup <: SEvent
     vars::Array{Symbol,1}
+    scope::Module
 end
 
 "`Switch(to)`: switch event with some info"

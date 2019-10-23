@@ -13,9 +13,10 @@ mutable struct Logger <: SEngine
     last::NamedTuple
     ltype::Int64
     lvars::Array{Symbol,1}
+    scope::Module
     df::DataFrame
 
-    Logger() = new(0, Undefined(), NamedTuple(), 0, Symbol[], DataFrame())
+    Logger() = new(0, Undefined(), NamedTuple(), 0, Symbol[], Main, DataFrame())
 end
 
 """
@@ -31,13 +32,14 @@ end
 """
     step!(A::Logger, ::Empty, σ::Setup)
 
-Setup a logger with logging variables. They are given by `Setup(vars)`.
+Setup a logger with logging variables. They are given by `Setup(vars, scope)`.
 """
 function step!(A::Logger, ::Empty, σ::Setup)
     A.lvars = σ.vars
+    A.scope = σ.scope
     A.df.time = Float64[]
     for v ∈ A.lvars
-        A.df[!, v] = typeof(Core.eval(Main, v))[]
+        A.df[!, v] = typeof(Core.eval(A.scope, v))[]
     end
     A.state = Idle()
 end
@@ -59,7 +61,7 @@ Logging event.
 """
 function step!(A::Logger, ::Idle, σ::Log)
     time = now(A.sim)
-    val = vcat([time], Array{Any}([Core.eval(Main,i) for i in A.lvars]))
+    val = vcat([time], Array{Any}([Core.eval(A.scope,i) for i in A.lvars]))
     A.last = NamedTuple{Tuple(vcat([:time],A.lvars))}(val)
     if A.ltype == 1
         println(A.last)
@@ -105,8 +107,10 @@ Setup a logger with logging variables.
 # Arguments
 - `L::Logger`
 - `vars::Array{Symbol}`: An array of symbols, e.g. of global variables
+- `scope::Module = Main`: Scope in which to evaluate the variables
 """
-setup!(L::Logger, vars::Array{Symbol}) = step!(L, L.state, Setup(vars))
+setup!(L::Logger, vars::Array{Symbol}; scope::Module = Main) =
+        step!(L, L.state, Setup(vars, scope))
 
 """
     record!(L::Logger)
