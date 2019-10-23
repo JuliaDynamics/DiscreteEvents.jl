@@ -9,18 +9,20 @@ CurrentModule = Sim
 Sim
 ```
 
-`Clock` and `Logger` are implemented as state machines. The exported functions above are commands to the internal state machines.
+The module contains two main types: `Clock` and `Logger`. Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.
 
-## Types for state machines
+## State machines
 
-We need some definitions for them to work.
+We have some definitions for them to work.
 
-### State machine
 ```@docs
 SEngine
 ```
 
 ### States
+
+Defined states for state machines.
+
 ```@docs
 SState
 Undefined
@@ -31,6 +33,9 @@ Halted
 ```
 
 ### Events
+
+Defined events.
+
 ```@docs
 SEvent
 Init
@@ -45,9 +50,9 @@ Resume
 Clear
 ```
 
-## Transition functions
+### Transition functions
 
-In state machines transitions occur depending of the states and events. This is done through the `step!` functions.
+In state machines transitions occur depending on states and events. The different transitions are described through different methods of the `step!`-function.
 ```@docs
 step!
 ```
