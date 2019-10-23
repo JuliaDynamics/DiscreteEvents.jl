@@ -14,7 +14,17 @@ Enumeration type for scheduling events and timed conditions:
 """
 @enum Timing at after every before
 
-"Create a simulation event: an expression to be executed at an event time."
+"""
+    SimEvent(expr::Expr, scope::Module, t::Float64, Δt::Float64)
+
+Create a simulation event: an expression to be executed at an event time.
+
+# Arguments
+- `expr::Expr`: expression to be evaluated at event time
+- `scope::Module`: evaluation scope
+- `t::Float64`: event time
+- `Δt::Float64`: repeat rate with which the event gets repeated
+"""
 struct SimEvent
     "expression to be evaluated at event time"
     expr::Expr
@@ -26,7 +36,15 @@ struct SimEvent
     Δt::Float64
 end
 
-"Create a sample expression"
+"""
+    Sample(expr::Expr, scope::Module)
+
+Create a sampling expression
+
+# Arguments
+- `expr::Expr`: expression to be evaluated at sample time
+- `scope::Module`: evaluation scope
+"""
 struct Sample
     "expression to be evaluated at sample time"
     expr::Expr
@@ -77,13 +95,25 @@ mutable struct Clock
                                 Logger())
 end
 
-"Return the current simulation time."
+"""
+    now(sim::Clock)
+
+Return the current simulation time.
+"""
 now(sim::Clock) = sim.time
 
-"Return the next scheduled event"
+"""
+    nextevent(sim::Clock)
+
+Return the next scheduled event
+"""
 nextevent(sim::Clock) = peek(sim.events)[1]
 
-"Return the time of next scheduled event"
+"""
+    nextevtime(sim::Clock)
+
+Return the time of next scheduled event
+"""
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
 """
@@ -139,23 +169,48 @@ function event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main
     end
 end
 
-"set the clock's sample time"
+"""
+    sample_time!(sim::Clock, Δt::Number)
+
+set the clock's sampling time from `now(sim)`
+
+# Arguments
+- `sim::Clock`
+- `Δt::Number`: sample rate, time interval for sampling
+"""
 function sample_time!(sim::Clock, Δt::Number)
     sim.Δt = Δt
     sim.tsa = sim.time + Δt
 end
 
-"enqueue an expression for sampling."
+"""
+    sample!(sim::Clock, expr::Expr; scope::Module=Main)
+
+enqueue an expression for sampling.
+
+# Arguments
+- `sim::Clock`
+- `expr::Expr`: a Julia expression
+- `scope::Module=Main`: optional, a scope for the expression to be evaluated in
+"""
 sample!(sim::Clock, expr::Expr; scope::Module=Main) =
                             push!(sim.sexpr, Sample(expr, scope))
 
-"initialize, startup logger"
+"""
+    step!(sim::Clock, ::Undefined, ::Init)
+
+initialize, startup logger
+"""
 function step!(sim::Clock, ::Undefined, ::Init)
     step!(sim.logger, sim.logger.state, Init(sim))
     sim.state = Idle()
 end
 
-"if uninitialized, initialize first"
+"""
+    step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
+
+if uninitialized, initialize and then Step or Run
+"""
 function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
     step!(sim, sim.state, Init(0))
     step!(sim, sim.state, σ)
@@ -214,6 +269,14 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     end
 end
 
+"""
+    step!(sim::Clock, ::Idle, σ::Run)
+
+Run a simulation for a given duration.
+
+The duration is given with `Run(duration)`. Call scheduled events and evaluate
+sampling expressions at each tick in that timeframe.
+"""
 function step!(sim::Clock, ::Idle, σ::Run)
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
@@ -243,27 +306,59 @@ function step!(sim::Clock, ::Idle, σ::Run)
     println("Finished: ", sim.evcount, " events, simulation time: ", sim.time)
 end
 
+"""
+    step!(sim::Clock, ::Busy, ::Stop)
+
+Stop the clock.
+"""
 function step!(sim::Clock, ::Busy, ::Stop)
     sim.state = Halted()
     println("Halted: ", sim.evcount, " events, simulation time: ", sim.time)
 end
 
+"""
+    step!(sim::Clock, ::Halted, ::Resume)
+
+Resume a halted clock.
+"""
 function step!(sim::Clock, ::Halted, ::Resume)
     sim.state = Idle()
     step!(sim, sim.state, Run(sim.end_time - sim.time))
 end
 
-"Run a simulation for a given duration. Call scheduled events in that timeframe."
+"""
+    run!(sim::Clock, duration::Number)
+Run a simulation for a given duration.
+
+Call scheduled events and evaluate sampling expressions at each tick
+in that timeframe.
+"""
 run!(sim::Clock, duration::Number) = step!(sim, sim.state, Run(duration))
 
-"Take one simulation step, execute the next tick or event."
+"""
+    incr!(sim::Clock)
+
+Take one simulation step, execute the next tick or event.
+"""
 incr!(sim::Clock) = step!(sim, sim.state, Step())
 
-"Stop a running simulation."
+"""
+    stop!(sim::Clock)
+
+Stop a running simulation.
+"""
 stop!(sim::Clock) = step!(sim, sim.state, Stop())
 
-"Resume a halted simulation."
+"""
+    resume!(sim::Clock)
+
+Resume a halted simulation.
+"""
 resume!(sim::Clock) = step!(sim, sim.state, Resume())
 
-"initialize a clock"
+"""
+    init!(sim::Clock)
+
+initialize a clock.
+"""
 init!(sim::Clock) = step!(sim, sim.state, Init(""))
