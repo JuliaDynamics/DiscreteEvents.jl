@@ -10,6 +10,7 @@ A Julia package for discrete event simulation.
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Sim.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Sim.jl?branch=master)
 
 **Author:** Paul Bayer
+
 **Documentation** is currently at https://pbayer.github.io/Sim.jl/dev
 
 ## A silly example
