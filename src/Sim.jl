@@ -1,3 +1,9 @@
+
+"""
+    Sim
+
+A Julia package for discrete event simulation based on state machines.
+"""
 module Sim
 
 using Random, DataStructures, DataFrames

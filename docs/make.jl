@@ -1,5 +1,3 @@
-push!(LOAD_PATH, "../src/")
-
 using Documenter, Sim
 
 makedocs(
@@ -12,6 +10,7 @@ makedocs(
         "Overview" => "overview.md",
         "Usage" => "usage.md",
         "Examples" => "examples.md",
+        "Internals" => "internals.md"
     ]
 )
 

@@ -1,8 +1,12 @@
 # User guide
 
-`jl` is not yet an registered package and is installed with
-
+```@meta
+CurrentModule = Sim
 ```
+
+`Sim.jl` is not yet an registered package and is installed with
+
+```julia
 pkg> add("https://github.com/pbayer/jl")
 ```
 
@@ -26,8 +30,8 @@ Timing
 ### Functions
 
 ```@docs
-now
-sample_time!
+now(sim::Clock)
+sample_time!(sim::Clock, Δt::Number)
 event!
 sample!
 incr!
@@ -85,56 +89,4 @@ julia> l.df
 │ 3   │ 0.0     │ 10    │ 100   │ 2197  │
 │ 4   │ 0.0     │ 10    │ 100   │ 2744  │
 │ 5   │ 0.0     │ 10    │ 100   │ 3375  │
-```
-
-## Internals
-
-`Clock` and `Logger` are implemented as state machines. The exported functions above are commands to the internal state machines.
-
-### Types for state machines
-
-We need some definitions for them to work.
-
-#### State machine
-```@docs
-SEngine
-```
-
-#### States
-```@docs
-SState
-Undefined
-Idle
-Empty
-Busy
-Halted
-```
-
-#### Events
-```@docs
-SEvent
-Init
-Setup
-Switch
-Log
-Step
-Run
-Start
-Stop
-Resume
-Clear
-```
-
-### Transition functions
-
-In state machines transitions occur depending of the states and events. This is done through the `step!` functions.
-```@docs
-step!
-```
-#### Other internal types and functions
-```@docs
-SimEvent
-Sample
-nextevent
-nextevtime
 ```

@@ -1,4 +1,4 @@
-## Discrete event simulation in Julia:
+### Discrete event simulation with `Sim.jl`
 
 1. [`Sim.jl`](https://github.com/pbayer/Sim.jl) evaluates Julia expressions at given (virtual) simulation times.
 2. Thus discrete event systems based on state machines can be modeled and simulated.

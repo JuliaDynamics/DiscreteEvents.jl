@@ -2,6 +2,11 @@
 # a simple event logger
 #
 
+"""
+    Logger()
+
+Setup and return a logging variable.
+"""
 mutable struct Logger <: SEngine
     sim::Union{Clock,Number}
     state::SState
@@ -10,18 +15,13 @@ mutable struct Logger <: SEngine
     lvars::Array{Symbol,1}
     df::DataFrame
 
-    """
-        Logger()
-
-    Setup and return a logging variable.
-    """
     Logger() = new(0, Undefined(), NamedTuple(), 0, Symbol[], DataFrame())
 end
 
 """
     step!(A::Logger, ::Undefined, σ::Init)
 
-Initialize a logger
+Initialize a logger.
 """
 function step!(A::Logger, ::Undefined, σ::Init)
     A.sim = σ.info
@@ -31,7 +31,7 @@ end
 """
     step!(A::Logger, ::Empty, σ::Setup)
 
-Setup a logger with logging variables. They are given by `Setup(vars).`
+Setup a logger with logging variables. They are given by `Setup(vars)`.
 """
 function step!(A::Logger, ::Empty, σ::Setup)
     A.lvars = σ.vars
@@ -55,7 +55,7 @@ end
 """
     step!(A::Logger, ::Idle, σ::Log)
 
-Logging event
+Logging event.
 """
 function step!(A::Logger, ::Idle, σ::Log)
     time = now(A.sim)
@@ -82,15 +82,19 @@ function step!(A::Logger, ::Idle, σ::Switch)
 end
 
 """
+    switch!(L::Logger, to::Number=0)
 
+Switch the operating mode of a logger.
+
+`to = 0`: no output, `to = 1`: print, `to = 2: store in log table"
 """
-"Switch type of logging 0: none, 1: print, 2: store in log table."
 switch!(L::Logger, to::Number=0) = step!(L, L.state, Switch(to))
 
 """
+    init!(L::Logger, sim::Clock)
 
+Initialize a Logger.
 """
-"Initialize a Logger"
 init!(L::Logger, sim::Clock) = step!(L, L.state, Init(sim))
 
 """
@@ -114,6 +118,6 @@ record!(L::Logger) = step!(L, L.state, Log())
 """
     clear!(L::Logger)
 
-clear the loggers last record and data table
+clear the loggers last record and data table.
 """
 clear!(L::Logger) = step!(L, L.state, Clear())

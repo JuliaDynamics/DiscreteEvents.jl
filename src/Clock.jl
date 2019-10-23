@@ -39,7 +39,7 @@ end
 """
     Sample(expr::Expr, scope::Module)
 
-Create a sampling expression
+Create a sampling expression.
 
 # Arguments
 - `expr::Expr`: expression to be evaluated at sample time
@@ -105,20 +105,22 @@ now(sim::Clock) = sim.time
 """
     nextevent(sim::Clock)
 
-Return the next scheduled event
+Return the next scheduled event.
 """
 nextevent(sim::Clock) = peek(sim.events)[1]
 
 """
     nextevtime(sim::Clock)
 
-Return the time of next scheduled event
+Return the time of next scheduled event.
 """
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
 """
-    event!(sim::Clock, expr::Expr, at::Number)
-
+```
+    event!(sim::Clock, expr::Expr, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
+    event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)::Float64
+```
 Schedule an expression for execution at a given simulation time.
 
 # Arguments
@@ -127,6 +129,7 @@ Schedule an expression for execution at a given simulation time.
 - `t::Float64`: simulation time
 - `scope::Module=Main`: scope for the expression to be evaluated
 - `cycle::Float64=0.0`: repeat cycle time for the event
+- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`)
 
 # returns
 Scheduled simulation time for that event.
@@ -143,22 +146,6 @@ function event!(sim::Clock, expr::Expr, t::Number;
     sim.events[ev] = t
     return t
 end
-
-"""
-    event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)
-
-Schedule an expression for execution at a given simulation time.
-
-# Arguments
-- `sim::Clock`: simulation clock
-- `expr::Expr`: an expression
-- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`)
-- `t::Float64`: time, time delay or repeat cycle depending on `T`
-- `scope::Module=Main`: scope for the expression to be evaluated
-
-# returns
-scheduled simulation time for that event.
-"""
 function event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)
     if T == after
         event!(sim, expr, t + sim.time, scope=scope)
@@ -172,7 +159,7 @@ end
 """
     sample_time!(sim::Clock, Δt::Number)
 
-set the clock's sampling time from `now(sim)`
+set the clock's sampling time from `now(sim)`.
 
 # Arguments
 - `sim::Clock`
@@ -199,7 +186,7 @@ sample!(sim::Clock, expr::Expr; scope::Module=Main) =
 """
     step!(sim::Clock, ::Undefined, ::Init)
 
-initialize, startup logger
+initialize, startup logger.
 """
 function step!(sim::Clock, ::Undefined, ::Init)
     step!(sim.logger, sim.logger.state, Init(sim))
@@ -209,7 +196,7 @@ end
 """
     step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
 
-if uninitialized, initialize and then Step or Run
+if uninitialized, initialize and then Step or Run.
 """
 function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
     step!(sim, sim.state, Init(0))
@@ -219,7 +206,7 @@ end
 """
     step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
-step forward to next tick or scheduled event"
+step forward to next tick or scheduled event.
 
 At a tick evaluate all sampling expressions, or, if an event is encountered
 evaluate the event expression.
