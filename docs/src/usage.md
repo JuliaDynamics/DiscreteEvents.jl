@@ -18,6 +18,29 @@ using Sim
 
 ## Modeling and simulation
 
+### Silly example
+
+```@repl usage
+using Printf
+sim = Clock(); # create a clock
+comm = ["Hi, nice to meet you!", "How are you?", "Have a nice day!"];
+greet(name, n) =  @printf("%5.2f s, %s: %s\n", now(sim), name, comm[n])
+function foo(n) # 1st passerby
+    greet("Foo", n)
+    event!(sim, :(bar($n)), after, 2*rand())
+end
+function bar(n) # 2nd passerby
+    greet("Bar", n)
+    if n < 3
+       event!(sim, :(foo($n+1)), after, 2*rand())
+    else
+       println("bye bye")
+    end
+end
+event!(sim, :(foo(1)), at, 10*rand()); # create one event for a good start
+run!(sim, 20) # and run the simulation
+```
+
 A virtual `Clock` allows to schedule Julia expressions as timed events or as sampling actions, which occur at predefined clock ticks. When we `run` the `Clock`, it fires the events at their scheduled times and executes the sampling actions at each tick.
 
 ### Types
