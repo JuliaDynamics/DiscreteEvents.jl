@@ -18,7 +18,7 @@ using Sim
 
 ## Modeling and simulation
 
-A virtual `Clock` allows to schedule Julia expressions as timed events or as sampling actions, which occur at predefined clock ticks. When we `run` the `Clock`, it fires the events at their scheduled times and executes the sampling actions at each tick.
+A virtual `Clock` allows to schedule Julia functions or expressions as timed events or as sampling actions, which occur at predefined clock ticks. When we `run` the `Clock`, it fires the events at their scheduled times and executes the sampling actions at each tick.
 
 ### Silly example
 
@@ -49,6 +49,7 @@ run!(sim, 20) # and run the simulation
 ```@docs
 Clock
 Timing
+SimFunction
 ```
 
 ### Functions

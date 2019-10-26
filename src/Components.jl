@@ -10,7 +10,7 @@ abstract type SEngine end
 "supertype for states"
 abstract type SState end
 
-"supertype for transitions."
+"supertype for events"
 abstract type SEvent end
 
 "a state machine is undefined (after creation)"
@@ -33,13 +33,13 @@ struct Init <: SEvent
     info::Any
 end
 
-"`Setup(vars)`: setup a logger with some info for variables"
+"`Setup(vars::Array{Symbol,1}, scope::Module)`: setup a logger with some info."
 struct Setup <: SEvent
     vars::Array{Symbol,1}
     scope::Module
 end
 
-"`Switch(to)`: switch event with some info"
+"`Switch(to)`: switch to some other mode"
 struct Switch <: SEvent
     to
 end

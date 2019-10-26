@@ -1,6 +1,6 @@
 ### Discrete event simulation with `Sim.jl`
 
-1. [`Sim.jl`](https://github.com/pbayer/Sim.jl) evaluates Julia expressions at given (virtual) simulation times.
+1. [`Sim.jl`](https://github.com/pbayer/Sim.jl) evaluates Julia expressions or arbitrary functions at given (virtual) simulation times.
 2. Thus discrete event systems based on state machines can be modeled and simulated.
 3. Variables can be logged over simulation time and then accessed for
 analysis or visualization.
@@ -15,31 +15,32 @@ analysis or visualization.
 
 If no Δt is given, the simulation doesn't tick with a fixed interval, but jumps from event to event.
 
-### Expressions as Events
+### Functions and expressions as Events
 
-Julia expressions are scheduled as events on the clock's time line:
+Julia functions or expressions are scheduled as events on the clock's time line:
 
-- `event!(sim::Clock, expr::Expr, t::Float64)` or
-- `event!(sim, expr, at, t)`: schedule an expression for evaluation at a given simulation time.
-- `event!(sim, expr, after, t):` schedule an expression for evaluation `t` after current simulation time.
-- `event!(sim, expr, every, Δt)`: schedule an expression for evaluation now and at every time step `Δt` until end of simulation.
+- `SimFunction(func::Function, arg...; kw...)` prepare a function and its arguments for simulation.
+- `event!(sim::Clock, ex::Union{Expr,SimFunction}, t::Float64)` or
+- `event!(sim, ex, at, t)`: schedule a function or an expression for a given simulation time.
+- `event!(sim, ex, after, t):` schedule a function or an expression for time `t` after current simulation time.
+- `event!(sim, ex, every, Δt)`: schedule a function an expression for now and every time step `Δt` until end of simulation.
 
-Events are evaluated later as we `step` or `run` through the simulation. They may then at runtime create further events and thus cause chains of events to be scheduled and called during simulation.
+Events are called later as we `step` or `run` through the simulation. They may at runtime create further events and thus cause chains of events to be scheduled and called during simulation.
 
 ### Sampling expressions
 
-If we provide the clock with a time interval `Δt`, the clock ticks with a fixed sample rate. At each tick it will evaluate expressions, we register with:
+If we provide the clock with a time interval `Δt`, the clock ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
 
-- `sample!(sim::Clock, expr::Expr)`: enqueue an expression for sampling.
+- `sample!(sim::Clock, ex::Union{Expr,SimFunction})`: enqueue a function or expression for sampling.
 
-Sampling expressions are evaluated at clock ticks in the sequence they were registered. They are evaluated before any events which may have been scheduled for the same time.
+Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events which may have been scheduled for the same time.
 
 ### Running the simulation
 
-Now, after we have setup a clock, scheduled expressions as events or registered them for sampling, we can step or run through a simulation, stop or resume it.
+Now, after we have setup a clock, scheduled events or setup sampling, we can step or run through a simulation, stop or resume it.
 
-- `run!(sim::Clock, duration::Number)`: run a simulation for a given duration. Call and evaluate all ticks and scheduled events in that timeframe.
-- `step!(sim::Clock)`: take one simulation step, execute the next tick or event.
+- `run!(sim::Clock, duration::Number)`: run a simulation for a given duration. Call all ticks and scheduled events in that timeframe.
+- `step!(sim::Clock)`: take one simulation step, call the next tick or event.
 - `stop!(sim::Clock)`: stop a simulation
 - `resume!(sim::Clock)`: resume a halted simulation.
 

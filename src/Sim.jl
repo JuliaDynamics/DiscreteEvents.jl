@@ -13,7 +13,7 @@ include("Clock.jl")
 include("Logger.jl")
 
 export  Logger, switch!, setup!, init!, record!, clear!,  # Logger.jl
-        Clock, now, sample_time!, event!, sample!,                # Clock.jl
+        Clock, SimFunction, now, sample_time!, event!, sample!,                # Clock.jl
         incr!, run!, stop!, resume!,
         Timing, at, after, every, before
 

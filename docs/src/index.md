@@ -2,7 +2,7 @@
 
 A Julia package for discrete event simulation.
 
-`Sim.jl` introduces a `Clock` and allows to schedule and evaluate arbitrary Julia expressions at their scheduled time or at each tick.
+`Sim.jl` introduces a `Clock` and allows to schedule and call arbitrary Julia functions or expressions at their scheduled time or at each tick.
 
 ## Installation
 

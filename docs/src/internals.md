@@ -61,6 +61,7 @@ step!
 ```@docs
 SimEvent
 Sample
+simExec
 nextevent
 nextevtime
 ```

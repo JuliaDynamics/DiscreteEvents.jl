@@ -1,6 +1,6 @@
 println("... basic tests: only events  ...")
 s = Sim.SimEvent(:(1+1), Main, 10, 0)
-@test eval(s.expr) == 2
+@test eval(s.ex) == 2
 @test s.t == 10
 
 sim = Clock()  # set up clock without sampling

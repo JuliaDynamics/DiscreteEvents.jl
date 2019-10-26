@@ -7,7 +7,7 @@
 
 Enumeration type for scheduling events and timed conditions:
 
-- `at`: schedule an event at agiven time
+- `at`: schedule an event at a given time
 - `after`: schedule an event a given time after current time
 - `every`: schedule an event every given time from now
 - `before`: a timed condition is true before a given time.
@@ -15,9 +15,68 @@ Enumeration type for scheduling events and timed conditions:
 @enum Timing at after every before
 
 """
+    SimFunction(func::Function, arg...; kw...)
+
+Type for preparing a function as an event to a simulation.
+
+# Arguments
+- `func::Function`: function to be executed at a later simulation time
+- `arg...`: arguments to the function
+- `kw...`: keyword arguments
+
+Be aware that, if the variables stored in a SimFunction are composite types,
+they can change until they are evaluated later by `func`. But that's the nature
+of simulation.
+
+# Example
+```jldoctest
+julia> using Sim
+
+julia> f(a,b,c; d=4, e=5) = a+b+c+d+e  # define a function
+f (generic function with 1 method)
+
+julia> sf = SimFunction(f, 10, 20, 30, d=14, e=15)  # store it as SimFunction
+SimFunction(f, (10, 20, 30), Base.Iterators.Pairs(:d => 14,:e => 15))
+
+julia> sf.func(sf.arg...; sf.kw...)  # and it can be executed later
+89
+
+julia> d = Dict(:a => 1, :b => 2) # now we set up a dictionary
+Dict{Symbol,Int64} with 2 entries:
+  :a => 1
+  :b => 2
+
+julia> f(t) = t[:a] + t[:b] # and a function adding :a and :b
+f (generic function with 2 methods)
+
+julia> f(d)  # our add function gives 3
+3
+
+julia> ff = SimFunction(f, d)   # we set up a SimFunction
+SimFunction(f, (Dict(:a => 1,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
+
+julia> d[:a] = 10  # later somehow we need to change d
+10
+
+julia> ff  # our SimFunction ff has changed too
+SimFunction(f, (Dict(:a => 10,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
+
+julia> ff.func(ff.arg...; ff.kw...)  # and calling it gives a different result
+12
+```
+"""
+struct SimFunction
+    func::Function
+    arg::Tuple
+    kw::Base.Iterators.Pairs
+
+    SimFunction(func, arg...; kw...) = new(func, arg, kw)
+end
+
+"""
     SimEvent(expr::Expr, scope::Module, t::Float64, Δt::Float64)
 
-Create a simulation event: an expression to be executed at an event time.
+Create a simulation event: an expression to be executed at event time.
 
 # Arguments
 - `expr::Expr`: expression to be evaluated at event time
@@ -27,7 +86,7 @@ Create a simulation event: an expression to be executed at an event time.
 """
 struct SimEvent
     "expression to be evaluated at event time"
-    expr::Expr
+    ex::Union{Expr, SimFunction}
     "evaluation scope"
     scope::Module
     "event time"
@@ -37,17 +96,17 @@ struct SimEvent
 end
 
 """
-    Sample(expr::Expr, scope::Module)
+    Sample(ex::Union{Expr, SimFunction}, scope::Module)
 
 Create a sampling expression.
 
 # Arguments
-- `expr::Expr`: expression to be evaluated at sample time
+- `ex::{Expr, SimFunction}`: expression or function to be called at sample time
 - `scope::Module`: evaluation scope
 """
 struct Sample
-    "expression to be evaluated at sample time"
-    expr::Expr
+    "expression or function to be called at sample time"
+    ex::Union{Expr, SimFunction}
     "evaluation scope"
     scope::Module
 end
@@ -117,15 +176,23 @@ Return the time of next scheduled event.
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
 """
+    simExec(ex::Union{Expr,SimFunction}, m::Module=Main)
+
+evaluate an expression or execute a SimFunction.
+"""
+simExec(ex::Union{Expr,SimFunction}, m::Module=Main) =
+    isa(ex, SimFunction) ? ex.func(ex.arg...; ex.kw...) : Core.eval(m,ex)
+
+"""
 ```
-    event!(sim::Clock, expr::Expr, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
-    event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)::Float64
+event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
+event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Number; scope::Module=Main)::Float64
 ```
-Schedule an expression for execution at a given simulation time.
+Schedule a function or expression for a given simulation time.
 
 # Arguments
 - `sim::Clock`: simulation clock
-- `expr::Expr`: an expression
+- `ex::{Expr, SimFunction}`: an expression or SimFunction
 - `t::Float64`: simulation time
 - `scope::Module=Main`: scope for the expression to be evaluated
 - `cycle::Float64=0.0`: repeat cycle time for the event
@@ -137,22 +204,22 @@ Scheduled simulation time for that event.
 May return a time `t > at` from repeated applications of `nextfloat(at)`
 if there were yet events scheduled for that time.
 """
-function event!(sim::Clock, expr::Expr, t::Number;
+function event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number;
                 scope::Module=Main, cycle::Number=0.0)::Float64
     while any(i->i==t, values(sim.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
     end
-    ev = SimEvent(expr, scope, t, cycle)
+    ev = SimEvent(ex, scope, t, cycle)
     sim.events[ev] = t
     return t
 end
-function event!(sim::Clock, expr::Expr, T::Timing, t::Number; scope::Module=Main)
+function event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Number; scope::Module=Main)
     if T == after
-        event!(sim, expr, t + sim.time, scope=scope)
+        event!(sim, ex, t + sim.time, scope=scope)
     elseif T == every
-        event!(sim, expr, sim.time, scope=scope, cycle=t)
+        event!(sim, ex, sim.time, scope=scope, cycle=t)
     else
-        event!(sim, expr, t, scope=scope)
+        event!(sim, ex, t, scope=scope)
     end
 end
 
@@ -171,17 +238,17 @@ function sample_time!(sim::Clock, Δt::Number)
 end
 
 """
-    sample!(sim::Clock, expr::Expr; scope::Module=Main)
+    sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main)
 
 enqueue an expression for sampling.
 
 # Arguments
 - `sim::Clock`
-- `expr::Expr`: a Julia expression
+- `ex::Union{Expr, SimFunction}`: an expression or function
 - `scope::Module=Main`: optional, a scope for the expression to be evaluated in
 """
-sample!(sim::Clock, expr::Expr; scope::Module=Main) =
-                            push!(sim.sexpr, Sample(expr, scope))
+sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main) =
+                            push!(sim.sexpr, Sample(ex, scope))
 
 """
     step!(sim::Clock, ::Undefined, ::Init)
@@ -216,10 +283,10 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     function exec_next_event()
         sim.time = sim.tev
         ev = dequeue!(sim.events)
-        Core.eval(ev.scope, ev.expr)
+        simExec(ev.ex, ev.scope)
         sim.evcount += 1
         if ev.Δt > 0.0  # schedule repeat event
-            event!(sim, ev.expr, sim.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
+            event!(sim, ev.ex, sim.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
         end
         if length(sim.events) ≥ 1
             sim.tev = nextevtime(sim)
@@ -229,7 +296,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     function exec_next_tick()
         sim.time = sim.tsa
         for s ∈ sim.sexpr
-            Core.eval(s.scope, s.expr)
+            simExec(s.ex, s.scope)
         end
         if (sim.tsa == sim.tev) && (length(sim.events) ≥ 1)
             exec_next_event()
