@@ -40,7 +40,7 @@ Sampling functions or expressions are called at clock ticks in the sequence they
 Now, after we have setup a clock, scheduled events or setup sampling, we can step or run through a simulation, stop or resume it.
 
 - `run!(sim::Clock, duration::Number)`: run a simulation for a given duration. Call all ticks and scheduled events in that timeframe.
-- `step!(sim::Clock)`: take one simulation step, call the next tick or event.
+- `incr!(sim::Clock)`: take one simulation step, call the next tick or event.
 - `stop!(sim::Clock)`: stop a simulation
 - `resume!(sim::Clock)`: resume a halted simulation.
 

@@ -13,37 +13,62 @@ A Julia package for discrete event simulation.
 
 **Documentation** is currently at https://pbayer.github.io/Sim.jl/dev
 
-## A silly example
+## Example: Two guys meet
 
 ```julia
-julia> using Sim
+using Sim, Printf
 
-julia> sim = Clock();
+struct Guy
+    name
+end
 
-julia> comm = ["Hi, nice to meet you!", "How are you?", "Have a nice day!"];
+abstract type Encounter end # we define some events
+struct Meet <: Encounter
+    someone
+end
+struct Greet <: Encounter
+    type
+    from
+end
+struct Response <: Encounter
+    type
+    from
+end
+comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
+sim = Clock()
 
-julia> greet(name, n) =  @printf("%5.2f s, %s: %s\n", now(sim), name, comm[n])
-greet (generic function with 1 method)
+say(name, n) =  @printf("%5.2f s, %s: %s\n", now(sim), name, comm[n])
 
-julia> function foo(n)
-           greet("Foo", n)
-           event!(sim, :(bar($n)), after, 2*rand())
-       end
-foo (generic function with 1 method)
+function step!(me::Guy, σ::Meet) # the step! functions realize a state machine
+    event!(sim, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())
+    say(me.name, 1)
+end
 
-julia> function bar(n)
-           greet("Bar", n)
-           if n < 3
-               event!(sim, :(foo($n+1)), after, 2*rand())
-           else
-               println("bye bye")
-           end
-         end
-bar (generic function with 1 method)
+function step!(me::Guy, σ::Greet)
+    if σ.type < 3
+        event!(sim, SimFunction(step!, σ.from, Response(σ.type, me)), after, 2*rand())
+        say(me.name, σ.type)
+    else
+        say(me.name, 4)
+    end
+end
 
-julia> event!(sim, :(foo(1)), at, 10*rand());
+function step!(me::Guy, σ::Response)
+    event!(sim, SimFunction(step!, σ.from, Greet(σ.type+1, me)), after, 2*rand())
+    say(me.name, σ.type+1)
+end
 
-julia> run!(sim, 20)
+foo = Guy("Foo")
+bar = Guy("Bar")
+
+event!(sim, SimFunction(step!, foo, Meet(bar)), at, 10*rand()) # 1st event
+run!(sim, 20)
+```
+
+If we source this code it will run a simulation:
+
+```julia
+julia> include("docs/examples/greeting.jl")
  7.18 s, Foo: Hi nice to meet you!
  7.92 s, Bar: Hi nice to meet you!
  9.54 s, Foo: How are you?
