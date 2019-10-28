@@ -9,11 +9,11 @@ struct Meet <: Encounter
     someone
 end
 struct Greet <: Encounter
-    type
+    num
     from
 end
 struct Response <: Encounter
-    type
+
     from
 end
 
@@ -28,17 +28,17 @@ function step!(me::Guy, σ::Meet)
 end
 
 function step!(me::Guy, σ::Greet)
-    if σ.type < 3
-        event!(sim, SimFunction(step!, σ.from, Response(σ.type, me)), after, 2*rand())
-        say(me.name, σ.type)
+    if σ. < 3
+        event!(sim, SimFunction(step!, σ.from, Response(σ., me)), after, 2*rand())
+        say(me.name, σ.)
     else
         say(me.name, 4)
     end
 end
 
 function step!(me::Guy, σ::Response)
-    event!(sim, SimFunction(step!, σ.from, Greet(σ.type+1, me)), after, 2*rand())
-    say(me.name, σ.type+1)
+    event!(sim, SimFunction(step!, σ.from, Greet(σ.+1, me)), after, 2*rand())
+    say(me.name, σ.+1)
 end
 
 foo = Guy("Foo")

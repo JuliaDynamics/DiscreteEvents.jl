@@ -27,11 +27,11 @@ struct Meet <: Encounter
     someone
 end
 struct Greet <: Encounter
-    type
+    num
     from
 end
 struct Response <: Encounter
-    type
+    num
     from
 end
 
@@ -44,17 +44,17 @@ function step!(me::Guy, σ::Meet) # the step! functions realize a state machine
 end
 
 function step!(me::Guy, σ::Greet)
-    if σ.type < 3
-        event!(sim, SimFunction(step!, σ.from, Response(σ.type, me)), after, 2*rand())
-        say(me.name, σ.type)
+    if σ.num < 3
+        event!(sim, SimFunction(step!, σ.from, Response(σ.num, me)), after, 2*rand())
+        say(me.name, σ.num)
     else
         say(me.name, 4)
     end
 end
 
 function step!(me::Guy, σ::Response)
-    event!(sim, SimFunction(step!, σ.from, Greet(σ.type+1, me)), after, 2*rand())
-    say(me.name, σ.type+1)
+    event!(sim, SimFunction(step!, σ.from, Greet(σ.num+1, me)), after, 2*rand())
+    say(me.name, σ.num+1)
 end
 
 sim = Clock()
