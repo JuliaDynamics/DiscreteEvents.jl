@@ -34,9 +34,8 @@ struct Response <: Encounter
     type
     from
 end
-comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
-sim = Clock()
 
+comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
 say(name, n) =  @printf("%5.2f s, %s: %s\n", now(sim), name, comm[n])
 
 function step!(me::Guy, σ::Meet) # the step! functions realize a state machine
@@ -58,6 +57,7 @@ function step!(me::Guy, σ::Response)
     say(me.name, σ.type+1)
 end
 
+sim = Clock()
 foo = Guy("Foo")
 bar = Guy("Bar")
 
@@ -68,15 +68,14 @@ run!(sim, 20)
 If we source this code it will run a simulation:
 
 ```julia
-julia> include("docs/examples/greeting.jl")
- 7.18 s, Foo: Hi nice to meet you!
- 7.92 s, Bar: Hi nice to meet you!
- 9.54 s, Foo: How are you?
-10.68 s, Bar: How are you?
-11.96 s, Foo: Have a nice day!
-12.69 s, Bar: Have a nice day!
-bye bye
+julia> include("greeting.jl")
+ 5.65 s, Foo: Nice to meet you!
+ 5.97 s, Bar: Nice to meet you!
+ 7.18 s, Foo: How are you?
+ 8.46 s, Bar: How are you?
+ 9.39 s, Foo: Have a nice day!
+11.30 s, Bar: bye bye
 Finished: 6 events, simulation time: 20.0
 ```
 
-For further examples see `docs/examples` or `docs/notebooks`.
+More description of this example is in the [notebook](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/greeting.ipynb). For further examples see [`docs/examples`](https://github.com/pbayer/Sim.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Sim.jl/tree/master/docs/notebooks).

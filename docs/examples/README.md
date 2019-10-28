@@ -1,4 +1,4 @@
 # Examples
 
-- `greeting.jl`: a silly example
+- `greeting.jl`: an initial example
 - `tabletennis.jl`: a simple table tennis simulation.
