@@ -123,7 +123,7 @@ Create a new simulation clock.
 If no Δt is given, the simulation doesn't tick, but jumps from event to event.
 Δt can be set later with `sample_time!`.
 """
-mutable struct Clock
+mutable struct Clock <: SEngine
     "clock state"
     state::SState
     "clock time"

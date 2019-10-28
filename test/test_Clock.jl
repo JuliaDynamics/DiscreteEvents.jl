@@ -4,6 +4,8 @@ s = Sim.SimEvent(:(1+1), Main, 10, 0)
 @test s.t == 10
 
 sim = Clock()  # set up clock without sampling
+@test_warn "undefined transition" Sim.step!(sim, sim.state, Sim.Resume())
+@test init!(sim) == Sim.Idle()
 @test now(sim) == 0
 sim = Clock(t0=100)
 @test now(sim) == 100
@@ -29,9 +31,12 @@ end
 
 @test length(sim.events) == 11
 
+@test Sim.nextevent(sim).t == 100
+
 incr!(sim)
 @test now(sim) == 100
 @test a == 1
+@test Sim.nextevent(sim).t == 101
 
 run!(sim, 5)
 @test now(sim) == 105
@@ -89,8 +94,23 @@ end
 a = 0
 b = 0
 sim = Clock(0.5)
-event!(sim, :(foo()), at, rand())
+event!(sim, :(foo()), at, 0.5)
+event!(sim, :(foo()), at, 1)
 sample!(sim, :(bar()))
 run!(sim, 10000)
 @test a == sim.evcount
 @test b == 20000
+
+println("... basic tests with SimFunction ...")
+D = Dict(:a=>0, :b=>0, :c=>0)
+function f!(D, i)
+    D[:a] += 1
+    D[:b] = D[:a]^2
+    D[:c] = D[:a]^3
+end
+sim = Clock()
+event!(sim, SimFunction(f!, D, 1), every, 1)
+run!(sim, 20)
+@test D[:a] == 21
+@test D[:b] == 21^2
+@test D[:c] == 21^3
