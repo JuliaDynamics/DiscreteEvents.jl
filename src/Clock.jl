@@ -473,7 +473,7 @@ catch all step!-function.
 """
 function step!(sim::Clock, q::SState, σ::SEvent)
     println(stderr, "Warning: undefined transition ",
-            "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))\n",
+            "$(typeof(sim)), ::$(typeof(q)), ::$(typeof(σ)))\n",
             "maybe, you should reset! the clock!")
 end
 

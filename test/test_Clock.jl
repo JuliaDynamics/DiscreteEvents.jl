@@ -1,4 +1,7 @@
 println("... basic tests: only events  ...")
+reset!(Τ)
+@test τ() == 0
+
 s = Sim.SimEvent(:(1+1), Main, 10, 0)
 @test eval(s.ex) == 2
 @test s.t == 10
