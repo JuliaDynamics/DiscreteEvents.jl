@@ -25,37 +25,42 @@ A virtual `Clock` allows to schedule Julia functions or expressions as timed eve
 ```@repl usage
 m = @__MODULE__ # catching the current module is needed for documentation
 using Printf
-sim = Clock(); # create a clock
 comm = ["Hi, nice to meet you!", "How are you?", "Have a nice day!"];
-greet(name, n) =  @printf("%5.2f s, %s: %s\n", now(sim), name, comm[n])
+greet(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
 function foo(n) # 1st passerby
     greet("Foo", n)
-    event!(sim, :(bar($n)), after, 2*rand(), scope = m)
+    event!(Τ, :(bar($n)), after, 2*rand(), scope = m)
 end
 function bar(n) # 2nd passerby
     greet("Bar", n)
     if n < 3
-       event!(sim, :(foo($n+1)), after, 2*rand(), scope = m)
+       event!(Τ, :(foo($n+1)), after, 2*rand(), scope = m)
     else
        println("bye bye")
     end
 end
-event!(sim, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
-run!(sim, 20) # and run the simulation
+event!(Τ, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
+run!(Τ, 20) # and run the simulation
 ```
 
-### Types
+### Types and constants
 
 ```@docs
+Time
 Clock
 Timing
 SimFunction
 ```
 
+### Central time
+```@docs
+Τ
+```
+
 ### Functions
 
 ```@docs
-now
+τ
 sample_time!
 event!
 sample!
@@ -63,6 +68,8 @@ incr!
 run!
 stop!
 resume!
+sync!
+reset!
 ```
 
 ## Logging

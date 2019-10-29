@@ -22,7 +22,7 @@ struct Guy
     name
 end
 
-abstract type Encounter end # we define some events
+abstract type Encounter end
 struct Meet <: Encounter
     someone
 end
@@ -36,16 +36,16 @@ struct Response <: Encounter
 end
 
 comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
-say(name, n) =  @printf("%5.2f s, %s: %s\n", now(sim), name, comm[n])
+say(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
 
-function step!(me::Guy, σ::Meet) # the step! functions realize a state machine
-    event!(sim, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())
+function step!(me::Guy, σ::Meet)
+    event!(Τ, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())
     say(me.name, 1)
 end
 
 function step!(me::Guy, σ::Greet)
     if σ.num < 3
-        event!(sim, SimFunction(step!, σ.from, Response(σ.num, me)), after, 2*rand())
+        event!(Τ, SimFunction(step!, σ.from, Response(σ.num, me)), after, 2*rand())
         say(me.name, σ.num)
     else
         say(me.name, 4)
@@ -53,28 +53,27 @@ function step!(me::Guy, σ::Greet)
 end
 
 function step!(me::Guy, σ::Response)
-    event!(sim, SimFunction(step!, σ.from, Greet(σ.num+1, me)), after, 2*rand())
+    event!(Τ, SimFunction(step!, σ.from, Greet(σ.num+1, me)), after, 2*rand())
     say(me.name, σ.num+1)
 end
 
-sim = Clock()
 foo = Guy("Foo")
 bar = Guy("Bar")
 
-event!(sim, SimFunction(step!, foo, Meet(bar)), at, 10*rand()) # 1st event
-run!(sim, 20)
+event!(Τ, SimFunction(step!, foo, Meet(bar)), at, 10*rand())
+run!(Τ, 20)
 ```
 
 If we source this code it will run a simulation:
 
 ```julia
-julia> include("greeting.jl")
- 5.65 s, Foo: Nice to meet you!
- 5.97 s, Bar: Nice to meet you!
- 7.18 s, Foo: How are you?
- 8.46 s, Bar: How are you?
- 9.39 s, Foo: Have a nice day!
-11.30 s, Bar: bye bye
+julia> include("docs/examples/greeting.jl")
+ 7.30 s, Foo: Nice to meet you!
+ 8.00 s, Bar: Nice to meet you!
+ 9.15 s, Foo: How are you?
+10.31 s, Bar: How are you?
+11.55 s, Foo: Have a nice day!
+12.79 s, Bar: bye bye
 Finished: 6 events, simulation time: 20.0
 ```
 

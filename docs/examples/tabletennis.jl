@@ -14,14 +14,13 @@ struct Miss <: PEvent end
 
 mutable struct Player
     name::AbstractString
-    sim::Union{Number, Clock}
     opp::Union{Number,Player}
     state::PState
     accuracy::Float64
     attentiveness::Float64
     score::Int64
 
-    Player(name, acc, att) = new(name, 0, 0, Idle(), acc, att, 0)
+    Player(name, acc, att) = new(name, 0, Idle(), acc, att, 0)
 end
 
 const dist = 3 # distance for ball to fly [m]
@@ -30,8 +29,7 @@ const vr   = 20 # return velocity [m/s]
 
 rd(s::Float64) = randn()*s + 1
 
-function init!(p::Player, s::Clock, opp::Player)
-    p.sim = s
+function init!(p::Player, opp::Player)
     p.opp = opp
     if rand() ≤ p.attentiveness
         p.state = Wait()
@@ -43,11 +41,11 @@ end
 function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(p.sim, :(step!($(p.opp), Serve())), after, ts)
-        @printf("%.2f: %s serves %s\n", p.sim.time+ts, p.name, p.opp.name)
+        event!(Τ, :(step!($(p.opp), Serve())), after, ts)
+        @printf("%.2f: %s serves %s\n", τ()+ts, p.name, p.opp.name)
     else
-        event!(p.sim, :(step!($(p.opp), Miss())), after, ts)
-        @printf("%.2f: %s serves and misses %s\n", p.sim.time+ts, p.name, p.opp.name)
+        event!(Τ, :(step!($(p.opp), Miss())), after, ts)
+        @printf("%.2f: %s serves and misses %s\n", τ()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
         p.state = Unalert()
@@ -57,11 +55,11 @@ end
 function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(p.sim, :(step!($(p.opp), Return())), after, tr)
-        @printf("%.2f: %s returns %s\n", p.sim.time+tr, p.name, p.opp.name)
+        event!(Τ, :(step!($(p.opp), Return())), after, tr)
+        @printf("%.2f: %s returns %s\n", τ()+tr, p.name, p.opp.name)
     else
-        event!(p.sim, :(step!($(p.opp), Miss())), after, tr)
-        @printf("%.2f: %s returns and misses %s\n", p.sim.time+tr, p.name, p.opp.name)
+        event!(Τ, :(step!($(p.opp), Miss())), after, tr)
+        @printf("%.2f: %s returns and misses %s\n", τ()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
         p.state = Unalert()
@@ -80,7 +78,7 @@ step!(p::Player, ::Wait, ::Union{Serve, Return}) = ret(p)
 
 "player p is unalert and gets served or returned"
 function step!(p::Player, ::Unalert, ::Union{Serve, Return})
-    @printf("%.2f: %s looses ball\n", p.sim.time, p.name)
+    @printf("%.2f: %s looses ball\n", τ(), p.name)
     p.opp.score += 1
     p.state = Wait()
     serve(p)
@@ -96,13 +94,12 @@ end
 "simplified `step!` call"
 step!(p::Player, σ::PEvent) = step!(p, p.state, σ)
 
-sim = Clock()
 ping = Player("Ping", 0.90, 0.90)
 pong = Player("Pong", 0.90, 0.90)
-init!(ping, sim, pong)
-init!(pong, sim, ping)
+init!(ping, pong)
+init!(pong, ping)
 step!(ping, Start())
 
-run!(sim, 30)
+run!(Τ, 30)
 println("Ping scored $(ping.score)")
 println("Pong scored $(pong.score)")

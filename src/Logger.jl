@@ -60,7 +60,7 @@ end
 Logging event.
 """
 function step!(A::Logger, ::Idle, σ::Log)
-    time = now(A.sim)
+    time = τ(A.sim)
     val = vcat([time], Array{Any}([Core.eval(A.scope,i) for i in A.lvars]))
     A.last = NamedTuple{Tuple(vcat([:time],A.lvars))}(val)
     if A.ltype == 1
@@ -97,7 +97,7 @@ switch!(L::Logger, to::Number=0) = step!(L, L.state, Switch(to))
 
 Initialize a Logger.
 """
-init!(L::Logger, sim::Clock) = step!(L, L.state, Init(sim))
+init!(L::Logger, sim::Clock=Τ) = step!(L, L.state, Init(sim))
 
 """
     setup!(L::Logger, vars::Array{Symbol})

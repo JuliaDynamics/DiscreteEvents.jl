@@ -9,10 +9,17 @@ Enumeration type for scheduling events and timed conditions:
 
 - `at`: schedule an event at a given time
 - `after`: schedule an event a given time after current time
-- `every`: schedule an event every given time from now
+- `every`: schedule an event every given time from now on
 - `before`: a timed condition is true before a given time.
 """
 @enum Timing at after every before
+
+"""
+    Time
+
+`Time` is a number in `Sim.jl`
+"""
+const Time = Number
 
 """
     SimFunction(func::Function, arg...; kw...)
@@ -74,7 +81,7 @@ struct SimFunction
 end
 
 """
-    SimEvent(expr::Expr, scope::Module, t::Float64, Δt::Float64)
+    SimEvent(expr::Expr, scope::Module, t::Time, Δt::Time)
 
 Create a simulation event: an expression to be executed at event time.
 
@@ -90,9 +97,9 @@ struct SimEvent
     "evaluation scope"
     scope::Module
     "event time"
-    t::Float64
+    t::Time
     "repeat time"
-    Δt::Float64
+    Δt::Time
 end
 
 """
@@ -127,39 +134,119 @@ mutable struct Clock <: SEngine
     "clock state"
     state::SState
     "clock time"
-    time::Float64
+    time::Time
 
     "scheduled events"
     events::PriorityQueue{SimEvent,Float64}
     "end time for simulation"
-    end_time::Float64
+    end_time::Time
     "event evcount"
     evcount::Int64
     "next event time"
-    tev::Float64
+    tev::Time
 
     "sampling time, timestep between ticks"
-    Δt::Float64
+    Δt::Time
     "Array of sampling expressions to evaluate at each tick"
     sexpr::Array{Sample}
     "next sample time"
-    tsa::Float64
-
-    "logger"               # do we need this anyway ?
-    logger::SEngine
+    tsa::Time
 
     Clock(Δt::Number=0; t0::Number=0) = new(Undefined(), t0,
-                                PriorityQueue{SimEvent,Float64}(), 0, 0, 0,
-                                Δt, Sample[], t0 + Δt,
-                                Logger())
+                                PriorityQueue{SimEvent,Float64}(), t0, 0, t0,
+                                Δt, Sample[], t0 + Δt)
 end
 
 """
-    now(sim::Clock)
+```
+Τ
+Tau
+```
+Τ (`\\Tau`+Tab), Tau is the central `Clock()`-variable.
 
-Return the current simulation time.
+# Examples
+```jldoctest
+julia> using Sim
+
+julia> Τ  # central clock
+Clock(Sim.Idle(), 0, DataStructures.PriorityQueue{Sim.SimEvent,Float64,Base.Order.ForwardOrdering}(), 0, 0, 0, 0, Sim.Sample[], 0)
+julia> Tau  # alias
+Clock(Sim.Idle(), 0, DataStructures.PriorityQueue{Sim.SimEvent,Float64,Base.Order.ForwardOrdering}(), 0, 0, 0, 0, Sim.Sample[], 0)
+julia> Τ.time
+0
+```
 """
-now(sim::Clock) = sim.time
+Τ = Clock()
+Tau = Τ
+
+"""
+```
+τ(sim::Clock=Τ)
+tau(sim::Clock=Tau)
+```
+Return the current simulation time (τ=\tau+Tab).
+
+# Examples
+```jldoctest
+julia> using Sim
+
+julia> τ() # gives the central time
+0
+julia> tau() # alias, gives the central time
+0
+```
+"""
+τ(sim::Clock=Τ) = sim.time
+tau = τ
+
+"""
+```
+sync!(sim::Clock, to::Clock=Τ)
+```
+Force a synchronization of two clocks. Change all registered times of
+`sim` accordingly.
+"""
+function sync!(sim::Clock, to::Clock=Τ)
+    Δt = to.time - sim.time
+    sim.time += Δt
+    sim.tsa  += Δt
+    sim.tev  += Δt
+    sim.end_time += Δt
+    sim.Δt = to.Δt
+    evq = PriorityQueue{SimEvent,Float64}()
+    for (ev, t) ∈ pairs(sim.events)
+        evq[ev] = t + Δt
+    end
+    sim.events = evq
+end
+
+"""
+    reset!(sim::Clock, Δt::Number=0; t0::Time=0, hard::Bool=true)
+
+reset a clock
+
+# Arguments
+- `sim::Clock`
+- `Δt::Number=0`: time increment
+- `t0::Time=0`: start time
+- `hard::Bool=true`: time is reset, all scheduled events and sampling are
+deleted. If hard=false, then only time is reset, event and sampling times are
+adjusted accordingly.
+"""
+function reset!(sim::Clock, Δt::Number=0; t0::Time=0, hard::Bool=true)
+    if hard
+        sim.state = Idle()
+        sim.time = t0
+        sim.tsa = t0
+        sim.tev = t0
+        sim.end_time = t0
+        sim.evcount = 0
+        sim.Δt = Δt
+        sim.events = PriorityQueue{SimEvent,Float64}();
+    else
+        sync!(sim, Clock(Δt, t0=t0))
+    end
+end
 
 """
     nextevent(sim::Clock)
@@ -193,9 +280,9 @@ Schedule a function or expression for a given simulation time.
 # Arguments
 - `sim::Clock`: simulation clock
 - `ex::{Expr, SimFunction}`: an expression or SimFunction
-- `t::Float64`: simulation time
+- `t::Time`: simulation time
 - `scope::Module=Main`: scope for the expression to be evaluated
-- `cycle::Float64=0.0`: repeat cycle time for the event
+- `cycle::Time=0.0`: repeat cycle time for the event
 - `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`)
 
 # returns
@@ -204,8 +291,8 @@ Scheduled simulation time for that event.
 May return a time `t > at` from repeated applications of `nextfloat(at)`
 if there were yet events scheduled for that time.
 """
-function event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number;
-                scope::Module=Main, cycle::Number=0.0)::Float64
+function event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Time;
+                scope::Module=Main, cycle::Time=0.0)::Float64
     while any(i->i==t, values(sim.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
     end
@@ -213,7 +300,7 @@ function event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number;
     sim.events[ev] = t
     return t
 end
-function event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Number; scope::Module=Main)
+function event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Time; scope::Module=Main)
     if T == after
         event!(sim, ex, t + sim.time, scope=scope)
     elseif T == every
@@ -224,15 +311,15 @@ function event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Number; 
 end
 
 """
-    sample_time!(sim::Clock, Δt::Number)
+    sample_time!(sim::Clock, Δt::Time)
 
-set the clock's sampling time from `now(sim)`.
+set the clock's sampling time from `\tau(sim)`.
 
 # Arguments
 - `sim::Clock`
 - `Δt::Number`: sample rate, time interval for sampling
 """
-function sample_time!(sim::Clock, Δt::Number)
+function sample_time!(sim::Clock, Δt::Time)
     sim.Δt = Δt
     sim.tsa = sim.time + Δt
 end
@@ -253,10 +340,9 @@ sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main) =
 """
     step!(sim::Clock, ::Undefined, ::Init)
 
-initialize, startup logger.
+initialize a clock.
 """
 function step!(sim::Clock, ::Undefined, ::Init)
-    step!(sim.logger, sim.logger.state, Init(sim))
     sim.state = Idle()
 end
 
@@ -378,6 +464,17 @@ Resume a halted clock.
 function step!(sim::Clock, ::Halted, ::Resume)
     sim.state = Idle()
     step!(sim, sim.state, Run(sim.end_time - sim.time))
+end
+
+"""
+    step!(sim::Clock, q::SState, σ::SEvent)
+
+catch all step!-function.
+"""
+function step!(sim::Clock, q::SState, σ::SEvent)
+    println(stderr, "Warning: undefined transition ",
+            "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))\n",
+            "maybe, you should reset! the clock!")
 end
 
 """
