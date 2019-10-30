@@ -9,7 +9,11 @@ makedocs(
         "Home" => "index.md",
         "Overview" => "overview.md",
         "Usage" => "usage.md",
-        "Examples" => "examples.md",
+        "Examples" => [
+            "Two guys meet" => "examples/greeting.md",
+            "Table tennis" => "examples/tabletennis.md",
+            "Further examples" => "examples/examples.md"
+        ],
         "Internals" => "internals.md"
     ]
 )

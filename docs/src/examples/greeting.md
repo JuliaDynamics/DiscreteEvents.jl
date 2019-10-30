@@ -1,19 +1,6 @@
-# Sim.jl
+### Two guys meet
 
-A Julia package for **discrete event simulation**. It introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence.
-
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Sim.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Sim.jl/dev)
-[![Build Status](https://travis-ci.com/pbayer/Sim.jl.svg?branch=master)](https://travis-ci.com/pbayer/Sim.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/pbayer/Sim.jl?svg=true)](https://ci.appveyor.com/project/pbayer/Sim-jl)
-[![Codecov](https://codecov.io/gh/pbayer/Sim.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Sim.jl)
-[![Coverage Status](https://coveralls.io/repos/github/pbayer/Sim.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Sim.jl?branch=master)
-
-**Author:** Paul Bayer
-
-**Documentation** is currently at https://pbayer.github.io/Sim.jl/dev
-
-## Example: Two guys meet
+If two guys meet, there is some standard verbiage, but some uncertainty in how long they need to greet and respond. We can simulate this as an introductory example.
 
 We call the needed modules and define some types and data:
 
@@ -100,4 +87,3 @@ Then we `reset` the clock `Τ` for further simulations.
 julia> reset!(Τ)
 clock reset to t₀=0, sampling rate Δt=0.
 ```
-For further examples see [`docs/examples`](https://github.com/pbayer/Sim.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Sim.jl/tree/master/docs/notebooks).

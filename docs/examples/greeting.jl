@@ -44,3 +44,5 @@ bar = Guy("Bar")
 
 event!(Τ, SimFunction(step!, foo, Meet(bar)), at, 10*rand())
 run!(Τ, 20)
+
+reset!(Τ)

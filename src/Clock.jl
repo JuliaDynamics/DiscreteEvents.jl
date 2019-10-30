@@ -242,10 +242,11 @@ function reset!(sim::Clock, Δt::Number=0; t0::Time=0, hard::Bool=true)
         sim.end_time = t0
         sim.evcount = 0
         sim.Δt = Δt
-        sim.events = PriorityQueue{SimEvent,Float64}();
+        sim.events = PriorityQueue{SimEvent,Float64}()
     else
         sync!(sim, Clock(Δt, t0=t0))
     end
+    println("clock reset to t₀=$t0, sampling rate Δt=$Δt.")
 end
 
 """
