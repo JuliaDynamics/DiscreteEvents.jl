@@ -1,6 +1,6 @@
 # Sim.jl
 
-A Julia package for discrete event simulation.
+A Julia package for **discrete event simulation**. It introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence.
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Sim.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Sim.jl/dev)
@@ -14,6 +14,8 @@ A Julia package for discrete event simulation.
 **Documentation** is currently at https://pbayer.github.io/Sim.jl/dev
 
 ## Example: Two guys meet
+
+We call the needed modules and define some types and data:
 
 ```julia
 using Sim, Printf
@@ -36,6 +38,17 @@ struct Response <: Encounter
 end
 
 comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
+```
+
+Then we implement the behavior of the "guys" as `step!`-δ-functions of a state machine. For that we use some features of `Sim.jl`:
+
+- `Τ` or `Tau` is the central clock,
+- `SimFunction` prepares a Julia function for later execution,
+- `event!` schedules it for execution `after` some time,
+- `τ()` gives the central time (`T.time`).
+
+
+```julia
 say(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
 
 function step!(me::Guy, σ::Meet)
@@ -56,7 +69,11 @@ function step!(me::Guy, σ::Response)
     event!(Τ, SimFunction(step!, σ.from, Greet(σ.num+1, me)), after, 2*rand())
     say(me.name, σ.num+1)
 end
+```
 
+Then we define some "guys", define a starting event and tell the clock `Τ` to `run` for twenty "seconds":
+
+```julia
 foo = Guy("Foo")
 bar = Guy("Bar")
 
@@ -64,7 +81,7 @@ event!(Τ, SimFunction(step!, foo, Meet(bar)), at, 10*rand())
 run!(Τ, 20)
 ```
 
-If we source this code it will run a simulation:
+If we source this code, it will run a simulation:
 
 ```julia
 julia> include("docs/examples/greeting.jl")
@@ -77,4 +94,4 @@ julia> include("docs/examples/greeting.jl")
 Finished: 6 events, simulation time: 20.0
 ```
 
-More description of this example is in the [notebook](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/greeting.ipynb). For further examples see [`docs/examples`](https://github.com/pbayer/Sim.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Sim.jl/tree/master/docs/notebooks).
+For further examples see [`docs/examples`](https://github.com/pbayer/Sim.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Sim.jl/tree/master/docs/notebooks).
