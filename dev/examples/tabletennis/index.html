@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Table tennis · Sim.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Sim.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><a class="toctext" href="../../overview/">Overview</a></li><li><a class="toctext" href="../../usage/">Usage</a></li><li><span class="toctext">Examples</span><ul><li><a class="toctext" href="../greeting/">Two guys meet</a></li><li class="current"><a class="toctext" href>Table tennis</a><ul class="internal"></ul></li><li><a class="toctext" href="../examples/">Further examples</a></li></ul></li><li><a class="toctext" href="../../internals/">Internals</a></li></ul></nav><article id="docs"><header><nav><ul><li>Examples</li><li><a href>Table tennis</a></li></ul><a class="edit-page" href="https://github.com/pbayer/Sim.jl/blob/master/docs/src/examples/tabletennis.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Table tennis</span><a class="fa fa-bars" href="#"></a></div></header><h3><a class="nav-anchor" id="Table-tennis-1" href="#Table-tennis-1">Table tennis</a></h3><p>In table tennis we have some physical constraints, standard moves and rules, but uncertainty in execution due to lack of accuray and attentiveness of the players and so on.</p><p>We can model the players as state machines and do a simulation on it.</p><p>First we need to call the needed modules:</p><pre><code class="language-julia">using Sim, Printf
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Table tennis · Sim.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Sim.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><a class="toctext" href="../../overview/">Overview</a></li><li><a class="toctext" href="../../usage/">Usage</a></li><li><span class="toctext">Examples</span><ul><li><a class="toctext" href="../greeting/">Two guys meet</a></li><li class="current"><a class="toctext" href>Table tennis</a><ul class="internal"></ul></li><li><a class="toctext" href="../singleserver/">Single server</a></li><li><a class="toctext" href="../examples/">Further examples</a></li></ul></li><li><a class="toctext" href="../../internals/">Internals</a></li></ul></nav><article id="docs"><header><nav><ul><li>Examples</li><li><a href>Table tennis</a></li></ul><a class="edit-page" href="https://github.com/pbayer/Sim.jl/blob/master/docs/src/examples/tabletennis.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Table tennis</span><a class="fa fa-bars" href="#"></a></div></header><h3><a class="nav-anchor" id="Table-tennis-1" href="#Table-tennis-1">Table tennis</a></h3><p>In table tennis we have some physical constraints, standard moves and rules, but uncertainty in execution due to lack of accuray and attentiveness of the players and so on.</p><p>We can model the players as state machines and do a simulation on it.</p><p>First we need to call the needed modules:</p><pre><code class="language-julia">using Sim, Printf
 import Sim.init!</code></pre><p>Then we need some definitions for states, events and players:</p><pre><code class="language-julia">abstract type PState end
 struct Idle &lt;: PState end
 struct Wait &lt;: PState end
@@ -24,7 +24,7 @@ end</code></pre><p>We have to define the physical facts and a function to random
 const vs   = 10 # serve velocity [m/s]
 const vr   = 20 # return velocity [m/s]
 
-rd(s::Float64) = randn()*s + 1</code></pre><p>Some functions describe the setup of players, serve and return. Here we use the following features of <code>Sim.jl</code>:</p><ul><li><code>Τ</code> or <code>Tau</code> is the central clock,</li><li><code>τ()</code> or <code>tau()</code> gives the central time,</li><li><code>event!</code> schedules an expression (or a function) for execution <code>after</code> some time on <code>Τ</code>s timeline.</li></ul><pre><code class="language-julia">function init!(p::Player, opp::Player)
+rd(s::Float64) = randn()*s + 1</code></pre><p>Some functions describe the setup of players, serve and return. Here we use the following features of <code>Sim.jl</code>:</p><ul><li>italic <code>𝐶</code> (<code>\itC</code>+Tab) or <code>Clk</code> is the central clock,</li><li><code>τ()</code> or <code>tau()</code> gives the central time,</li><li><code>event!</code> schedules an expression (or a function) for execution <code>after</code> some time on <code>𝐶</code>s timeline.</li></ul><pre><code class="language-julia">function init!(p::Player, opp::Player)
     p.opp = opp
     if rand() ≤ p.attentiveness
         p.state = Wait()
@@ -35,11 +35,11 @@ end
 
 function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
-    if rand() ≤ p.accuracy
-        event!(Τ, :(step!($(p.opp), Serve())), after, ts)
+    if (rand() ≤ p.accuracy) &amp;&amp; (p.state == Wait())
+        event!(𝐶, :(step!($(p.opp), Serve())), after, ts)
         @printf(&quot;%.2f: %s serves %s\n&quot;, τ()+ts, p.name, p.opp.name)
     else
-        event!(Τ, :(step!($(p.opp), Miss())), after, ts)
+        event!(𝐶, :(step!($(p.opp), Miss())), after, ts)
         @printf(&quot;%.2f: %s serves and misses %s\n&quot;, τ()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -50,10 +50,10 @@ end
 function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(Τ, :(step!($(p.opp), Return())), after, tr)
+        event!(𝐶, :(step!($(p.opp), Return())), after, tr)
         @printf(&quot;%.2f: %s returns %s\n&quot;, τ()+tr, p.name, p.opp.name)
     else
-        event!(Τ, :(step!($(p.opp), Miss())), after, tr)
+        event!(𝐶, :(step!($(p.opp), Miss())), after, tr)
         @printf(&quot;%.2f: %s returns and misses %s\n&quot;, τ()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -64,7 +64,7 @@ step!(p::Player, q::PState, σ::PEvent) =
         println(&quot;undefined transition for $(p.name), $q, $σ&quot;)
 
 &quot;player p gets a start command&quot;
-step!(p::Player, ::Wait, ::Start) = serve(p)
+step!(p::Player, ::Union{Wait, Unalert}, ::Start) = serve(p)
 
 &quot;player p is waiting and gets served or returned&quot;
 step!(p::Player, ::Wait, ::Union{Serve, Return}) = ret(p)
@@ -89,7 +89,7 @@ step!(p::Player, σ::PEvent) = step!(p, p.state, σ)</code></pre><p>Next we defi
 pong = Player(&quot;Pong&quot;, 0.90, 0.90)
 init!(ping, pong)
 init!(pong, ping)
-step!(ping, Start())</code></pre><p>Finally we setup a simulation and analysis of the results:</p><pre><code class="language-julia">run!(Τ, 30)
+step!(ping, Start())</code></pre><p>Finally we setup a simulation and analysis of the results:</p><pre><code class="language-julia">run!(𝐶, 30)
 println(&quot;Ping scored $(ping.score)&quot;)
 println(&quot;Pong scored $(pong.score)&quot;)</code></pre><p>If we source this code, the simulation runs:</p><pre><code class="language-julia">julia&gt; include(&quot;docs/examples/tabletennis.jl&quot;)
 3.35: Ping serves Pong
@@ -122,5 +122,5 @@ println(&quot;Pong scored $(pong.score)&quot;)</code></pre><p>If we source this 
 32.75: Ping serves Pong
 Finished: 22 events, simulation time: 30.0
 Ping scored 3
-Pong scored 5</code></pre><p>Finally we should reset the clock for following simulations:</p><pre><code class="language-julia">julia&gt; reset!(Τ)
-clock reset to t₀=0, sampling rate Δt=0.</code></pre><footer><hr/><a class="previous" href="../greeting/"><span class="direction">Previous</span><span class="title">Two guys meet</span></a><a class="next" href="../examples/"><span class="direction">Next</span><span class="title">Further examples</span></a></footer></article></body></html>
+Pong scored 5</code></pre><p>Finally we should reset the clock for following simulations:</p><pre><code class="language-julia">julia&gt; reset!(𝐶)
+clock reset to t₀=0, sampling rate Δt=0.</code></pre><footer><hr/><a class="previous" href="../greeting/"><span class="direction">Previous</span><span class="title">Two guys meet</span></a><a class="next" href="../singleserver/"><span class="direction">Next</span><span class="title">Single server</span></a></footer></article></body></html>
