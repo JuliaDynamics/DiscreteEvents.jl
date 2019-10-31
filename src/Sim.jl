@@ -16,9 +16,9 @@ include("Logger.jl")
 export  Logger, switch!, setup!, init!, record!, clear!,  # Logger.jl
         Clock, SimFunction, τ, tau, sample_time!, event!, sample!,                # Clock.jl
         incr!, run!, stop!, resume!, reset!, sync!,
-        Τ, Tau, Time, Timing, at, after, every, before
+        𝐶, Clk, Time, Timing, at, after, every, before
 
 Random.seed!(123)
-Τ.state == Undefined() ? init!(Τ) : nothing
+𝐶.state == Undefined() ? init!(𝐶) : nothing
 
 end # module

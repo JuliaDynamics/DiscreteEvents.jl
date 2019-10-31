@@ -159,29 +159,28 @@ end
 
 """
 ```
-Τ
-Tau
+𝐶
+Clk
 ```
-Τ (`\\Tau`+Tab), Tau is the central `Clock()`-variable.
+italic 𝐶 (`\\itC`+Tab) or `Clk` is the central `Clock()`-variable.
 
 # Examples
 ```jldoctest
 julia> using Sim
 
-julia> Τ  # central clock
+julia> 𝐶  # central clock
 Clock(Sim.Idle(), 0, DataStructures.PriorityQueue{Sim.SimEvent,Float64,Base.Order.ForwardOrdering}(), 0, 0, 0, 0, Sim.Sample[], 0)
-julia> Tau  # alias
+julia> Clk  # alias
 Clock(Sim.Idle(), 0, DataStructures.PriorityQueue{Sim.SimEvent,Float64,Base.Order.ForwardOrdering}(), 0, 0, 0, 0, Sim.Sample[], 0)
-julia> Τ.time
+julia> 𝐶.time
 0
 ```
 """
-Τ = Clock()
-Tau = Τ
+𝐶 = Clk = Clock()
 
 """
 ```
-τ(sim::Clock=Τ)
+τ(sim::Clock=𝐶)
 tau(sim::Clock=Tau)
 ```
 Return the current simulation time (τ=\tau+Tab).
@@ -196,17 +195,17 @@ julia> tau() # alias, gives the central time
 0
 ```
 """
-τ(sim::Clock=Τ) = sim.time
+τ(sim::Clock=𝐶) = sim.time
 tau = τ
 
 """
 ```
-sync!(sim::Clock, to::Clock=Τ)
+sync!(sim::Clock, to::Clock=𝐶)
 ```
 Force a synchronization of two clocks. Change all registered times of
 `sim` accordingly.
 """
-function sync!(sim::Clock, to::Clock=Τ)
+function sync!(sim::Clock, to::Clock=𝐶)
     Δt = to.time - sim.time
     sim.time += Δt
     sim.tsa  += Δt
@@ -246,7 +245,7 @@ function reset!(sim::Clock, Δt::Number=0; t0::Time=0, hard::Bool=true)
     else
         sync!(sim, Clock(Δt, t0=t0))
     end
-    println("clock reset to t₀=$t0, sampling rate Δt=$Δt.")
+    "clock reset to t₀=$t0, sampling rate Δt=$Δt."
 end
 
 """
@@ -314,7 +313,7 @@ end
 """
     sample_time!(sim::Clock, Δt::Time)
 
-set the clock's sampling time from `\tau(sim)`.
+set the clock's sampling time starting from now (`𝐶(sim)`).
 
 # Arguments
 - `sim::Clock`
@@ -444,7 +443,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
 
     sim.time = sim.end_time
     sim.state = Idle()
-    println("Finished: ", sim.evcount, " events, simulation time: ", sim.time)
+    "run! finished with $(sim.evcount) events, simulation time: $(sim.time)"
 end
 
 """
@@ -454,7 +453,7 @@ Stop the clock.
 """
 function step!(sim::Clock, ::Busy, ::Stop)
     sim.state = Halted()
-    println("Halted: ", sim.evcount, " events, simulation time: ", sim.time)
+    "Halted after $(sim.evcount) events, simulation time: $(sim.time)"
 end
 
 """

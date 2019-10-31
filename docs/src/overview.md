@@ -10,11 +10,11 @@ analysis or visualization.
 `Sim.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time.
 
 - `Clock(Δt::Number=0; t0::Number=0)`: create a new clock with start time `t0` and sample time `Δt`.
-- `Τ` or `Tau` : is the central Clock() variable.
-- `τ(sim::Clock=Τ)`: return the current clock time.
+- italic `𝐶` (`\itC`+Tab) or `Clk` : is the central Clock() variable.
+- `τ(sim::Clock=𝐶)`: return the current clock time.
 - `sample_time!(sim::Clock, Δt::Number)`: set the clock's sample rate starting from `now(sim)`.
 - `reset!(sim::Clock, Δt::Number=0; t0::Time=0, hard::Bool=true)`: reset a clock.
-- `sync!(sim::Clock, to::Clock=Τ)`: Force a synchronization of two clocks.
+- `sync!(sim::Clock, to::Clock=𝐶)`: Force a synchronization of two clocks.
 
 If no Δt ≠ 0 is given, the simulation doesn't tick with a fixed interval, but jumps from event to event.
 
@@ -54,7 +54,7 @@ Now we can evaluate the results.
 Logging enables us to trace variables over simulation time and such analyze their behaviour.
 
 - `L = Logger()`: create a new logger, providing the newest record `L.last`, a logging table `L.df` and a switch `L.ltype` between logging types.
-- `init!(L::Logger, sim::Clock=Τ)`:
+- `init!(L::Logger, sim::Clock=𝐶)`:
 - `setup!(L::Logger, vars::Array{Symbol})`: setup `L`, providing it with an array of logging variables `[:a, :b, :c ...]`
 - `switch!(L::Logger, to::Number=0)`: switch between `0`: only keep the last record, `1`: print, `2`: write records to the table
 - `record!(L::Logger)`: record the logging variables with current simulation time.

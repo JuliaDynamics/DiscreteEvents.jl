@@ -29,18 +29,18 @@ comm = ["Hi, nice to meet you!", "How are you?", "Have a nice day!"];
 greet(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
 function foo(n) # 1st passerby
     greet("Foo", n)
-    event!(Τ, :(bar($n)), after, 2*rand(), scope = m)
+    event!(𝐶, :(bar($n)), after, 2*rand(), scope = m)
 end
 function bar(n) # 2nd passerby
     greet("Bar", n)
     if n < 3
-       event!(Τ, :(foo($n+1)), after, 2*rand(), scope = m)
+       event!(𝐶, :(foo($n+1)), after, 2*rand(), scope = m)
     else
        println("bye bye")
     end
 end
-event!(Τ, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
-run!(Τ, 20) # and run the simulation
+event!(𝐶, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
+run!(𝐶, 20) # and run the simulation
 ```
 
 ### Types and constants
@@ -54,7 +54,7 @@ SimFunction
 
 ### Central time
 ```@docs
-Τ
+𝐶
 ```
 
 ### Functions

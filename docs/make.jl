@@ -12,6 +12,7 @@ makedocs(
         "Examples" => [
             "Two guys meet" => "examples/greeting.md",
             "Table tennis" => "examples/tabletennis.md",
+            "Single server" => "examples/singleserver.md",
             "Further examples" => "examples/examples.md"
         ],
         "Internals" => "internals.md"

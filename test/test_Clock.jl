@@ -1,5 +1,5 @@
 println("... basic tests: only events  ...")
-reset!(Τ)
+reset!(𝐶)
 @test τ() == 0
 
 s = Sim.SimEvent(:(1+1), Main, 10, 0)
@@ -108,21 +108,21 @@ run!(sim, 10000)
 @test a == sim.evcount
 @test b == 20000
 
-sync!(sim, Τ)
-@test sim.time == Τ.time
+sync!(sim, 𝐶)
+@test sim.time == 𝐶.time
 
-println("... basic tests with SimFunction, now with Τ ...")
+println("... basic tests with SimFunction, now with 𝐶 ...")
 D = Dict(:a=>0, :b=>0, :c=>0)
 function f!(D, i)
     D[:a] += 1
     D[:b] = D[:a]^2
     D[:c] = D[:a]^3
 end
-event!(Τ, SimFunction(f!, D, 1), every, 1)
-run!(Τ, 20)
+event!(𝐶, SimFunction(f!, D, 1), every, 1)
+run!(𝐶, 20)
 @test τ() == 20
 @test D[:a] == 21
 @test D[:b] == 21^2
 @test D[:c] == 21^3
-reset!(Τ)
+reset!(𝐶)
 @test tau() == 0

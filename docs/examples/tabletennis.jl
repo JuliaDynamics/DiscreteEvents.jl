@@ -41,10 +41,10 @@ end
 function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
     if (rand() ≤ p.accuracy) && (p.state == Wait())
-        event!(Τ, :(step!($(p.opp), Serve())), after, ts)
+        event!(𝐶, :(step!($(p.opp), Serve())), after, ts)
         @printf("%.2f: %s serves %s\n", τ()+ts, p.name, p.opp.name)
     else
-        event!(Τ, :(step!($(p.opp), Miss())), after, ts)
+        event!(𝐶, :(step!($(p.opp), Miss())), after, ts)
         @printf("%.2f: %s serves and misses %s\n", τ()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -55,10 +55,10 @@ end
 function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(Τ, :(step!($(p.opp), Return())), after, tr)
+        event!(𝐶, :(step!($(p.opp), Return())), after, tr)
         @printf("%.2f: %s returns %s\n", τ()+tr, p.name, p.opp.name)
     else
-        event!(Τ, :(step!($(p.opp), Miss())), after, tr)
+        event!(𝐶, :(step!($(p.opp), Miss())), after, tr)
         @printf("%.2f: %s returns and misses %s\n", τ()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -100,8 +100,8 @@ init!(ping, pong)
 init!(pong, ping)
 step!(ping, Start())
 
-run!(Τ, 30)
+run!(𝐶, 30)
 println("Ping scored $(ping.score)")
 println("Pong scored $(pong.score)")
 
-reset!(Τ)
+reset!(𝐶)

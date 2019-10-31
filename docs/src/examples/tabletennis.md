@@ -49,9 +49,9 @@ rd(s::Float64) = randn()*s + 1
 
 Some functions describe the setup of players, serve and return. Here we use the following features of `Sim.jl`:
 
-- `Τ` or `Tau` is the central clock,
+- italic `𝐶` (`\itC`+Tab) or `Clk` is the central clock,
 - `τ()` or `tau()` gives the central time,
-- `event!` schedules an expression (or a function) for execution `after` some time on `Τ`s timeline.
+- `event!` schedules an expression (or a function) for execution `after` some time on `𝐶`s timeline.
 
 ```julia
 function init!(p::Player, opp::Player)
@@ -65,11 +65,11 @@ end
 
 function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
-    if rand() ≤ p.accuracy
-        event!(Τ, :(step!($(p.opp), Serve())), after, ts)
+    if (rand() ≤ p.accuracy) && (p.state == Wait())
+        event!(𝐶, :(step!($(p.opp), Serve())), after, ts)
         @printf("%.2f: %s serves %s\n", τ()+ts, p.name, p.opp.name)
     else
-        event!(Τ, :(step!($(p.opp), Miss())), after, ts)
+        event!(𝐶, :(step!($(p.opp), Miss())), after, ts)
         @printf("%.2f: %s serves and misses %s\n", τ()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -80,10 +80,10 @@ end
 function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(Τ, :(step!($(p.opp), Return())), after, tr)
+        event!(𝐶, :(step!($(p.opp), Return())), after, tr)
         @printf("%.2f: %s returns %s\n", τ()+tr, p.name, p.opp.name)
     else
-        event!(Τ, :(step!($(p.opp), Miss())), after, tr)
+        event!(𝐶, :(step!($(p.opp), Miss())), after, tr)
         @printf("%.2f: %s returns and misses %s\n", τ()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -102,7 +102,7 @@ step!(p::Player, q::PState, σ::PEvent) =
         println("undefined transition for $(p.name), $q, $σ")
 
 "player p gets a start command"
-step!(p::Player, ::Wait, ::Start) = serve(p)
+step!(p::Player, ::Union{Wait, Unalert}, ::Start) = serve(p)
 
 "player p is waiting and gets served or returned"
 step!(p::Player, ::Wait, ::Union{Serve, Return}) = ret(p)
@@ -139,7 +139,7 @@ step!(ping, Start())
 Finally we setup a simulation and analysis of the results:
 
 ```julia
-run!(Τ, 30)
+run!(𝐶, 30)
 println("Ping scored $(ping.score)")
 println("Pong scored $(pong.score)")
 ```
@@ -184,6 +184,6 @@ Pong scored 5
 Finally we should reset the clock for following simulations:
 
 ```julia
-julia> reset!(Τ)
+julia> reset!(𝐶)
 clock reset to t₀=0, sampling rate Δt=0.
 ```
