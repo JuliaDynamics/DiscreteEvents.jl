@@ -15,6 +15,8 @@ A Julia package for **discrete event simulation**. It introduces a **clock** and
 
 ## Example: Two guys meet
 
+When two guys meet, they can refer to standard verbiage, but there is some variation in greeting and response times. We can simulate that with `Sim.jl`:
+
 We call the needed modules and define some types and data:
 
 ```julia
@@ -40,7 +42,7 @@ end
 comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
 ```
 
-We implement the behavior of the "guys" as `step!`-δ-functions of a state machine. For that we use some features of `Sim.jl`:
+We implement the behavior of the "guys" as `step!`-δ-functions of a state machine. For that we use the following features:
 
 - italic `𝐶` (`\itC`+Tab) or `Clk` is the central clock,
 - `SimFunction` prepares a Julia function for later execution,
@@ -100,4 +102,7 @@ Then we `reset` the clock `𝐶` for further simulations.
 julia> reset!(𝐶)
 clock reset to t₀=0, sampling rate Δt=0.
 ```
+
+## 😄
+
 For further examples see [`docs/examples`](https://github.com/pbayer/Sim.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Sim.jl/tree/master/docs/notebooks).
