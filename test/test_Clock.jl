@@ -2,13 +2,14 @@ println("... basic tests: only events  ...")
 reset!(𝐶)
 @test τ() == 0
 
-s = Sim.SimEvent(:(1+1), Main, 10, 0)
-@test eval(s.ex) == 2
-@test s.t == 10
+ev = Sim.SimEvent(:(1+1), Main, 10, 0)
+@test eval(ev.ex) == 2
+@test ev.t == 10
 
 sim = Clock()  # set up clock without sampling
 @test_warn "undefined transition" Sim.step!(sim, sim.state, Sim.Resume())
-@test init!(sim) == Sim.Idle()
+init!(sim)
+@test sim.state == Sim.Idle()
 @test τ(sim) == 0
 sim = Clock(t0=100)
 @test τ(sim) == 100
@@ -126,3 +127,61 @@ run!(𝐶, 20)
 @test D[:c] == 21^3
 reset!(𝐶)
 @test tau() == 0
+
+println("... unit tests ...")
+c = Clock(unit = hr)
+@test c.unit == hr
+c = Clock(1s, t0=1hr, unit=minute)
+@test c.time == 60
+@test c.unit == minute
+@test c.Δt == 1/60
+c = Clock(1s)
+@test c.unit == s
+@test c.Δt == 1
+c = Clock(t0=60s)
+@test c.unit == s
+@test c.time == 60
+c = Clock(1s, t0=1hr)
+@test c.unit == s
+@test c.time == 3600
+@test c.Δt ==1
+init!(c)
+println(c)
+@test repr(c) == "Clock: state=Sim.Idle(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0"
+
+reset!(𝐶)
+@test 𝐶.unit == NoUnits
+setUnit!(𝐶, s)
+@test 𝐶.unit == s
+@test setUnit!(𝐶, s) == 0s
+c = Clock(1s, t0=1hr)
+setUnit!(c, hr)
+@test c.unit == hr
+@test c.time == 1
+@test c.Δt == 1/3600
+setUnit!(c, Unitful.m)
+@test c.unit == NoUnits
+
+setUnit!(c, s)
+run!(𝐶, 1)
+sync!(c)
+@test c.time == 1
+
+reset!(𝐶, unit=s)
+@test 𝐶.unit == s
+@test isa(1𝐶.unit, Time)
+reset!(𝐶, 1s, t0=1minute)
+@test 𝐶.unit == s
+@test 𝐶.time == 60
+reset!(𝐶, t0=1minute)
+@test 𝐶.unit == minute
+@test 𝐶.time == 1
+
+reset!(𝐶, unit=s)
+myfunc(a, b) = a+b
+@test event!(𝐶, SimFunction(myfunc, 4, 5), 1minute, cycle=1minute) == 60
+@test event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr) == 3600
+@test sample_time!(𝐶, 30s) == 30
+sample!(𝐶, SimFunction(myfunc, 1, 2))
+run!(𝐶, 1hr)
+@test 𝐶.evcount == 61

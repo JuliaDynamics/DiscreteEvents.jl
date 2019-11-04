@@ -46,7 +46,6 @@ run!(𝐶, 20) # and run the simulation
 ### Types and constants
 
 ```@docs
-Time
 Clock
 Timing
 SimFunction
@@ -60,6 +59,7 @@ SimFunction
 ### Functions
 
 ```@docs
+setUnit!
 τ
 sample_time!
 event!

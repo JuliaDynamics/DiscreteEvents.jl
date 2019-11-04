@@ -1,5 +1,5 @@
-using Sim
-using Test
+using Sim, Unitful, Test
+import Unitful: Time, ms, s, minute, hr
 
 println(".... testing Sim.jl .....")
 @testset "Clock.jl" begin

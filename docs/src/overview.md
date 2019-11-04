@@ -7,7 +7,7 @@ analysis or visualization.
 
 ### The clock
 
-`Sim.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time.
+`Sim.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time. A unit can be set and times can be given to the clock with `Unitful` time units and thus are automatically converted.
 
 - `Clock(Δt::Number=0; t0::Number=0)`: create a new clock with start time `t0` and sample time `Δt`.
 - italic `𝐶` (`\itC`+Tab) or `Clk` : is the central Clock() variable.
