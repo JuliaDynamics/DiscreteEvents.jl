@@ -1,10 +1,10 @@
 
 """
-    Sim
+    Simulate
 
 A Julia package for discrete event simulation based on state machines.
 """
-module Sim
+module Simulate
 
 using Unitful, Random, DataStructures, DataFrames
 import Unitful: FreeUnits, Time

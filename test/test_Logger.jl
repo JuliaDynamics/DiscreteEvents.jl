@@ -4,6 +4,7 @@ c = 0
 
 sim = Clock()
 L = Logger()
+@test_warn "undefined transition" Simulate.step!(L, L.state, Simulate.Resume())
 
 init!(L, sim)
 setup!(L, [:a, :b, :c])

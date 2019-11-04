@@ -5,7 +5,7 @@ If two guys meet, there is standard verbiage, but some uncertainty in how long t
 We call the needed modules and define some types and data:
 
 ```julia
-using Sim, Printf
+using Simulate, Printf
 
 struct Guy
     name

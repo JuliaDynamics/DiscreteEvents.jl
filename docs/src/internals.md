@@ -1,12 +1,12 @@
 # Internals
 
 ```@meta
-CurrentModule = Sim
+CurrentModule = Simulate
 ```
 
 ## Module
 ```@docs
-Sim
+Simulate
 ```
 
 The module contains two main types: `Clock` and `Logger`. Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.

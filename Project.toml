@@ -1,4 +1,4 @@
-name = "Sim"
+name = "Simulate"
 uuid = "7fe0908f-881e-4672-99a3-35ccdc95dcfc"
 authors = ["Paul Bayer"]
 version = "0.1.0"
@@ -11,6 +11,10 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+DataFrames = "0.19"
+DataStructures = "0.17"
+Documenter = "0.23"
+Unitful = "0.17"
 julia = "1"
 
 [extras]

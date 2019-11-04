@@ -1,9 +1,9 @@
-using Documenter, Sim
+using Documenter, Simulate
 
 makedocs(
-    modules = [Sim],
+    modules = [Simulate],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
-    sitename = "Sim.jl",
+    sitename = "Simulate.jl",
     authors  = "Paul Bayer",
     pages = [
         "Home" => "index.md",
@@ -20,7 +20,7 @@ makedocs(
 )
 
 deploydocs(
-    repo   = "github.com/pbayer/Sim.jl.git",
+    repo   = "github.com/pbayer/Simulate.jl.git",
     target = "build",
     deps   = nothing,
     make   = nothing

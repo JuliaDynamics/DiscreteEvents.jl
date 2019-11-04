@@ -1,13 +1,13 @@
-### Discrete event simulation with `Sim.jl`
+### Discrete event simulation with `Simulate.jl`
 
-1. [`Sim.jl`](https://github.com/pbayer/Sim.jl) evaluates Julia expressions or arbitrary functions at given (virtual) simulation times.
+1. [`Simulate.jl`](https://github.com/pbayer/Simulate.jl) evaluates Julia expressions or arbitrary functions at given (virtual) simulation times.
 2. Thus discrete event systems based on state machines can be modeled and simulated.
 3. Variables can be logged over simulation time and then accessed for
 analysis or visualization.
 
 ### The clock
 
-`Sim.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time. A unit can be set and times can be given to the clock with `Unitful` time units and thus are automatically converted.
+`Simulate.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time. A unit can be set and times can be given to the clock with `Unitful` time units and thus are automatically converted.
 
 - `Clock(Δt::Number=0; t0::Number=0)`: create a new clock with start time `t0` and sample time `Δt`.
 - italic `𝐶` (`\itC`+Tab) or `Clk` : is the central Clock() variable.

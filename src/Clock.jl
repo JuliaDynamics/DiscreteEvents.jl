@@ -30,7 +30,7 @@ of simulation.
 
 # Example
 ```jldoctest
-julia> using Sim
+julia> using Simulate
 
 julia> f(a,b,c; d=4, e=5) = a+b+c+d+e  # define a function
 f (generic function with 1 method)
@@ -129,22 +129,22 @@ If no Δt is given, the simulation doesn't tick, but jumps from event to event.
 
 # Examples
 ```jldoctest
-julia> using Sim, Unitful
+julia> using Simulate, Unitful
 
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()
-Clock: state=Sim.Undefined(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 julia> init!(c)
-Clock: state=Sim.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Simulate.Idle()
 julia> c = Clock(1s, unit=minute)
-Clock: state=Sim.Undefined(), time=0.0, unit=minute, events: 0, sampling: 0, sample rate Δt=0.016666666666666666
+Clock: state=Simulate.Undefined(), time=0.0, unit=minute, events: 0, sampling: 0, sample rate Δt=0.016666666666666666
 julia> c = Clock(1s)
-Clock: state=Sim.Undefined(), time=0.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=0.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
 julia> c = Clock(t0=60s)
-Clock: state=Sim.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=0.0
 julia> c = Clock(1s, t0=1hr)
-Clock: state=Sim.Undefined(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
 ```
 """
 mutable struct Clock <: SEngine
@@ -214,12 +214,12 @@ current clock times to the new unit.
 
 # Examples
 ```jldoctest
-julia> using Sim, Unitful
+julia> using Simulate, Unitful
 
 julia> import Unitful: Time, s, minute, hr
 
-julia> c = Clock(t0=60); # setup a new clock with t0=60
-Clock: state=Sim.Undefined(), time=60.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+julia> c = Clock(t0=60) # setup a new clock with t0=60
+Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 julia> τ(c) # current time is 60.0 NoUnits
 60.0
 julia> setUnit!(c, s)  # set clock unit to Unitful.s
@@ -232,7 +232,7 @@ julia> τ(c) # current time is now 1.0 minute
 1.0 minute
 julia> typeof(τ(c))  # τ(c) now returns a time Quantity ...
 Quantity{Float64,𝐓,Unitful.FreeUnits{(minute,),𝐓,nothing}}
-julia> isa(τ(), Time)
+julia> isa(τ(c), Time)
 true
 julia> uconvert(s, τ(c)) # ... which can be converted to other time units
 60.0 s
@@ -276,14 +276,16 @@ normally is sufficient for simulation purposes.
 
 # Examples
 ```jldoctest
-julia> using Sim
+julia> using Simulate
 
+julia> reset!(𝐶)
+"clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> 𝐶  # central clock
-Clock: state=Sim.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 julia> Clk  # alias
-Clock: state=Sim.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 julia> 𝐶.time
-0
+0.0
 ```
 """
 𝐶 = Clk = Clock()
@@ -297,8 +299,10 @@ Return the current simulation time (τ=\tau+Tab).
 
 # Examples
 ```jldoctest
-julia> using Sim
+julia> using Simulate
 
+julia> reset!(𝐶)
+"clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> τ() # gives the central time
 0.0
 julia> tau() # alias, gives the central time
@@ -358,16 +362,16 @@ its Time unit goes into the clock time unit.
 
 # Examples
 ```jldoctest
-julia> using Sim, Unitful
+julia> using Simulate, Unitful
 
 julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
-Clock: state=Sim.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
 julia> reset!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> c
-Clock: state=Sim.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 ```
 """
 function reset!(sim::Clock, Δt::Number=0;
@@ -464,7 +468,7 @@ if there are events scheduled for `t`.
 
 # Examples
 ```jldoctest
-julia> using Sim, Unitful
+julia> using Simulate, Unitful
 
 julia> import Unitful: s, minute, hr
 
@@ -484,7 +488,7 @@ julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
 3600.0
 julia> 𝐶
-Clock: state=Sim.Idle(), time=0.0, unit=s, events: 5, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=s, events: 5, sampling: 0, sample rate Δt=0.0
 julia> run!(𝐶, 1hr)
 "run! finished with 5 events, simulation time: 3600.0"
 ```

@@ -1,16 +1,15 @@
 println("... basic tests: only events  ...")
 reset!(𝐶)
 @test τ() == 0
-@test_warn "undefined transition" Sim.step!(𝐶, 𝐶.state, Sim.Resume())
 
-ev = Sim.SimEvent(:(1+1), Main, 10, 0)
+ev = Simulate.SimEvent(:(1+1), Main, 10, 0)
 @test eval(ev.ex) == 2
 @test ev.t == 10
 
 sim = Clock()  # set up clock without sampling
-@test_warn "undefined transition" Sim.step!(sim, sim.state, Sim.Resume())
+@test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
 init!(sim)
-@test sim.state == Sim.Idle()
+@test sim.state == Simulate.Idle()
 @test τ(sim) == 0
 sim = Clock(t0=100)
 @test τ(sim) == 100
@@ -36,12 +35,12 @@ end
 
 @test length(sim.events) == 11
 
-@test Sim.nextevent(sim).t == 100
+@test Simulate.nextevent(sim).t == 100
 
 incr!(sim)
 @test τ(sim) == 100
 @test a == 1
-@test Sim.nextevent(sim).t == 101
+@test Simulate.nextevent(sim).t == 101
 
 run!(sim, 5)
 @test τ(sim) == 105
@@ -50,7 +49,7 @@ run!(sim, 5)
 stop = event!(sim, :(stop!(sim)), 108)
 run!(sim, 6)
 @test a == 16
-@test sim.state == Sim.Halted()
+@test sim.state == Simulate.Halted()
 @test τ(sim) == stop
 resume!(sim)
 @test τ(sim) == 111
@@ -148,7 +147,7 @@ c = Clock(1s, t0=1hr)
 @test c.Δt ==1
 init!(c)
 println(c)
-@test repr(c) == "Clock: state=Sim.Idle(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0"
+@test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0"
 
 reset!(𝐶)
 @test 𝐶.unit == NoUnits

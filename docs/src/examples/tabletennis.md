@@ -7,8 +7,8 @@ We can model the players as state machines and do a simulation on it.
 First we need to call the needed modules:
 
 ```julia
-using Sim, Printf
-import Sim.init!
+using Simulate, Printf
+import Simulate.init!
 ```
 
 Then we need some definitions for states, events and players:

@@ -14,7 +14,7 @@ This example is from Choi, Kang: Modeling and Simulation of Discrete-Event Syste
 We use this simple example for illustration of how it can be modeled, simulated and analyzed using `Sim.jl`. First we have to import the necessary modules:
 
 ```julia
-using Sim, Random, Distributions, DataFrames, Plots, LaTeXStrings
+using Simulate, Random, Distributions, DataFrames, Plots, LaTeXStrings
 pyplot()
 ```
 

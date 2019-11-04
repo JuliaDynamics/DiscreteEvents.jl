@@ -1,4 +1,4 @@
-using Sim, Unitful, Test
+using Simulate, Unitful, Test
 import Unitful: Time, ms, s, minute, hr
 
 println(".... testing Sim.jl .....")

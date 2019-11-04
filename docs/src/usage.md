@@ -1,10 +1,10 @@
 # User guide
 
 ```@meta
-CurrentModule = Sim
+CurrentModule = Simulate
 ```
 
-`Sim.jl` is not yet an registered package and is installed with
+`Simulate.jl` is not yet an registered package and is installed with
 
 ```julia
 pkg> add("https://github.com/pbayer/jl")
@@ -13,7 +13,7 @@ pkg> add("https://github.com/pbayer/jl")
 The package is then loaded with
 
 ```@repl usage
-using Sim
+using Simulate
 ```
 
 ## Modeling and simulation
