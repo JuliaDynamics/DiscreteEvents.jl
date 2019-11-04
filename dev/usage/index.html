@@ -28,12 +28,12 @@ bar (generic function with 1 method)
 julia&gt; event!(𝐶, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
 
 julia&gt; run!(𝐶, 20) # and run the simulation
- 4.56 s, Foo: Hi, nice to meet you!
- 5.39 s, Bar: Hi, nice to meet you!
- 7.33 s, Foo: How are you?
- 8.79 s, Bar: How are you?
-10.46 s, Foo: Have a nice day!
-10.66 s, Bar: Have a nice day!
+ 3.35 s, Foo: Hi, nice to meet you!
+ 3.96 s, Bar: Hi, nice to meet you!
+ 4.32 s, Foo: How are you?
+ 5.82 s, Bar: How are you?
+ 5.87 s, Foo: Have a nice day!
+ 7.65 s, Bar: Have a nice day!
 bye bye
 &quot;run! finished with 6 events, simulation time: 20.0&quot;</code></pre><h3><a class="nav-anchor" id="Types-and-constants-1" href="#Types-and-constants-1">Types and constants</a></h3><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Simulate.Clock" href="#Simulate.Clock"><code>Simulate.Clock</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-julia">Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)</code></pre><p>Create a new simulation clock.</p><p><strong>Arguments</strong></p><ul><li><code>Δt::Number=0</code>: time increment</li><li><code>t0::Number=0</code>: start time for simulation</li><li><code>unit::FreeUnits=NoUnits</code>: clock time unit. Units can be set explicitely by</li></ul><p>setting e.g. <code>unit=minute</code> or implicitly by giving Δt as a time or else setting t0 to a time, e.g. <code>t0=60s</code>.</p><p>If no Δt is given, the simulation doesn&#39;t tick, but jumps from event to event. Δt can be set later with <code>sample_time!</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using Simulate, Unitful
 
