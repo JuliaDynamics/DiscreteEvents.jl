@@ -1,6 +1,7 @@
 println("... basic tests: only events  ...")
 reset!(𝐶)
 @test τ() == 0
+@test_warn "undefined transition" Sim.step!(𝐶, 𝐶.state, Sim.Resume())
 
 ev = Sim.SimEvent(:(1+1), Main, 10, 0)
 @test eval(ev.ex) == 2
@@ -166,6 +167,13 @@ setUnit!(c, s)
 run!(𝐶, 1)
 sync!(c)
 @test c.time == 1
+reset!(𝐶)
+sync!(c)
+c = Clock(t0=1minute)
+reset!(𝐶, t0=100s)
+sync!(c)
+@test c.time == 100
+@test c.unit == s
 
 reset!(𝐶, unit=s)
 @test 𝐶.unit == s
@@ -177,8 +185,11 @@ reset!(𝐶, t0=1minute)
 @test 𝐶.unit == minute
 @test 𝐶.time == 1
 
-reset!(𝐶, unit=s)
 myfunc(a, b) = a+b
+reset!(𝐶)
+@test_warn "clock has no time unit" event!(𝐶, SimFunction(myfunc, 1, 2), 1s)
+
+reset!(𝐶, unit=s)
 @test event!(𝐶, SimFunction(myfunc, 4, 5), 1minute, cycle=1minute) == 60
 @test event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr) == 3600
 @test sample_time!(𝐶, 30s) == 30

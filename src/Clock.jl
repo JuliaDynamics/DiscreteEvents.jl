@@ -322,10 +322,11 @@ function sync!(sim::Clock, to::Clock=𝐶)
         println(stderr, "Warning: deleted time unit without conversion")
         fac = 1
     else
-        fac = uconvert(to.unit, 1sim.unit)
+        fac = uconvert(to.unit, 1sim.unit).val
     end
     Δt = to.time - sim.time*fac
     sim.time = sim.time*fac + Δt
+    sim.unit = to.unit
     sim.tsa  = sim.tsa*fac + Δt
     sim.tev  = sim.tev*fac + Δt
     sim.end_time = sim.end_time*fac + Δt
@@ -545,7 +546,6 @@ initialize a clock.
 """
 function step!(sim::Clock, ::Undefined, ::Init)
     sim.state = Idle()
-    sim
 end
 
 """
