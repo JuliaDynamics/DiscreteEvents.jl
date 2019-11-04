@@ -1,26 +1,26 @@
-# Sim.jl
+# Simulate.jl
 
 A Julia package for **discrete event simulation**. It introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence.
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Sim.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Sim.jl/dev)
-[![Build Status](https://travis-ci.com/pbayer/Sim.jl.svg?branch=master)](https://travis-ci.com/pbayer/Sim.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/pbayer/Sim.jl?svg=true)](https://ci.appveyor.com/project/pbayer/Sim-jl)
-[![Codecov](https://codecov.io/gh/pbayer/Sim.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Sim.jl)
-[![Coverage Status](https://coveralls.io/repos/github/pbayer/Sim.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Sim.jl?branch=master)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Simulate.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
+[![Build Status](https://travis-ci.com/pbayer/Simulate.jl.svg?branch=master)](https://travis-ci.com/pbayer/Simulate.jl)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/pbayer/Simulate.jl?svg=true)](https://ci.appveyor.com/project/pbayer/Sim-jl)
+[![Codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
+[![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Simulate.jl?branch=master)
 
 **Author:** Paul Bayer
 
-**Documentation** is currently at https://pbayer.github.io/Sim.jl/dev
+**Documentation** is currently at https://pbayer.github.io/Simulate.jl/dev
 
 ## Example: Two guys meet
 
-When two guys meet, they can refer to standard verbiage, but there is some variation in greeting and response times. We can simulate that with `Sim.jl`:
+When two guys meet, they can refer to standard verbiage, but there is some variation in greeting and response times. We can simulate that with `Simulate.jl`:
 
 We call the needed modules and define some types and data:
 
 ```julia
-using Sim, Printf
+using Simulate, Printf
 
 struct Guy
     name
@@ -105,4 +105,4 @@ clock reset to t₀=0, sampling rate Δt=0.
 
 ## 😄
 
-For further examples see [`docs/examples`](https://github.com/pbayer/Sim.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Sim.jl/tree/master/docs/notebooks).
+For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).
