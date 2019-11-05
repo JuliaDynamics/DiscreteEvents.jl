@@ -5,7 +5,7 @@ A Julia package for **discrete event simulation**. It introduces a **clock** and
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Simulate.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
 [![Build Status](https://travis-ci.com/pbayer/Simulate.jl.svg?branch=master)](https://travis-ci.com/pbayer/Simulate.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/pbayer/Simulate.jl?svg=true)](https://ci.appveyor.com/project/pbayer/Sim-jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/p5trstrte9il7rm1/branch/master?svg=true)](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/master)
 [![codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Simulate.jl?branch=master)
 
