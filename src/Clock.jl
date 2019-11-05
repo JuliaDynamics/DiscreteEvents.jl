@@ -519,7 +519,7 @@ end
 """
     sample_time!(sim::Clock, Δt::Number)
 
-set the clock's sampling time starting from now (`𝐶(sim)`).
+set the clock's sampling time starting from now (`τ(sim)`).
 
 # Arguments
 - `sim::Clock`
