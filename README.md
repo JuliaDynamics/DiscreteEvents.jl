@@ -5,7 +5,7 @@ A Julia package for **discrete event simulation**. It introduces a **clock** and
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Simulate.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
 [![Build Status](https://travis-ci.com/pbayer/Simulate.jl.svg?branch=dev)](https://travis-ci.com/pbayer/Simulate.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/pbayer/Simulate.jl?svg=true)](https://ci.appveyor.com/project/pbayer/Sim-jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/p5trstrte9il7rm1/branch/dev?svg=true)](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/dev)
 [![codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/dev/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=dev)](https://coveralls.io/github/pbayer/Simulate.jl?branch=dev)
 
@@ -15,13 +15,15 @@ A Julia package for **discrete event simulation**. It introduces a **clock** and
 
 ## Intermediate goals for development
 
-I want to develop `Simulate.jl` to support all major approaches to modeling and simulation:
+I want to develop `Simulate.jl` to support four major approaches to modeling and simulation of discrete event systems (DES):
 
-- [x] event based,
-- [x] activity based,
-- [ ] state based,
-- [ ] process based.
+- [x] **event based**: events occur in time and trigger actions, which may
+cause further events …
+- [x] **activity based**: activities occur in time and cause other activities …
+- [x] **state based**: events occur in time and trigger actions of entities (e.g. state machines) depending on their current state, those actions may cause further events …
+- [ ] **process based**: entities in a DES are modeled as processes waiting for
+events and then acting according to the event and their current state …
 
-With the main two simulation hooks of `Simulate.jl`: `event!` and `SimFunction` only the first two approaches are supported.
+With the current main two simulation hooks of `Simulate.jl`: `event!` and `SimFunction` the first three approaches are supported. Therefore the next step will be to integrate a process based modeling and simulation approach. Then all four approaches can be combined.
 
 For examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).

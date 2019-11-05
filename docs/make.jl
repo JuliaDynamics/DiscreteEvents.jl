@@ -7,6 +7,7 @@ makedocs(
     authors  = "Paul Bayer",
     pages = [
         "Home" => "index.md",
+        "Approaches" => "approach.md"
         "Overview" => "overview.md",
         "Usage" => "usage.md",
         "Examples" => [
