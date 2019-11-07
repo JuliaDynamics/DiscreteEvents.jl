@@ -10,9 +10,9 @@ using Unitful, Random, DataStructures, DataFrames
 import Unitful: FreeUnits, Time
 import Base.show
 
-include("Components.jl")
-include("Clock.jl")
-include("Logger.jl")
+include("components.jl")
+include("clock.jl")
+include("logger.jl")
 
 
 export  Logger, switch!, setup!, init!, record!, clear!,    # Logger.jl
