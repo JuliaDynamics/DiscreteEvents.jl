@@ -4,9 +4,7 @@
 
 """
     Timing
-
 Enumeration type for scheduling events and timed conditions:
-
 - `at`: schedule an event at a given time
 - `after`: schedule an event a given time after current time
 - `every`: schedule an event every given time from now on
@@ -16,51 +14,37 @@ Enumeration type for scheduling events and timed conditions:
 
 """
     SimFunction(func::Function, arg...; kw...)
-
 Type for preparing a function as an event to a simulation.
-
 # Arguments
 - `func::Function`: function to be executed at a later simulation time
 - `arg...`: arguments to the function
 - `kw...`: keyword arguments
-
 Be aware that, if the variables stored in a SimFunction are composite types,
 they can change until they are evaluated later by `func`. But that's the nature
 of simulation.
-
 # Example
 ```jldoctest
 julia> using Simulate
-
 julia> f(a,b,c; d=4, e=5) = a+b+c+d+e  # define a function
 f (generic function with 1 method)
-
 julia> sf = SimFunction(f, 10, 20, 30, d=14, e=15)  # store it as SimFunction
 SimFunction(f, (10, 20, 30), Base.Iterators.Pairs(:d => 14,:e => 15))
-
 julia> sf.func(sf.arg...; sf.kw...)  # and it can be executed later
 89
-
 julia> d = Dict(:a => 1, :b => 2) # now we set up a dictionary
 Dict{Symbol,Int64} with 2 entries:
   :a => 1
   :b => 2
-
 julia> f(t) = t[:a] + t[:b] # and a function adding :a and :b
 f (generic function with 2 methods)
-
 julia> f(d)  # our add function gives 3
 3
-
 julia> ff = SimFunction(f, d)   # we set up a SimFunction
 SimFunction(f, (Dict(:a => 1,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
-
 julia> d[:a] = 10  # later somehow we need to change d
 10
-
 julia> ff  # our SimFunction ff has changed too
 SimFunction(f, (Dict(:a => 10,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
-
 julia> ff.func(ff.arg...; ff.kw...)  # and calling it gives a different result
 12
 ```
@@ -75,9 +59,7 @@ end
 
 """
     SimEvent(expr::Expr, scope::Module, t::Float64, Δt::Float64)
-
 Create a simulation event: an expression to be executed at event time.
-
 # Arguments
 - `expr::Expr`: expression to be evaluated at event time
 - `scope::Module`: evaluation scope
@@ -97,9 +79,7 @@ end
 
 """
     Sample(ex::Union{Expr, SimFunction}, scope::Module)
-
 Create a sampling expression.
-
 # Arguments
 - `ex::{Expr, SimFunction}`: expression or function to be called at sample time
 - `scope::Module`: evaluation scope
@@ -116,23 +96,18 @@ end
 Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)
 ```
 Create a new simulation clock.
-
 # Arguments
 - `Δt::Number=0`: time increment
 - `t0::Number=0`: start time for simulation
 - `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
 setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
 t0 to a time, e.g. `t0=60s`.
-
 If no Δt is given, the simulation doesn't tick, but jumps from event to event.
 Δt can be set later with `sample_time!`.
-
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
-
 julia> import Unitful: s, minute, hr
-
 julia> c = Clock()
 Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 julia> init!(c)
@@ -203,21 +178,16 @@ end
 
 """
     setUnit!(sim::Clock, new::FreeUnits)
-
 set a clock to a new time unit in `Unitful`. If necessary convert
 current clock times to the new unit.
-
 # Arguments
 - `sim::Clock`
 - `new::FreeUnits`: new is one of `ms`, `s`, `minute` or `hr` or another Unitful
 `Time` unit.
-
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
-
 julia> import Unitful: Time, s, minute, hr
-
 julia> c = Clock(t0=60) # setup a new clock with t0=60
 Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
 julia> τ(c) # current time is 60.0 NoUnits
@@ -273,11 +243,9 @@ Clk
 ```
 italic 𝐶 (`\\itC`+Tab) or `Clk` is the central `Clock()`-variable, which
 normally is sufficient for simulation purposes.
-
 # Examples
 ```jldoctest
 julia> using Simulate
-
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> 𝐶  # central clock
@@ -296,11 +264,9 @@ julia> 𝐶.time
 tau(sim::Clock=Tau)
 ```
 Return the current simulation time (τ=\tau+Tab).
-
 # Examples
 ```jldoctest
 julia> using Simulate
-
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> τ() # gives the central time
@@ -348,7 +314,6 @@ end
 reset!(sim::Clock, Δt::Number=0; t0::Number=0, hard::Bool=true, unit=NoUnits)
 ```
 reset a clock
-
 # Arguments
 - `sim::Clock`
 - `Δt::Number=0`: time increment
@@ -359,13 +324,10 @@ sampling times are adjusted accordingly.
 - `unit=NoUnits`: the Time unit for the clock after reset. If a `Δt::Time` is
 given, its Time unit goes into the clock Time unit. If only t0::Time is given,
 its Time unit goes into the clock time unit.
-
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
-
 julia> import Unitful: s
-
 julia> c = Clock(1s, t0=60s)
 Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
 julia> reset!(c)
@@ -407,21 +369,18 @@ end
 
 """
     nextevent(sim::Clock)
-
 Return the next scheduled event.
 """
 nextevent(sim::Clock) = peek(sim.events)[1]
 
 """
     nextevtime(sim::Clock)
-
 Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
 """
     simExec(ex::Union{Expr,SimFunction}, m::Module=Main)
-
 evaluate an expression or execute a SimFunction.
 """
 simExec(ex::Union{Expr,SimFunction}, m::Module=Main) =
@@ -429,7 +388,6 @@ simExec(ex::Union{Expr,SimFunction}, m::Module=Main) =
 
 """
     checktime(sim::Clock, t::Number)::Float64
-
 check `t` given according to clock settings and return value
 """
 function checktime(sim::Clock, t::Number)::Float64
@@ -451,7 +409,6 @@ event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number; scope::Module=Main, 
 event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Number; scope::Module=Main)::Float64
 ```
 Schedule a function or expression for a given simulation time.
-
 # Arguments
 - `sim::Clock`: simulation clock
 - `ex::{Expr, SimFunction}`: an expression or SimFunction
@@ -459,19 +416,14 @@ Schedule a function or expression for a given simulation time.
 - `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`)
 - `scope::Module=Main`: scope for the expression to be evaluated
 - `cycle::Float64=0.0`: repeat cycle time for the event
-
 # returns
 Scheduled internal simulation time (unitless) for that event.
-
 May return a time `> t` from repeated applications of `nextfloat(t)`
 if there are events scheduled for `t`.
-
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
-
 julia> import Unitful: s, minute, hr
-
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 julia> event!(𝐶, SimFunction(myfunc, 1, 2), 1) # a 1st event
@@ -518,9 +470,7 @@ end
 
 """
     sample_time!(sim::Clock, Δt::Number)
-
 set the clock's sampling time starting from now (`τ(sim)`).
-
 # Arguments
 - `sim::Clock`
 - `Δt::Number`: sample rate, time interval for sampling
@@ -532,9 +482,7 @@ end
 
 """
     sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main)
-
 enqueue an expression for sampling.
-
 # Arguments
 - `sim::Clock`
 - `ex::Union{Expr, SimFunction}`: an expression or function
@@ -545,7 +493,6 @@ sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main) =
 
 """
     step!(sim::Clock, ::Undefined, ::Init)
-
 initialize a clock.
 """
 function step!(sim::Clock, ::Undefined, ::Init)
@@ -554,7 +501,6 @@ end
 
 """
     step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
-
 if uninitialized, initialize and then Step or Run.
 """
 function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
@@ -564,9 +510,7 @@ end
 
 """
     step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
-
 step forward to next tick or scheduled event.
-
 At a tick evaluate all sampling expressions, or, if an event is encountered
 evaluate the event expression.
 """
@@ -617,9 +561,7 @@ end
 
 """
     step!(sim::Clock, ::Idle, σ::Run)
-
 Run a simulation for a given duration.
-
 The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
@@ -654,7 +596,6 @@ end
 
 """
     step!(sim::Clock, ::Busy, ::Stop)
-
 Stop the clock.
 """
 function step!(sim::Clock, ::Busy, ::Stop)
@@ -664,7 +605,6 @@ end
 
 """
     step!(sim::Clock, ::Halted, ::Resume)
-
 Resume a halted clock.
 """
 function step!(sim::Clock, ::Halted, ::Resume)
@@ -674,7 +614,6 @@ end
 
 """
     step!(sim::Clock, q::SState, σ::SEvent)
-
 catch all step!-function.
 """
 function step!(sim::Clock, q::SState, σ::SEvent)
@@ -685,9 +624,7 @@ end
 
 """
     run!(sim::Clock, duration::Number)
-
 Run a simulation for a given duration.
-
 Call scheduled events and evaluate sampling expressions at each tick
 in that timeframe.
 """
@@ -697,28 +634,24 @@ run!(sim::Clock, duration::Number) =
 
 """
     incr!(sim::Clock)
-
 Take one simulation step, execute the next tick or event.
 """
 incr!(sim::Clock) = step!(sim, sim.state, Step())
 
 """
     stop!(sim::Clock)
-
 Stop a running simulation.
 """
 stop!(sim::Clock) = step!(sim, sim.state, Stop())
 
 """
     resume!(sim::Clock)
-
 Resume a halted simulation.
 """
 resume!(sim::Clock) = step!(sim, sim.state, Resume())
 
 """
     init!(sim::Clock)
-
 initialize a clock.
 """
 init!(sim::Clock) = step!(sim, sim.state, Init(""))
