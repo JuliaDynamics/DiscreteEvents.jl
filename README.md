@@ -1,6 +1,6 @@
-# Simulate.jl - development
+# Simulate.jl
 
-A Julia package for **discrete event simulation**. It introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence.
+A Julia package for **discrete event simulation**. It introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc.
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Simulate.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
@@ -13,22 +13,20 @@ A Julia package for **discrete event simulation**. It introduces a **clock** and
 
 **Development Documentation** is currently at https://pbayer.github.io/Simulate.jl/dev
 
-## Intermediate goals for development
+## A pragmatic approach to simulation
 
 I want to develop `Simulate.jl` to support four major approaches to modeling and simulation of discrete event systems (DES):
 
-- [x] **event based**: events occur in time and trigger actions, which may
+1. **event based**: events occur in time and trigger actions, which may
 cause further events …
-- [x] **activity based**: activities occur in time and cause other activities …
-- [x] **state based**: events occur in time and trigger actions of entities (e.g. state machines) depending on their current state, those actions may cause further events …
-- [ ] **process based**: entities in a DES are modeled as processes waiting for
+2. **activity based**: activities occur in time and cause other activities …
+3. **state based**: events occur in time and trigger actions of entities (e.g. state machines) depending on their current state, those actions may cause further events …
+4. **process based**: entities in a DES are modeled as processes waiting for
 events and then acting according to the event and their current state …
 
-With the current main two simulation hooks of `Simulate.jl`: `event!` and `SimFunction` the first three approaches are supported.
+With the current main two simulation hooks of `Simulate.jl`: `event!` and `SimFunction` the first three approaches are supported. Now I introduce also process based modeling and simulation. `SimProcess` and `process!` are still a bit experimental and look like that:
 
-The next step introduces with `SimProcess` and `process!` process based modeling and simulation and looks like that:
-
-## Example
+## Example (process based)
 
 ```julia
 using Simulate, Printf
