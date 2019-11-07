@@ -48,6 +48,25 @@ If we provide the clock with a time interval `Δt`, it ticks with a fixed sample
 
 Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
 
+### Functions as processes
+
+If they match certain conditions, functions can be started as processes, which
+wait for inputs, respond accordingly and create some output.
+
+- `SimProcess(id, func::Function, in::Channel=Channel(Inf), out::Channel=Channel(Inf), arg...; kw...)`: prepare a function `func(in::Channel, out::Channel, arg...; kw...)` for
+running as a process in a simulation.
+- `process!(sim::Clock, p::SimProcess)`: register a `SimProcess` to a clock
+- `start!(sim::Clock)`: start all registered `SimProcess`es.
+- `stop!(p::SimProcess)`: stop `p`.
+- `delay!(sim::Clock, t::Number)`: a process can call for a delay, which creates
+an event on the clock's timeline and wakes up the process after the given `t`.
+
+!!! note
+    A function `f` running as a `SimProcess` is put in a loop. So it has to
+    give back control by e.g. doing a `take!(in)` on its input channel or by calling
+    `delay!` etc., which will `yield` it. Otherwise it will after start starve
+    everything else!
+
 ### Running the simulation
 
 Now, after we have setup a clock, scheduled events or setup sampling, we can step or run through a simulation, stop or resume it.

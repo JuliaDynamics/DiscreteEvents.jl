@@ -10,16 +10,19 @@ using Unitful, Random, DataStructures, DataFrames
 import Unitful: FreeUnits, Time
 import Base.show
 
-include("Components.jl")
-include("Clock.jl")
-include("Logger.jl")
+include("components.jl")
+include("types.jl")
+include("clock.jl")
+include("process.jl")
+include("logger.jl")
 
 
-export  Logger, switch!, setup!, init!, record!, clear!,    # Logger.jl
-        Clock, setUnit!, SimFunction, τ, tau,                # Clock.jl
+export  Logger, switch!, setup!, init!, record!, clear!,
+        Clock, setUnit!, SimFunction, τ, tau,
         sample_time!, event!, sample!,
         incr!, run!, stop!, resume!, reset!, sync!,
-        𝐶, Clk, Timing, at, after, every, before
+        𝐶, Clk, Timing, at, after, every, before,
+        SimException, SimProcess, process!, start!, delay!
 
 Random.seed!(123)
 𝐶.state == Undefined() ? init!(𝐶) : nothing

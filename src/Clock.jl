@@ -2,204 +2,6 @@
 # simulation routines for discrete event simulation
 #
 
-"""
-    Timing
-
-Enumeration type for scheduling events and timed conditions:
-
-- `at`: schedule an event at a given time
-- `after`: schedule an event a given time after current time
-- `every`: schedule an event every given time from now on
-- `before`: a timed condition is true before a given time.
-"""
-@enum Timing at after every before
-
-"""
-    SimFunction(func::Function, arg...; kw...)
-
-Type for preparing a function as an event to a simulation.
-
-# Arguments
-- `func::Function`: function to be executed at a later simulation time
-- `arg...`: arguments to the function
-- `kw...`: keyword arguments
-
-Be aware that, if the variables stored in a SimFunction are composite types,
-they can change until they are evaluated later by `func`. But that's the nature
-of simulation.
-
-# Example
-```jldoctest
-julia> using Simulate
-
-julia> f(a,b,c; d=4, e=5) = a+b+c+d+e  # define a function
-f (generic function with 1 method)
-
-julia> sf = SimFunction(f, 10, 20, 30, d=14, e=15)  # store it as SimFunction
-SimFunction(f, (10, 20, 30), Base.Iterators.Pairs(:d => 14,:e => 15))
-
-julia> sf.func(sf.arg...; sf.kw...)  # and it can be executed later
-89
-
-julia> d = Dict(:a => 1, :b => 2) # now we set up a dictionary
-Dict{Symbol,Int64} with 2 entries:
-  :a => 1
-  :b => 2
-
-julia> f(t) = t[:a] + t[:b] # and a function adding :a and :b
-f (generic function with 2 methods)
-
-julia> f(d)  # our add function gives 3
-3
-
-julia> ff = SimFunction(f, d)   # we set up a SimFunction
-SimFunction(f, (Dict(:a => 1,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
-
-julia> d[:a] = 10  # later somehow we need to change d
-10
-
-julia> ff  # our SimFunction ff has changed too
-SimFunction(f, (Dict(:a => 10,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
-
-julia> ff.func(ff.arg...; ff.kw...)  # and calling it gives a different result
-12
-```
-"""
-struct SimFunction
-    func::Function
-    arg::Tuple
-    kw::Base.Iterators.Pairs
-
-    SimFunction(func, arg...; kw...) = new(func, arg, kw)
-end
-
-"""
-    SimEvent(expr::Expr, scope::Module, t::Float64, Δt::Float64)
-
-Create a simulation event: an expression to be executed at event time.
-
-# Arguments
-- `expr::Expr`: expression to be evaluated at event time
-- `scope::Module`: evaluation scope
-- `t::Float64`: event time
-- `Δt::Float64`: repeat rate with which the event gets repeated
-"""
-struct SimEvent
-    "expression to be evaluated at event time"
-    ex::Union{Expr, SimFunction}
-    "evaluation scope"
-    scope::Module
-    "event time"
-    t::Float64
-    "repeat time"
-    Δt::Float64
-end
-
-"""
-    Sample(ex::Union{Expr, SimFunction}, scope::Module)
-
-Create a sampling expression.
-
-# Arguments
-- `ex::{Expr, SimFunction}`: expression or function to be called at sample time
-- `scope::Module`: evaluation scope
-"""
-struct Sample
-    "expression or function to be called at sample time"
-    ex::Union{Expr, SimFunction}
-    "evaluation scope"
-    scope::Module
-end
-
-"""
-```
-Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)
-```
-Create a new simulation clock.
-
-# Arguments
-- `Δt::Number=0`: time increment
-- `t0::Number=0`: start time for simulation
-- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
-setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
-t0 to a time, e.g. `t0=60s`.
-
-If no Δt is given, the simulation doesn't tick, but jumps from event to event.
-Δt can be set later with `sample_time!`.
-
-# Examples
-```jldoctest
-julia> using Simulate, Unitful
-
-julia> import Unitful: s, minute, hr
-
-julia> c = Clock()
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
-julia> init!(c)
-Simulate.Idle()
-julia> c = Clock(1s, unit=minute)
-Clock: state=Simulate.Undefined(), time=0.0, unit=minute, events: 0, sampling: 0, sample rate Δt=0.016666666666666666
-julia> c = Clock(1s)
-Clock: state=Simulate.Undefined(), time=0.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
-julia> c = Clock(t0=60s)
-Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=0.0
-julia> c = Clock(1s, t0=1hr)
-Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
-```
-"""
-mutable struct Clock <: SEngine
-    "clock state"
-    state::SState
-    "clock time"
-    time::Float64
-    "time unit"
-    unit::FreeUnits
-    "scheduled events"
-    events::PriorityQueue{SimEvent,Float64}
-    "end time for simulation"
-    end_time::Float64
-    "event evcount"
-    evcount::Int64
-    "next event time"
-    tev::Float64
-
-    "sampling time, timestep between ticks"
-    Δt::Float64
-    "Array of sampling expressions to evaluate at each tick"
-    sexpr::Array{Sample}
-    "next sample time"
-    tsa::Float64
-
-    function Clock(Δt::Number=0;
-                   t0::Number=0, unit::FreeUnits=NoUnits)
-        if isa(1unit, Time)
-            Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
-            t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
-        elseif isa(Δt, Time)
-            unit = Unitful.unit(Δt)
-            t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
-            Δt = Δt.val
-        elseif isa(t0, Time)
-            unit = Unitful.unit(t0)
-            t0 = t0.val
-        else
-            nothing
-        end
-        new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(),
-            t0, 0, t0, Δt, Sample[], t0 + Δt)
-    end
-end
-
-function show(io::IO, sim::Clock)
-    s1::String = "Clock: "
-    s2::String = "state=$(sim.state), "
-    s3::String = "time=$(sim.time), "
-    s4::String = "unit=$(sim.unit), "
-    s5::String = "events: $(length(sim.events)), "
-    s6::String = "sampling: $(length(sim.sexpr)), "
-    s7::String = "sample rate Δt=$(sim.Δt)"
-    print(io, s1 * s2 * s3 * s4 * s5 * s6 * s7)
-end
 
 """
     setUnit!(sim::Clock, new::FreeUnits)
@@ -219,7 +21,7 @@ julia> using Simulate, Unitful
 julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60) # setup a new clock with t0=60
-Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> τ(c) # current time is 60.0 NoUnits
 60.0
 julia> setUnit!(c, s)  # set clock unit to Unitful.s
@@ -281,9 +83,9 @@ julia> using Simulate
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> 𝐶  # central clock
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> Clk  # alias
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> 𝐶.time
 0.0
 ```
@@ -367,11 +169,11 @@ julia> using Simulate, Unitful
 julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
-Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 julia> reset!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> c
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 ```
 """
 function reset!(sim::Clock, Δt::Number=0;
@@ -399,6 +201,7 @@ function reset!(sim::Clock, Δt::Number=0;
         sim.evcount = 0
         sim.Δt = Δt
         sim.events = PriorityQueue{SimEvent,Float64}()
+        sim.processes = Dict{Any, SimProcess}()
     else
         sync!(sim, Clock(Δt, t0=t0, unit=unit))
     end
@@ -424,8 +227,14 @@ nextevtime(sim::Clock) = peek(sim.events)[2]
 
 evaluate an expression or execute a SimFunction.
 """
-simExec(ex::Union{Expr,SimFunction}, m::Module=Main) =
-    isa(ex, SimFunction) ? ex.func(ex.arg...; ex.kw...) : Core.eval(m,ex)
+function simExec(ex::Union{Expr,SimFunction}, m::Module=Main)
+    if isa(ex, SimFunction)
+        ex.func(ex.arg...; ex.kw...)
+        yield()  # to an eventually triggered process
+    else
+        Core.eval(m,ex)
+    end
+end
 
 """
     checktime(sim::Clock, t::Number)::Float64
@@ -488,7 +297,7 @@ julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
 3600.0
 julia> 𝐶
-Clock: state=Simulate.Idle(), time=0.0, unit=s, events: 5, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=s, events: 5, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> run!(𝐶, 1hr)
 "run! finished with 5 events, simulation time: 3600.0"
 ```
@@ -563,12 +372,31 @@ function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
 end
 
 """
+    setTimes(sim::Clock)
+
+set clock times for next event or sampling action. The internal clock times
+`sim.tev` and `sim.tsa` must always be set to be at least `sim.time`.
+"""
+function setTimes(sim::Clock)
+    if length(sim.events) ≥ 1
+        sim.tev = nextevtime(sim)
+        sim.tsa = sim.Δt > 0 ? sim.time + sim.Δt : sim.time
+    else
+        sim.tsa = sim.Δt > 0 ? sim.time + sim.Δt : sim.time
+        sim.tev = sim.tsa
+    end
+end
+
+"""
     step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
 step forward to next tick or scheduled event.
 
 At a tick evaluate all sampling expressions, or, if an event is encountered
 evaluate the event expression.
+
+The internal clock times `sim.tev` and `sim.tsa` must always be set to be
+at least `sim.time`.
 """
 function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
@@ -580,9 +408,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         if ev.Δt > 0.0  # schedule repeat event
             event!(sim, ev.ex, sim.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
         end
-        if length(sim.events) ≥ 1
-            sim.tev = nextevtime(sim)
-        end
+        sim.tev = length(sim.events) ≥ 1 ? nextevtime(sim) : sim.time
     end
 
     function exec_next_tick()
@@ -590,10 +416,6 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
-        if (sim.tsa == sim.tev) && (length(sim.events) ≥ 1)
-            exec_next_event()
-        end
-        sim.tsa += sim.Δt
     end
 
     if (sim.tev ≤ sim.time) && (length(sim.events) ≥ 1)
@@ -602,17 +424,29 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
     if (length(sim.events) ≥ 1) | (sim.Δt > 0)
         if length(sim.events) ≥ 1
-            if (sim.Δt > 0) && (sim.tsa ≤ sim.tev)
-                exec_next_tick()
+            if (sim.Δt > 0)
+                if sim.tsa <= sim.tev
+                    exec_next_tick()
+                    if sim.tsa == sim.tev
+                        exec_next_event()
+                    end
+                    sim.tsa += sim.Δt
+                else
+                    exec_next_event()
+                end
             else
                 exec_next_event()
+                sim.tsa = sim.time
             end
         else
             exec_next_tick()
+            sim.tsa += sim.Δt
+            sim.tev = sim.time
         end
     else
         println(stderr, "step!: nothing to evaluate")
     end
+    length(sim.processes) == 0 || sleep(0.01) # let processes run
 end
 
 """
@@ -627,12 +461,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
     sim.state = Busy()
-    if sim.Δt > 0
-        sim.tsa = sim.time + sim.Δt
-    end
-    if length(sim.events) ≥ 1
-        sim.tev = nextevtime(sim)
-    end
+    setTimes(sim)
     while any(i->(sim.time < i ≤ sim.end_time), (sim.tsa, sim.tev))
         step!(sim, sim.state, Step())
         if sim.state == Halted()
@@ -649,6 +478,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
 
     sim.time = sim.end_time
     sim.state = Idle()
+    sleep(0.1)
     "run! finished with $(sim.evcount) events, simulation time: $(sim.time)"
 end
 

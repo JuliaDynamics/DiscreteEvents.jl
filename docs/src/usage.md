@@ -49,6 +49,8 @@ run!(𝐶, 20) # and run the simulation
 Clock
 Timing
 SimFunction
+SimProcess
+SimException
 ```
 
 ### Central time
@@ -64,6 +66,9 @@ setUnit!
 sample_time!
 event!
 sample!
+process!
+delay!
+start!
 incr!
 run!
 stop!

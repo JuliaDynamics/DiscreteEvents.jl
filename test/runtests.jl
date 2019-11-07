@@ -2,10 +2,14 @@ using Simulate, Unitful, Test
 import Unitful: Time, ms, s, minute, hr
 
 println(".... testing Simulate.jl .....")
-@testset "Clock.jl" begin
-    include("test_Clock.jl")
+@testset "clock.jl" begin
+    include("test_clock.jl")
 end
 
-@testset "Logger.jl" begin
-        include("test_Logger.jl")
+@testset "process.jl" begin
+    include("test_process.jl")
+end
+
+@testset "logger.jl" begin
+        include("test_logger.jl")
 end
