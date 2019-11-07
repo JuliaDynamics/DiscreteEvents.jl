@@ -147,7 +147,7 @@ c = Clock(1s, t0=1hr)
 @test c.Δt ==1
 init!(c)
 println(c)
-@test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, sampling: 0, sample rate Δt=1.0"
+@test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
 
 reset!(𝐶)
 @test 𝐶.unit == NoUnits

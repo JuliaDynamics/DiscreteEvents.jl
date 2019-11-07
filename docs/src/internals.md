@@ -65,4 +65,7 @@ simExec
 nextevent
 nextevtime
 checktime
+setTimes
+startup!
+loop
 ```
