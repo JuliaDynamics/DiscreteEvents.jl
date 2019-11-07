@@ -26,7 +26,7 @@ events and then acting according to the event and their current state …
 
 With the current main two simulation hooks of `Simulate.jl`: `event!` and `SimFunction` the first three approaches are supported.
 
-The next step integrates process based modeling and simulation and looks like that:
+The next step introduces with `SimProcess` and `process!` process based modeling and simulation and looks like that:
 
 ## Example
 
