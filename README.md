@@ -2,7 +2,7 @@
 
 A Julia package for **discrete event simulation**.
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Simulate.jl/stable)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pkg.julialang.org/docs/Simulate)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
 [![Build Status](https://travis-ci.com/pbayer/Simulate.jl.svg?branch=master)](https://travis-ci.com/pbayer/Simulate.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/p5trstrte9il7rm1/branch/master?svg=true)](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/master)
@@ -11,7 +11,7 @@ A Julia package for **discrete event simulation**.
 
 **Development Documentation** is currently at https://pbayer.github.io/Simulate.jl/dev
 
-`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. Expressions or functions can register for sampling and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock, the events are executed in the scheduled sequence.
+`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **discrete events** for later execution on the clock's time line. Expressions or functions can register for **continuous sampling** and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock,  events are executed in the scheduled sequence, sampling functions are called continuously at each clock tick and processes are served accordingly.
 
 ## Approaches to simulation
 
@@ -92,6 +92,8 @@ julia> include("docs/examples/channels.jl")
 10.09: foo 1 took token 88827800
 "run! finished with 22 events, simulation time: 10.0"
 ```
+
+Please use, test and help to develop `Simulate.jl`! 😄
 
 For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).
 

@@ -2,7 +2,7 @@
 
 A Julia package for discrete event simulation.
 
-`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. Expressions or functions can register for sampling and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock, the events are executed in the scheduled sequence.
+`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **discrete events** for later execution on the clock's time line. Expressions or functions can register for **continuous sampling** and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock,  events are executed in the scheduled sequence, sampling functions are called continuously at each clock tick and processes are served accordingly.
 
 ## Installation
 

@@ -14,7 +14,8 @@ makedocs(
                        ["examples/greeting.md",
                        "examples/tabletennis.md",
                        "examples/singleserver.md"]),
-        "Internals" => "internals.md"
+        "Internals" => "internals.md",
+        "Troubeshooting" => "troubleshooting.md"
     ]
 )
 
@@ -24,6 +25,6 @@ deploydocs(
     deps   = nothing,
     make   = nothing,
     devbranch = "master",
-    devurl = "master",
-    versions = ["stable" => "v^", "v#.#", "dev" => "master"]
+    devurl = "dev",
+    versions = ["stable" => "v^", "v#.#", "dev" => "dev"]
 )

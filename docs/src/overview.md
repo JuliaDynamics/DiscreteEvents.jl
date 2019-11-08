@@ -53,7 +53,7 @@ Sampling functions or expressions are called at clock ticks in the sequence they
 If they match certain conditions, functions can be started as processes, which
 wait for inputs, respond accordingly and create some output.
 
-- `SimProcess(id, func::Function, in::Channel=Channel(Inf), out::Channel=Channel(Inf), arg...; kw...)`: prepare a function `func(in::Channel, out::Channel, arg...; kw...)` for
+- `SimProcess(id, func::Function, input::Channel=Channel(Inf), output::Channel=Channel(Inf), arg...; kw...)`: prepare a function `func(input::Channel, output::Channel, arg...; kw...)` for
 running as a process in a simulation.
 - `process!(sim::Clock, p::SimProcess)`: register a `SimProcess` to a clock
 - `start!(sim::Clock)`: start all registered `SimProcess`es.
@@ -63,7 +63,7 @@ an event on the clock's timeline and wakes up the process after the given `t`.
 
 !!! note
     A function `f` running as a `SimProcess` is put in a loop. So it has to
-    give back control by e.g. doing a `take!(in)` on its input channel or by calling
+    give back control by e.g. doing a `take!(input)` on its input channel or by calling
     `delay!` etc., which will `yield` it. Otherwise it will after start starve
     everything else!
 

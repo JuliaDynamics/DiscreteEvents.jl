@@ -138,13 +138,13 @@ Prepare a function to run as a process in a simulation.
 # Arguments
 - `id`: some unique identification
 - `func::Function`: a function `f(in::Channel, out::Channel, arg...; kw...)`
-- `in::Channel=Channel(Inf)`: `f`s input channel
-- `out::Channel=Channel(Inf)`: `f`s output channel
+- `input::Channel=Channel(Inf)`: `f`s input channel
+- `output::Channel=Channel(Inf)`: `f`s output channel
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
 **Note:** A function `f` running as a SimProcess is put in a loop. So it has to
-give back control by e.g. doing a `take!(in)` on its input channel or by calling
+give back control by e.g. doing a `take!(input)` on its input channel or by calling
 `delay!` etc., which will `yield` it. Otherwise it will after start starve
 everything else!
 
@@ -157,15 +157,15 @@ mutable struct SimProcess
     task
     state::SState
     func::Function
-    in::Channel
-    out::Channel
+    input::Channel
+    output::Channel
     arg::Tuple
     kw::Base.Iterators.Pairs
 
     SimProcess( id, func::Function,
-                in::Channel=Channel(Inf), out::Channel=Channel(Inf),
+                input::Channel=Channel(Inf), output::Channel=Channel(Inf),
                 arg...; kw...) =
-        new(id, nothing, Undefined(), func, in, out, arg, kw)
+        new(id, nothing, Undefined(), func, input, output, arg, kw)
 end
 
 
