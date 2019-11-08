@@ -1,4 +1,4 @@
-### Table tennis
+# Table tennis
 
 In table tennis we have some physical constraints, standard moves and rules, but uncertainty in execution due to lack of accuray and attentiveness of the players and so on.
 

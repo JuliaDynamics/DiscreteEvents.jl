@@ -1,11 +1,11 @@
-### Discrete event simulation with `Simulate.jl`
+# Discrete event simulation with `Simulate.jl`
 
 1. [`Simulate.jl`](https://github.com/pbayer/Simulate.jl) evaluates Julia expressions or arbitrary functions at given (virtual) simulation times.
 2. Thus discrete event systems based on state machines can be modeled and simulated.
 3. Variables can be logged over simulation time and then accessed for
 analysis or visualization.
 
-### The clock
+## The clock
 
 `Simulate.jl` provides a clock for a simulation time  (a `Float64`) with an arbitrary unit of time. A unit can be set and times can be given to the clock with `Unitful` time units and thus are automatically converted.
 
@@ -27,7 +27,7 @@ Internally `Simulate` clocks work with a `Float64` time and it works per default
 
 At the moment I find it unconvenient to work with units if you trace simulation times in a table or you do plots. It seems easier not to use them as long you need automatic time conversion in your simulation projects.
 
-### Functions and expressions as Events
+## Functions and expressions as Events
 
 Julia functions or expressions are scheduled as events on the clock's time line:
 
@@ -39,7 +39,7 @@ Julia functions or expressions are scheduled as events on the clock's time line:
 
 Events are called later as we `step` or `run` through the simulation. They may at runtime create further events and thus cause chains of events to be scheduled and called during simulation.
 
-### Sampling expressions
+## Sampling expressions
 
 If we provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
 
@@ -48,7 +48,7 @@ If we provide the clock with a time interval `Δt`, it ticks with a fixed sample
 
 Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
 
-### Functions as processes
+## Functions as processes
 
 If they match certain conditions, functions can be started as processes, which
 wait for inputs, respond accordingly and create some output.
@@ -67,7 +67,7 @@ an event on the clock's timeline and wakes up the process after the given `t`.
     `delay!` etc., which will `yield` it. Otherwise it will after start starve
     everything else!
 
-### Running the simulation
+## Running a simulation
 
 Now, after we have setup a clock, scheduled events or setup sampling, we can step or run through a simulation, stop or resume it.
 
@@ -78,7 +78,7 @@ Now, after we have setup a clock, scheduled events or setup sampling, we can ste
 
 Now we can evaluate the results.
 
-### Logging
+## Logging
 
 Logging enables us to trace variables over simulation time and such analyze their behaviour.
 

@@ -1,4 +1,4 @@
-### Two guys meet
+# Two guys meet
 
 If two guys meet, there is standard verbiage, but some uncertainty in how long they need to greet and respond. We can simulate this as an introductory example.
 

@@ -7,21 +7,13 @@ makedocs(
     authors  = "Paul Bayer",
     pages = [
         "Home" => "index.md",
-        "Approaches" => [
-            "Overview" => "approach.md",
-            "Activity based" => "activity.md",
-            "Event based" => "event.md",
-            "State based" => "state.md",
-            "Process based" => "process.md"
-        ],
+        "Approaches" => "approach.md",
         "Overview" => "overview.md",
         "Usage" => "usage.md",
-        "Examples" => [
-            "Two guys meet" => "examples/greeting.md",
-            "Table tennis" => "examples/tabletennis.md",
-            "Single server" => "examples/singleserver.md",
-            "Further examples" => "examples/examples.md"
-        ],
+        hide("Examples" => "examples/examples.md",
+                       ["examples/greeting.md",
+                       "examples/tabletennis.md",
+                       "examples/singleserver.md"]),
         "Internals" => "internals.md"
     ]
 )
@@ -30,5 +22,8 @@ deploydocs(
     repo   = "github.com/pbayer/Simulate.jl.git",
     target = "build",
     deps   = nothing,
-    make   = nothing
+    make   = nothing,
+    devbranch = "master",
+    devurl = "master",
+    versions = ["stable" => "v^", "v#.#", "dev" => "master"]
 )

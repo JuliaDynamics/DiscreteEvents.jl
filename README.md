@@ -11,7 +11,7 @@ A Julia package for **discrete event simulation**.
 
 **Development Documentation** is currently at https://pbayer.github.io/Simulate.jl/dev
 
-`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc.
+`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. Expressions or functions can register for sampling and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock, the events are executed in the scheduled sequence.
 
 ## Approaches to simulation
 

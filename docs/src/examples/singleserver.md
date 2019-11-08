@@ -1,4 +1,4 @@
-### Single server
+# Single server
 
 This example is from Choi, Kang: Modeling and Simulation of Discrete-Event Systems, p. 18. It describes a single server system. The event graph given is:
 

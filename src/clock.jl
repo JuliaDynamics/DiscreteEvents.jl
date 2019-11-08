@@ -14,7 +14,9 @@ current clock times to the new unit.
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
+
 julia> import Unitful: Time, s, minute, hr
+
 julia> c = Clock(t0=60) # setup a new clock with t0=60
 Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> τ(c) # current time is 60.0 NoUnits
@@ -73,6 +75,7 @@ normally is sufficient for simulation purposes.
 # Examples
 ```jldoctest
 julia> using Simulate
+
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> 𝐶  # central clock
@@ -94,6 +97,7 @@ Return the current simulation time (τ=\tau+Tab).
 # Examples
 ```jldoctest
 julia> using Simulate
+
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> τ() # gives the central time
@@ -154,7 +158,9 @@ its Time unit goes into the clock time unit.
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
+
 julia> import Unitful: s
+
 julia> c = Clock(1s, t0=60s)
 Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 julia> reset!(c)
@@ -257,7 +263,9 @@ if there are events scheduled for `t`.
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
+
 julia> import Unitful: s, minute, hr
+
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 julia> event!(𝐶, SimFunction(myfunc, 1, 2), 1) # a 1st event
