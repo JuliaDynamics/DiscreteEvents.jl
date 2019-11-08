@@ -1,6 +1,6 @@
 # Simulate.jl
 
-A Julia package for **discrete event simulation**. It introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc.
+A Julia package for **discrete event simulation**.
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/Simulate.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
@@ -9,29 +9,30 @@ A Julia package for **discrete event simulation**. It introduces a **clock** and
 [![codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Simulate.jl?branch=master)
 
-**Author:** Paul Bayer
-
 **Development Documentation** is currently at https://pbayer.github.io/Simulate.jl/dev
 
-## A pragmatic approach to simulation
+`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **events** for later execution on the clock's time line. If we **run** the clock, the events are executed in the scheduled sequence. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc.
 
-I want to develop `Simulate.jl` to support four major approaches to modeling and simulation of discrete event systems (DES):
+## Approaches to simulation
 
-1. **event based**: events occur in time and trigger actions, which may
-cause further events …
-2. **activity based**: activities occur in time and cause other activities …
-3. **state based**: events occur in time and trigger actions of entities (e.g. state machines) depending on their current state, those actions may cause further events …
-4. **process based**: entities in a DES are modeled as processes waiting for
+There are four major approaches to modeling and simulation of discrete event systems (DES):
+
+1. **event based**: *events* occur in time and trigger actions causing further events …
+2. **activity based**: *activities* occur in time and cause other activities …
+3. **state based**: entities react to events occurring in time depending on their current *state*. Their actions may cause further events …
+4. **process based**: entities are modeled as *processes* waiting for
 events and then acting according to the event and their current state …
 
-With the current main two simulation hooks of `Simulate.jl`: `event!` and `SimFunction` the first three approaches are supported. Now I introduce also process based modeling and simulation. `SimProcess` and `process!` are still a bit experimental and look like that:
+The first three approaches are enabled with `event!` and `SimFunction` of Simulate.jl v0.1.0 (released). 0.2.0 (current master) is still a bit experimental and supports also process based modeling and simulation with `SimProcess` and `process!`. Simulate.jl allows the four approaches to be combined in a consistent framework.
 
-## Example (process based)
+## Process based example
 
 ```julia
 using Simulate, Printf
-reset!(𝐶)
+reset!(𝐶) # reset the central clock
 
+# a function with Channels in and out as the first  
+# two arguments can be registered as a SimProcess
 function foo(in::Channel, out::Channel, id)
     token = take!(in)
     @printf("%5.2f: foo %d took token %d\n", τ(), id, token)
@@ -49,7 +50,7 @@ end
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create and register 8 SimProcesses
+for i in 1:2:8    # create and register 8 SimProcesses to the clock
     process!(𝐶, SimProcess(i, foo, ch1, ch2, i))     # 4 foos
     process!(𝐶, SimProcess(i+1, bar, ch2, ch1, i+1)) # 4 bars
 end
@@ -57,7 +58,7 @@ end
 start!(𝐶) # start all registered processes
 put!(ch1, 1) # put first token into channel 1
 
-sleep(0.1) # we give the processes some time to startup
+sleep(0.1) # give the processes some time to startup
 
 run!(𝐶, 10)
 ```
@@ -93,3 +94,5 @@ julia> include("docs/examples/channels.jl")
 ```
 
 For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).
+
+**Author:** Paul Bayer
