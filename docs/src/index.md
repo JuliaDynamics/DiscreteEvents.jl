@@ -27,20 +27,20 @@ pkg> add("https://github.com/pbayer/Simulate.jl")
 using Simulate, Printf
 reset!(𝐶) # reset the central clock
 
-# a function with Channels in and out as the first  
+# a function with Channels input and output as the first  
 # two arguments can be registered as a SimProcess
-function foo(in::Channel, out::Channel, id)
-    token = take!(in)
+function foo(input::Channel, output::Channel, id)
+    token = take!(input)
     @printf("%5.2f: foo %d took token %d\n", τ(), id, token)
     d = delay!(rand())
-    put!(out, token+id)
+    put!(output, token+id)
 end
 
-function bar(in::Channel, out::Channel, id)
-    token = take!(in)
+function bar(input::Channel, output::Channel, id)
+    token = take!(input)
     @printf("%5.2f: bar %d took token %d\n", τ(), id, token)
     d = delay!(rand())
-    put!(out, token*id)
+    put!(output, token*id)
 end
 
 ch1 = Channel(32)  # create two channels

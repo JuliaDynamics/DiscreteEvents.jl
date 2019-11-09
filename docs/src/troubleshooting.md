@@ -2,7 +2,7 @@
 
 ## A SimProcess fails
 
-You can check, if that is the case: if `𝐶` is your clock, you get the list of all running processes with `𝐶.processes`. Than you can check the failed process by checking `𝐶.processes[id].task`. This gives you the stack trace of the failed process, e.g.
+You can check, if that is the case: if `𝐶` is your clock, you get the list of all running processes with `𝐶.processes`. Than you can look at the failed process with `𝐶.processes[id].task`. This gives you the stack trace of the failed process, e.g.
 
 ```julia
 julia> 𝐶.processes
