@@ -34,7 +34,7 @@ Put a `SimProcess` in a loop, which can be broken by a `SimException`.
 function loop(p::SimProcess)
     while true
         try
-            p.func(p.in, p.out, p.arg...; p.kw...)
+            p.func(p.input, p.output, p.arg...; p.kw...)
         catch exc
             if isa(exc, SimException)
                 exc.ev == Stop() ? break : nothing
