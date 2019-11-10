@@ -1,6 +1,6 @@
 # Simulate.jl
 
-A Julia package for **discrete event simulation**.
+A new⭐ Julia package for **discrete event simulation**.
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pkg.julialang.org/docs/Simulate)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/Simulate.jl/dev)
@@ -9,21 +9,36 @@ A Julia package for **discrete event simulation**.
 [![codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/Simulate.jl?branch=master)
 
-**Development Documentation** is currently at https://pbayer.github.io/Simulate.jl/dev
+**Development Documentation** is at https://pbayer.github.io/Simulate.jl/dev
 
 `Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **discrete events** for later execution on the clock's time line. Expressions or functions can register for **continuous sampling** and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock,  events are executed in the scheduled sequence, sampling functions are called continuously at each clock tick and processes are served accordingly.
 
-## Approaches to simulation
+## Installation
 
-There are four major approaches to modeling and simulation of discrete event systems (DES):
+The development (and sometimes not so stable) version can be installed with:
+
+```julia
+pkg> add("https://github.com/pbayer/Simulate.jl")
+```
+
+The stable, registered version is installed with:
+
+```julia
+pkg> add Simulate
+```
+
+
+## Approaches to discrete event simulation
+
+`Simulate.jl` supports four major approaches to modeling and simulation of discrete event systems (DES):
 
 1. **event based**: *events* occur in time and trigger actions causing further events …
-2. **activity based**: *activities* occur in time and cause other activities …
-3. **state based**: entities react to events occurring in time depending on their current *state*. Their actions may cause further events …
+2. **state based**: entities react to events occurring in time depending on their current *state*. Their actions may cause further events …
+3. **activity based**: *activities* occur in time and cause other activities …
 4. **process based**: entities are modeled as *processes* waiting for
 events and then acting according to the event and their current state …
 
-The first three approaches are enabled with `event!` and `SimFunction` of Simulate.jl v0.1.0 (released). 0.2.0 (current master) is still a bit experimental and supports also process based modeling and simulation with `SimProcess` and `process!`. Simulate.jl allows the four approaches to be combined in a consistent framework.
+The first three approaches are enabled with `event!` and `SimFunction` of Simulate.jl v0.1.0 (released). 0.2.0 (current master) is still a bit experimental and supports  process based modeling and simulation with `SimProcess` and `process!`. `Simulate.jl`'s aim is to allow the four approaches to be combined in a consistent framework.
 
 ## Process based example
 

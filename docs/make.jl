@@ -15,7 +15,8 @@ makedocs(
                        "examples/tabletennis.md",
                        "examples/singleserver.md"]),
         "Internals" => "internals.md",
-        "Troubeshooting" => "troubleshooting.md"
+        "Troubeshooting" => "troubleshooting.md",
+        "History" => "history.md"
     ]
 )
 
