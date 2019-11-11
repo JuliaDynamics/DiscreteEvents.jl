@@ -15,13 +15,13 @@ mutable struct Entity
 end
 
 function take(en::Entity)
-    isempty(en.input) || event!(𝐶, SimFunction(take, en), :(!isempty(en.input)))
+    isempty(en.input) || event!(𝐅(take, en), :(!isempty(en.input)))
     en.token = take!(en.input)
     @printf("%5.2f: %s %d took token %d\n", τ(), en.name, en.id, en.token)
     proc(en)
 end
 
-proc(en) = event!(𝐶, SimFunction(put, en), after, rand())
+proc(en) = event!(𝐅(put, en), after, rand())
 
 function put(en)
     put!(en.output, en.op(en.id, ))

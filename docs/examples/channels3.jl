@@ -1,4 +1,4 @@
-# the channel example using a activity-based approach
+# the channel example using an activity-based approach
 #
 
 mutable struct Server
@@ -16,11 +16,11 @@ cond(en) = !isempty(en.input) && en.state == Idle
 
 function serve(en::Server)
     if isempty(en.input)
-      event!(𝐶, SimFunction(take, en), !isempty(en.input))
+      event!(𝐅(take, en), !isempty(en.input))
     else
       en.token = take!(en.input)
       @printf("%5.2f: %s %d took token %d\n", τ(), en.name, en.id, en.token)
-      event!(𝐶, SimFunction((put!, en.output, token), (serve, en)), after, rand())
+      event!((𝐅(put!, en.output, token), 𝐅(serve, en)), after, rand())
     end
 end
 
