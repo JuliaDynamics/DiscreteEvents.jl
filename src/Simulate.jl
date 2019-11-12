@@ -18,11 +18,11 @@ include("logger.jl")
 
 
 export  Logger, switch!, setup!, init!, record!, clear!,
-        Clock, setUnit!, SimFunction, τ, tau,
+        Clock, setUnit!, SimExpr, SimFunction, 𝐅, τ, tau,
         sample_time!, event!, sample!,
         incr!, run!, stop!, resume!, reset!, sync!,
         𝐶, Clk, Timing, at, after, every, before,
-        SimException, SimProcess, process!, start!, delay!
+        SimException, SimProcess, 𝐏, process!, start!, delay!
 
 Random.seed!(123)
 𝐶.state == Undefined() ? init!(𝐶) : nothing

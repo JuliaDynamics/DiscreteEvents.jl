@@ -49,6 +49,7 @@ run!(𝐶, 20) # and run the simulation
 Clock
 Timing
 SimFunction
+SimExpr
 SimProcess
 SimException
 ```

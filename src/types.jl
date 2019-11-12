@@ -15,9 +15,11 @@ Enumeration type for scheduling events and timed conditions:
 @enum Timing at after every before
 
 """
-    SimFunction(func::Function, arg...; kw...)
-
-Type for preparing a function as an event to a simulation.
+```
+SimFunction(func::Function, arg...; kw...)
+𝐅(func::Function, arg...; kw...)
+```
+Prepare a function to be called as event in a simulation (bold 𝐅 is `\\bfF`+`Tab`).
 
 # Arguments
 - `func::Function`: function to be executed at a later simulation time
@@ -72,41 +74,69 @@ struct SimFunction
 
     SimFunction(func, arg...; kw...) = new(func, arg, kw)
 end
+𝐅 = SimFunction
 
 """
-    SimEvent(expr::Expr, scope::Module, t::Float64, Δt::Float64)
+    SimExpr = Union{Expr, SimFunction}
 
-Create a simulation event: an expression to be executed at event time.
+A type which is either a `SimFunction` or any Julia expression `Expr`.
+"""
+SimExpr = Union{Expr, SimFunction}
+
+"""
+    sconvert(ex::Union{SimExpr,Array,Tuple})::Array{SimExpr,1}
+
+convert a SimExpr or an array or a tuple of it to an Array{SimExpr,1}
+"""
+function sconvert(ex::Union{SimExpr,Array,Tuple})::Array{SimExpr,1}
+    if isa(ex, SimExpr)
+        return convert(Array{SimExpr,1}, [ex])
+    elseif isa(ex, Array)
+        return convert(Array{SimExpr,1}, ex)
+    else
+        return convert(Array{SimExpr,1}, [i for i in ex])
+    end
+end
+
+"""
+```
+SimEvent(ex::Array{SimExpr, 1}, scope::Module, t::Float64, Δt::Float64)
+```
+Create a simulation event: a SimExpr or an array of SimExpr to be
+executed at event time.
 
 # Arguments
-- `expr::Expr`: expression to be evaluated at event time
-- `scope::Module`: evaluation scope
-- `t::Float64`: event time
-- `Δt::Float64`: repeat rate with which the event gets repeated
+- `ex::Array{SimExpr, 1}`: an array of SimExpr to be evaluated at event time,
+- `scope::Module`: evaluation scope,
+- `t::Float64`: event time,
+- `Δt::Float64`: repeat rate with which the event gets repeated.
 """
 struct SimEvent
-    "expression to be evaluated at event time"
-    ex::Union{Expr, SimFunction}
+    "expression or SimFunction to be evaluated at event time"
+    ex::Array{SimExpr, 1}
     "evaluation scope"
     scope::Module
     "event time"
     t::Float64
     "repeat time"
     Δt::Float64
+
+    SimEvent(ex::Array{SimExpr, 1}, scope::Module, t::Number, Δt::Number) =
+        new(ex, scope, t, Δt)
 end
 
 """
-    Sample(ex::Union{Expr, SimFunction}, scope::Module)
+    Sample(ex::SimExpr, scope::Module)
 
 Create a sampling expression.
 
 # Arguments
-- `ex::{Expr, SimFunction}`: expression or function to be called at sample time
+- `ex::SimExpr`: expression or SimFunction to be called at sample time
 - `scope::Module`: evaluation scope
 """
 struct Sample
     "expression or function to be called at sample time"
-    ex::Union{Expr, SimFunction}
+    ex::SimExpr
     "evaluation scope"
     scope::Module
 end
@@ -130,10 +160,12 @@ end
 """
 ```
 SimProcess( id, func::Function, body,
-            in::Channel=Channel(Inf), out::Channel=Channel(Inf),
-            arg...; kw...) =
+            input::Channel=Channel(Inf), output::Channel=Channel(Inf),
+            arg...; kw...)
+𝐏(id, func::Function, body,
+  input::Channel=Channel(Inf), output::Channel=Channel(Inf), arg...; kw...)
 ```
-Prepare a function to run as a process in a simulation.
+Prepare a function to run as a process in a simulation (bold 𝐏 is `\\bfP`+`Tab`).
 
 # Arguments
 - `id`: some unique identification

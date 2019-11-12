@@ -84,3 +84,13 @@ julia> include("docs/examples/channels.jl")
 ```
 
 For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).
+
+## Changes in v0.2.0 (development)
+
+- **next**: conditional events with `event!(sim, ex, cond)` and `wait!(cond)` where `cond::Union{SimExpr, Array{SimExpr,1}}`,
+- `event!` can be called without the first clock argument, it then goes to `𝐶`.
+- `event!` takes an expression or a SimFunction or a tuple or an array of them,
+- introduced aliases: `𝐅` for `SimFunction` and `𝐏` for `SimProcess`
+- introduced process-based simulation with `SimProcess` and `process!`,
+- extensive documentation
+- more examples

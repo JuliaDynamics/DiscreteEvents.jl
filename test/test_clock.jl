@@ -2,9 +2,48 @@ println("... basic tests: only events  ...")
 reset!(𝐶)
 @test τ() == 0
 
-ev = Simulate.SimEvent(:(1+1), Main, 10, 0)
-@test eval(ev.ex) == 2
+ex1 = :(1+1)
+ex2 = :(1+2)
+f(a) = a+3
+g(a) = a+4
+
+conv = Simulate.sconvert
+@test isa(conv(ex1), Array{SimExpr,1})
+@test isa(conv([ex1, ex2]), Array{SimExpr,1})
+@test isa(conv(𝐅(f,1)), Array{SimExpr,1})
+@test isa(conv([𝐅(f,1),𝐅(g,1)]), Array{SimExpr,1})
+@test isa(conv([ex1,𝐅(f,1),𝐅(g,1),ex2]), Array{SimExpr,1})
+@test isa(conv((ex1,𝐅(f,1),𝐅(g,1),ex2)), Array{SimExpr,1})
+
+# one expression
+ev = Simulate.SimEvent(conv(:(1+1)), Main, 10, 0)
+@test eval(ev.ex[1]) == 2
 @test ev.t == 10
+
+# two expressions
+ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 10, 0)
+@test eval(ev.ex[1]) == 2
+@test eval(ev.ex[2]) == 3
+@test ev.t == 10
+
+# one SimFunction
+ev = Simulate.SimEvent(conv(𝐅(f, 1)), Main, 10, 0)
+ex = ev.ex[1]
+@test ex.func(ex.arg...; ex.kw...) == 4
+
+# two SimFunctions
+ev = Simulate.SimEvent(conv([𝐅(f, 1), 𝐅(g, 1)]), Main, 10, 0)
+@test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex]) == 9
+
+# expressions and SimFunctions mixed in an array
+ev = Simulate.SimEvent(conv([:(1+1), 𝐅(g,2), :(1+2), 𝐅(f, 1)]), Main, 10, 0)
+@test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
+@test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
+
+# expressions and SimFunctions mixed in a tuple
+ev = Simulate.SimEvent(conv((:(1+1), 𝐅(g,2), :(1+2), 𝐅(f, 1))), Main, 10, 0)
+@test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
+@test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 
 sim = Clock()  # set up clock without sampling
 @test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
@@ -69,7 +108,7 @@ run!(sim,14)
 reset!(sim)
 @test tau(sim) == 0
 
-println("... basic tests: only sampling ...")
+println("... basic tests: sampling ...")
 sim = Clock(1)  # clock with sample rate 1
 @test sim.time == 0
 @test sim.tsa == 1

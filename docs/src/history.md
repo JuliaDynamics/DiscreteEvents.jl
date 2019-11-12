@@ -1,9 +1,11 @@
 # Version history
 
 ## v0.2.0 (development)
+- **next**: conditional events with `event!(sim, ex, cond)` and `wait!(cond)` where `cond::Union{SimExpr, Array{SimExpr,1}}`,
+- `event!` can be called without the first clock argument, it then goes to `𝐶`.
+- `event!` takes an expression or a SimFunction or a tuple or an array of them,
+- introduced aliases: `𝐅` for `SimFunction` and `𝐏` for `SimProcess`
 - introduced process-based simulation with `SimProcess` and `process!`,
-- **planned**: conditional events with `event!(sim, ex, cond)` and `wait!(cond)` where `cond::Union{Expr, SimFunction}`,
-- **planned**: SimFunction takes also a tuple of functions.
 - extensive documentation
 - more examples
 

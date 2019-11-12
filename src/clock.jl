@@ -1,16 +1,19 @@
 #
-# simulation routines for discrete event simulation
+# clock and event routines
 #
 
 
 """
     setUnit!(sim::Clock, new::FreeUnits)
+
 set a clock to a new time unit in `Unitful`. If necessary convert
 current clock times to the new unit.
+
 # Arguments
 - `sim::Clock`
 - `new::FreeUnits`: new is one of `ms`, `s`, `minute` or `hr` or another Unitful
 `Time` unit.
+
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
@@ -70,9 +73,10 @@ end
 𝐶
 Clk
 ```
-italic 𝐶 (`\\itC`+Tab) or `Clk` is the central `Clock()`-variable, which
-normally is sufficient for simulation purposes.
+italic 𝐶 (`\\itC`+Tab) or `Clk` is the central `Clock()`-variable.
+
 # Examples
+
 ```jldoctest
 julia> using Simulate
 
@@ -94,7 +98,9 @@ julia> 𝐶.time
 tau(sim::Clock=Tau)
 ```
 Return the current simulation time (τ=\tau+Tab).
+
 # Examples
+
 ```jldoctest
 julia> using Simulate
 
@@ -145,6 +151,7 @@ end
 reset!(sim::Clock, Δt::Number=0; t0::Number=0, hard::Bool=true, unit=NoUnits)
 ```
 reset a clock
+
 # Arguments
 - `sim::Clock`
 - `Δt::Number=0`: time increment
@@ -155,7 +162,9 @@ sampling times are adjusted accordingly.
 - `unit=NoUnits`: the Time unit for the clock after reset. If a `Δt::Time` is
 given, its Time unit goes into the clock Time unit. If only t0::Time is given,
 its Time unit goes into the clock time unit.
+
 # Examples
+
 ```jldoctest
 julia> using Simulate, Unitful
 
@@ -203,31 +212,45 @@ end
 
 """
     nextevent(sim::Clock)
+
 Return the next scheduled event.
 """
 nextevent(sim::Clock) = peek(sim.events)[1]
 
 """
     nextevtime(sim::Clock)
+
 Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
 """
-    simExec(ex::Union{Expr,SimFunction}, m::Module=Main)
-evaluate an expression or execute a SimFunction.
+    simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
+
+evaluate the event expressions or SimFunctions.
+
+# Return
+
+the evaluated value or a tuple of evaluated values
 """
-function simExec(ex::Union{Expr,SimFunction}, m::Module=Main)
-    if isa(ex, SimFunction)
-        ex.func(ex.arg...; ex.kw...)
-        yield()  # to an eventually triggered process
-    else
-        Core.eval(m,ex)
+function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
+
+    function sexec(x::SimExpr)
+        if x isa SimFunction
+            ret = x.func(x.arg...; x.kw...)
+            yield()  # to an eventually triggered process
+        else
+            return Core.eval(m, x)
+        end
+        return ret
     end
+
+    return ex isa SimExpr ? sexec(ex) : Tuple([sexec(x) for x in ex])
 end
 
 """
     checktime(sim::Clock, t::Number)::Float64
+
 check `t` given according to clock settings and return value
 """
 function checktime(sim::Clock, t::Number)::Float64
@@ -245,21 +268,31 @@ end
 
 """
 ```
-event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
-event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing, t::Number; scope::Module=Main)::Float64
+event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
+event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
+event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple})::Float64
+event!(ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)
+event!(ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)
+event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
 ```
-Schedule a function or expression for a given simulation time.
+Schedule an event for a given simulation time or under a condition.
+
 # Arguments
-- `sim::Clock`: simulation clock
-- `ex::{Expr, SimFunction}`: an expression or SimFunction
-- `t::Float64` or `t::Time`: simulation time
-- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`)
-- `scope::Module=Main`: scope for the expression to be evaluated
-- `cycle::Float64=0.0`: repeat cycle time for the event
+- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
+- `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
+- `t::Float64` or `t::Time`: simulation time,
+- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
+- `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
+or an array or tuple of them. It is only True if all expressions or SimFunctions
+return true.
+- `scope::Module=Main`: scope for the expressions to be evaluated
+- `cycle::Float64=0.0`: repeat cycle time for an event
+
 # returns
 Scheduled internal simulation time (unitless) for that event.
 May return a time `> t` from repeated applications of `nextfloat(t)`
 if there are events scheduled for `t`.
+
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
@@ -287,31 +320,42 @@ julia> run!(𝐶, 1hr)
 "run! finished with 5 events, simulation time: 3600.0"
 ```
 """
-function event!(sim::Clock, ex::Union{Expr, SimFunction}, t::Number;
+function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
                 scope::Module=Main, cycle::Number=0.0)::Float64
     t = checktime(sim, t)
     cycle = checktime(sim, cycle)
     while any(i->i==t, values(sim.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
     end
-    ev = SimEvent(ex, scope, t, cycle)
+    ev = SimEvent(sconvert(ex), scope, t, cycle)
     sim.events[ev] = t
     return t
 end
-function event!(sim::Clock, ex::Union{Expr, SimFunction}, T::Timing,
-                t::Number; scope::Module=Main)
+function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number;
+                scope::Module=Main)
     t = checktime(sim, t)
     if T == after
-        event!(sim, ex, t + sim.time, scope=scope)
+        event!(sim, sconvert(ex), t + sim.time, scope=scope)
     elseif T == every
-        event!(sim, ex, sim.time, scope=scope, cycle=t)
+        event!(sim, sconvert(ex), sim.time, scope=scope, cycle=t)
     else
-        event!(sim, ex, t, scope=scope)
+        event!(sim, sconvert(ex), t, scope=scope)
     end
 end
+function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
+                cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+    error("conditional events are not yet implemented")
+end
+event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0) =
+            event!(𝐶, ex, t, scope=scope, cycle=cycle)
+event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main) =
+            event!(𝐶, ex, T, t; scope=scope)
+event!( ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple};
+        scope::Module=Main) = event!(𝐶, ex, cond, scope=scope)
 
 """
     sample_time!(sim::Clock, Δt::Number)
+
 set the clock's sampling time starting from now (`τ(sim)`).
 # Arguments
 - `sim::Clock`
@@ -324,6 +368,7 @@ end
 
 """
     sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main)
+
 enqueue an expression for sampling.
 # Arguments
 - `sim::Clock`
@@ -335,6 +380,7 @@ sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main) =
 
 """
     step!(sim::Clock, ::Undefined, ::Init)
+
 initialize a clock.
 """
 function step!(sim::Clock, ::Undefined, ::Init)
@@ -343,6 +389,7 @@ end
 
 """
     step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
+
 if uninitialized, initialize and then Step or Run.
 """
 function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
@@ -368,6 +415,7 @@ end
 
 """
     step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
+
 step forward to next tick or scheduled event.
 At a tick evaluate all sampling expressions, or, if an event is encountered
 evaluate the event expression.
@@ -428,7 +476,9 @@ end
 
 """
     step!(sim::Clock, ::Idle, σ::Run)
+
 Run a simulation for a given duration.
+
 The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
@@ -459,6 +509,7 @@ end
 
 """
     step!(sim::Clock, ::Busy, ::Stop)
+
 Stop the clock.
 """
 function step!(sim::Clock, ::Busy, ::Stop)
@@ -468,6 +519,7 @@ end
 
 """
     step!(sim::Clock, ::Halted, ::Resume)
+
 Resume a halted clock.
 """
 function step!(sim::Clock, ::Halted, ::Resume)
@@ -477,6 +529,7 @@ end
 
 """
     step!(sim::Clock, q::SState, σ::SEvent)
+
 catch all step!-function.
 """
 function step!(sim::Clock, q::SState, σ::SEvent)
@@ -487,9 +540,9 @@ end
 
 """
     run!(sim::Clock, duration::Number)
-Run a simulation for a given duration.
-Call scheduled events and evaluate sampling expressions at each tick
-in that timeframe.
+
+Run a simulation for a given duration. Call scheduled events and evaluate
+sampling expressions at each tick in that timeframe.
 """
 run!(sim::Clock, duration::Number) =
                         step!(sim, sim.state, Run(checktime(sim, duration)))
@@ -497,24 +550,28 @@ run!(sim::Clock, duration::Number) =
 
 """
     incr!(sim::Clock)
+
 Take one simulation step, execute the next tick or event.
 """
 incr!(sim::Clock) = step!(sim, sim.state, Step())
 
 """
     stop!(sim::Clock)
+
 Stop a running simulation.
 """
 stop!(sim::Clock) = step!(sim, sim.state, Stop())
 
 """
     resume!(sim::Clock)
+
 Resume a halted simulation.
 """
 resume!(sim::Clock) = step!(sim, sim.state, Resume())
 
 """
     init!(sim::Clock)
+
 initialize a clock.
 """
 init!(sim::Clock) = step!(sim, sim.state, Init(""))
