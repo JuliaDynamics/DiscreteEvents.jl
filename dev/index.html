@@ -32,21 +32,11 @@ run!(𝐶, 10)   # an run for 10 time units</code></pre><p>If we source this pro
  0.55: bar 2 took token 35
  1.21: foo 5 took token 70
  1.33: bar 8 took token 75
- 1.47: foo 1 took token 600
- 1.57: bar 6 took token 601
- 2.07: foo 7 took token 3606
- 3.00: bar 4 took token 3613
- 3.68: foo 3 took token 14452
- 4.33: bar 2 took token 14455
- 5.22: foo 5 took token 28910
- 6.10: bar 8 took token 28915
- 6.50: foo 1 took token 231320
- 6.57: bar 6 took token 231321
- 7.13: foo 7 took token 1387926
- 8.05: bar 4 took token 1387933
+...
+...
  8.90: foo 3 took token 5551732
  9.10: bar 2 took token 5551735
  9.71: foo 5 took token 11103470
  9.97: bar 8 took token 11103475
 10.09: foo 1 took token 88827800
-&quot;run! finished with 22 events, simulation time: 10.0&quot;</code></pre><p>For further examples see <a href="https://github.com/pbayer/Simulate.jl/tree/master/docs/examples"><code>docs/examples</code></a> or <a href="https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks"><code>docs/notebooks</code></a>.</p><h2><a class="nav-anchor" id="Changes-in-v0.2.0-(development)-1" href="#Changes-in-v0.2.0-(development)-1">Changes in v0.2.0 (development)</a></h2><ul><li><strong>next</strong>: conditional events with <code>event!(sim, ex, cond)</code> and <code>wait!(cond)</code> where <code>cond::Union{SimExpr, Array{SimExpr,1}}</code>,</li><li><code>event!</code> can be called without the first clock argument, it then goes to <code>𝐶</code>.</li><li><code>event!</code> takes an expression or a SimFunction or a tuple or an array of them,</li><li>introduced aliases: <code>𝐅</code> for <code>SimFunction</code> and <code>𝐏</code> for <code>SimProcess</code></li><li>introduced process-based simulation with <code>SimProcess</code> and <code>process!</code>,</li><li>extensive documentation</li><li>more examples</li></ul><footer><hr/><a class="next" href="approach/"><span class="direction">Next</span><span class="title">Approaches</span></a></footer></article></body></html>
+&quot;run! finished with 22 events, simulation time: 10.0&quot;</code></pre><p>For further examples see <a href="https://github.com/pbayer/Simulate.jl/tree/master/docs/examples"><code>docs/examples</code></a> or <a href="https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks"><code>docs/notebooks</code></a>.</p><h2><a class="nav-anchor" id="Changes-in-v0.2.0-(development)-1" href="#Changes-in-v0.2.0-(development)-1">Changes in v0.2.0 (development)</a></h2><ul><li><strong>next</strong> conditional <code>wait!(cond)</code></li><li>conditional events with <code>event!(sim, ex, cond)</code> are executed when the conditions are met,</li><li><code>event!</code> can be called without the first clock argument, it then goes to <code>𝐶</code>,</li><li><code>event!</code> takes an expression or a SimFunction or a tuple or an array of them,</li><li>introduced aliases: <code>𝐅</code> for <code>SimFunction</code> and <code>𝐏</code> for <code>SimProcess</code></li><li>introduced process-based simulation with <code>SimProcess</code> and <code>process!</code>,</li><li>extensive documentation,</li><li>more examples,</li></ul><footer><hr/><a class="next" href="approach/"><span class="direction">Next</span><span class="title">Approaches</span></a></footer></article></body></html>
