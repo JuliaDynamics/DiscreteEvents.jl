@@ -17,33 +17,33 @@ conv = Simulate.sconvert
 
 # one expression
 ev = Simulate.SimEvent(conv(:(1+1)), Main, 10, 0)
-@test eval(ev.ex[1]) == 2
+@test Simulate.simExec(ev.ex) == (2,)
 @test ev.t == 10
 
 # two expressions
-ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 10, 0)
-@test eval(ev.ex[1]) == 2
-@test eval(ev.ex[2]) == 3
-@test ev.t == 10
+ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 15, 0)
+@test Simulate.simExec(ev.ex) == (2, 3)
+@test ev.t == 15
 
 # one SimFunction
 ev = Simulate.SimEvent(conv(𝐅(f, 1)), Main, 10, 0)
-ex = ev.ex[1]
-@test ex.func(ex.arg...; ex.kw...) == 4
+@test Simulate.simExec(ev.ex) == (4,)
 
 # two SimFunctions
 ev = Simulate.SimEvent(conv([𝐅(f, 1), 𝐅(g, 1)]), Main, 10, 0)
-@test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex]) == 9
+@test Simulate.simExec(ev.ex) == (4, 5)
 
 # expressions and SimFunctions mixed in an array
 ev = Simulate.SimEvent(conv([:(1+1), 𝐅(g,2), :(1+2), 𝐅(f, 1)]), Main, 10, 0)
 @test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
+@test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
 # expressions and SimFunctions mixed in a tuple
 ev = Simulate.SimEvent(conv((:(1+1), 𝐅(g,2), :(1+2), 𝐅(f, 1))), Main, 10, 0)
 @test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
+@test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
 sim = Clock()  # set up clock without sampling
 @test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
@@ -72,8 +72,14 @@ end
 
 @test event!(sim, :(a += 1), every, 1) == 100
 
-@test length(sim.events) == 11
+# conditional events
+@test sim.Δt == 0
+@test event!(sim, :(a +=1), (:(τ(sim)>110), :(a>20))) == 100
+@test length(sim.cevents) == 1
+@test Simulate.simExec(sim.cevents[1].cond) == (false, false)
+@test sim.Δt == 0.01
 
+@test length(sim.events) == 11
 @test Simulate.nextevent(sim).t == 100
 
 incr!(sim)
@@ -89,10 +95,12 @@ stop = event!(sim, :(stop!(sim)), 108)
 run!(sim, 6)
 @test a == 16
 @test sim.state == Simulate.Halted()
+@test length(sim.cevents) == 1
 @test τ(sim) == stop
 resume!(sim)
 @test τ(sim) == 111
-@test a == 22
+@test length(sim.cevents) == 0
+@test a == 23
 @test length(sim.events) == 1
 
 t = 121.0
@@ -103,7 +111,7 @@ for i ∈ 1:10
 end
 run!(sim,14)
 @test τ(sim) == 125
-@test a == 46
+@test a == 47
 @test length(sim.events) == 1
 reset!(sim)
 @test tau(sim) == 0
@@ -186,7 +194,7 @@ c = Clock(1s, t0=1hr)
 @test c.Δt ==1
 init!(c)
 println(c)
-@test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
+@test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
 
 reset!(𝐶)
 @test 𝐶.unit == NoUnits

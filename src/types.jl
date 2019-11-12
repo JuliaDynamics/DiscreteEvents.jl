@@ -126,6 +126,26 @@ struct SimEvent
 end
 
 """
+    SimCond(cond::Array{SimExpr, 1}, ex::Array{SimExpr, 1}, scope::Module)
+
+create a condition to be evaluated repeatedly with expressions or functions
+to be executed if conditions are met.
+
+# Arguments
+- `cond::Array{SimExpr, 1}`: Expr or 𝐅s to be evaluated as conditions
+- `ex::Array{SimExpr, 1}`: Expr or 𝐅s to be evaluated if conditions are all true
+- `scope::Module`: evaluation scope
+"""
+struct SimCond
+    "Expr or 𝐅s to be evaluated as conditions"
+    cond::Array{SimExpr, 1}
+    "Expr or 𝐅s to be evaluated if all conditions are True"
+    ex::Array{SimExpr, 1}
+    "evaluation scope"
+    scope::Module
+end
+
+"""
     Sample(ex::SimExpr, scope::Module)
 
 Create a sampling expression.
@@ -224,17 +244,17 @@ julia> using Simulate, Unitful
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> init!(c)
 Simulate.Idle()
 julia> c = Clock(1s, unit=minute)
-Clock: state=Simulate.Undefined(), time=0.0, unit=minute, events: 0, processes: 0, sampling: 0, sample rate Δt=0.016666666666666666
+Clock: state=Simulate.Undefined(), time=0.0, unit=minute, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.016666666666666666
 julia> c = Clock(1s)
-Clock: state=Simulate.Undefined(), time=0.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=0.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 julia> c = Clock(t0=60s)
-Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> c = Clock(1s, t0=1hr)
-Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 ```
 """
 mutable struct Clock <: SEngine
@@ -246,6 +266,8 @@ mutable struct Clock <: SEngine
     unit::FreeUnits
     "scheduled events"
     events::PriorityQueue{SimEvent,Float64}
+    "conditional events"
+    cevents::Array{SimCond,1}
     "registered processes"
     processes::Dict{Any, SimProcess}
     "end time for simulation"
@@ -258,26 +280,26 @@ mutable struct Clock <: SEngine
     "sampling time, timestep between ticks"
     Δt::Float64
     "Array of sampling expressions to evaluate at each tick"
-    sexpr::Array{Sample}
+    sexpr::Array{Sample,1}
     "next sample time"
     tsa::Float64
 
     function Clock(Δt::Number=0;
                    t0::Number=0, unit::FreeUnits=NoUnits)
-        if isa(1unit, Time)
+        if 1unit isa Time
             Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
             t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
-        elseif isa(Δt, Time)
+        elseif Δt isa Time
             unit = Unitful.unit(Δt)
             t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
             Δt = Δt.val
-        elseif isa(t0, Time)
+        elseif t0 isa Time
             unit = Unitful.unit(t0)
             t0 = t0.val
         else
             nothing
         end
-        new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(),
+        new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(), SimCond[],
             Dict{Any, SimProcess}(), t0, 0, t0, Δt, Sample[], t0 + Δt)
     end
 end
@@ -288,8 +310,9 @@ function show(io::IO, sim::Clock)
     s3::String = "time=$(sim.time), "
     s4::String = "unit=$(sim.unit), "
     s5::String = "events: $(length(sim.events)), "
-    s6::String = "processes: $(length(sim.processes)), "
-    s7::String = "sampling: $(length(sim.sexpr)), "
-    s8::String = "sample rate Δt=$(sim.Δt)"
-    print(io, s1 * s2 * s3 * s4 * s5 * s6 * s7 * s8)
+    s6::String = "cevents: $(length(sim.cevents)), "
+    s7::String = "processes: $(length(sim.processes)), "
+    s8::String = "sampling: $(length(sim.sexpr)), "
+    s9::String = "sample rate Δt=$(sim.Δt)"
+    print(io, s1 * s2 * s3 * s4 * s5 * s6 * s7 * s8 * s9)
 end

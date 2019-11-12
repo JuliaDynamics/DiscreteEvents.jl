@@ -21,7 +21,7 @@ julia> using Simulate, Unitful
 julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60) # setup a new clock with t0=60
-Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> τ(c) # current time is 60.0 NoUnits
 60.0
 julia> setUnit!(c, s)  # set clock unit to Unitful.s
@@ -83,9 +83,9 @@ julia> using Simulate
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> 𝐶  # central clock
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> Clk  # alias
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 julia> 𝐶.time
 0.0
 ```
@@ -171,11 +171,11 @@ julia> using Simulate, Unitful
 julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
-Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 julia> reset!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> c
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 ```
 """
 function reset!(sim::Clock, Δt::Number=0;
@@ -267,24 +267,18 @@ function checktime(sim::Clock, t::Number)::Float64
 end
 
 """
+### Event
+
 ```
 event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple})::Float64
 event!(ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)
-event!(ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)
-event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
 ```
-Schedule an event for a given simulation time or under a condition.
+Schedule an event for a given simulation time.
 
 # Arguments
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
 - `t::Float64` or `t::Time`: simulation time,
-- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
-- `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
-or an array or tuple of them. It is only True if all expressions or SimFunctions
-return true.
 - `scope::Module=Main`: scope for the expressions to be evaluated
 - `cycle::Float64=0.0`: repeat cycle time for an event
 
@@ -312,12 +306,6 @@ julia> setUnit!(𝐶, s)
 0.0 s
 julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 60.0
-julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
-3600.0
-julia> 𝐶
-Clock: state=Simulate.Idle(), time=0.0, unit=s, events: 5, processes: 0, sampling: 0, sample rate Δt=0.0
-julia> run!(𝐶, 1hr)
-"run! finished with 5 events, simulation time: 3600.0"
 ```
 """
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
@@ -331,6 +319,42 @@ function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
     sim.events[ev] = t
     return t
 end
+event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0) =
+            event!(𝐶, ex, t, scope=scope, cycle=cycle)
+
+"""
+### Timed event
+
+```
+event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
+event!(ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)
+```
+Schedule a timed event.
+
+# Arguments
+- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
+- `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
+- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
+- `t::Float64` or `t::Time`: simulation time,
+- `scope::Module=Main`: scope for the expressions to be evaluated
+
+# returns
+Scheduled internal simulation time (unitless) for that event.
+
+# Examples
+```jldoctest
+julia> using Simulate, Unitful
+
+julia> import Unitful: s, minute, hr
+
+julia> setUnit!(𝐶, s)
+0.0 s
+julia> myfunc(a, b) = a+b
+myfunc (generic function with 1 method)
+julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
+3600.0
+```
+"""
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number;
                 scope::Module=Main)
     t = checktime(sim, t)
@@ -342,14 +366,64 @@ function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Numb
         event!(sim, sconvert(ex), t, scope=scope)
     end
 end
-function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
-                cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
-    error("conditional events are not yet implemented")
-end
-event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0) =
-            event!(𝐶, ex, t, scope=scope, cycle=cycle)
 event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main) =
             event!(𝐶, ex, T, t; scope=scope)
+
+"""
+### Conditional event
+```
+event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
+event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+```
+Schedule a conditional event.
+
+It is executed immediately if the conditions are met, else the condition is
+checked at each clock tick Δt. If no sampling rate Δt is setup, a default
+sampling is setup.
+
+# Arguments
+- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
+- `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
+- `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
+or an array or tuple of them. It is true if all expressions or SimFunctions
+therein return true.
+- `scope::Module=Main`: scope for the expressions to be evaluated
+- `cycle::Float64=0.0`: repeat cycle time for an event
+
+# returns
+current simulation time `τ(sim)`.
+
+# Examples
+```jldoctest
+julia> using Simulate, Unitful
+
+julia> import Unitful: s, minute, hr
+
+```
+"""
+function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
+                cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+
+    function scale(n::Number)
+        if n > 0
+            i = 1.0
+            while !(10^i ≤ n < 10^(i+1))
+                n < 10^i ? i -= 1 : i += 1
+            end
+            return 10^i
+        else
+            return 1
+        end
+    end
+
+    if all(simExec(sconvert(cond)))   # all conditions met
+        simExec(sconvert(ex))         # execute immediately
+    else
+        sim.Δt == 0 ? sim.Δt = scale(sim.end_time - sim.time)/100 : nothing
+        push!(sim.cevents, SimCond(sconvert(cond), sconvert(ex), scope))
+    end
+    return tau(sim)
+end
 event!( ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple};
         scope::Module=Main) = event!(𝐶, ex, cond, scope=scope)
 
@@ -417,8 +491,9 @@ end
     step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
 step forward to next tick or scheduled event.
-At a tick evaluate all sampling expressions, or, if an event is encountered
-evaluate the event expression.
+
+At a tick evaluate (1) all sampling expressions, (2) all conditional events, then
+(3) if an event is encountered, evaluate the event expression.
 
 The internal clock times `sim.tev` and `sim.tsa` must always be set to be
 at least `sim.time`.
@@ -441,6 +516,16 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
+        cond = []
+        for c ∈ sim.cevents
+            if all(simExec(c.cond))
+                push!(cond, true)
+                simExec(c.ex)
+            else
+                push!(cond, false)
+            end
+        end
+        any(cond) ? sim.cevents = sim.cevents[.!cond] : nothing
     end
 
     if (sim.tev ≤ sim.time) && (length(sim.events) ≥ 1)
