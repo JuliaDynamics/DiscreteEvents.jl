@@ -11,7 +11,7 @@ A new⭐ Julia package for **discrete event simulation**.
 
 **Development Documentation** is at https://pbayer.github.io/Simulate.jl/dev
 
-`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **discrete events** for later execution on the clock's time line. Expressions or functions can register for **continuous sampling** and then are executed at each clock tick. Julia functions can also run as **processes**, which can refer to the clock, respond to events, delay etc. If we **run** the clock,  events are executed in the scheduled sequence, sampling functions are called continuously at each clock tick and processes are served accordingly.
+`Simulate.jl` introduces a **clock** and allows to schedule Julia expressions and functions as **discrete events** for delayed execution on the clock's time line. Expressions or functions can register for **sampling** at each clock tick. Julia functions can also run as **processes**, registered to the clock, responding to events, delaying etc. If the clock **runs**, events are executed in the scheduled sequence, sampling functions are called at each clock tick and processes can interact with them and with the clock.
 
 ## Installation
 
@@ -41,29 +41,31 @@ The first three approaches are enabled with `event!` and `SimFunction` of v0.1.0
 
 ## Process based example
 
+A simple process takes something from its input and puts it out modified after some service time. We implement that in a function, create input and output channels and some "foo" and "bar" processes from that function operating reciprocally on the channels:  
+
 ```julia
 using Simulate, Printf
 reset!(𝐶) # reset the central clock
 
-# a function with Channels input and output as the first
-# two arguments can be registered as a SimProcess
-# the function is put in a loop, so no need to have a loop here
+# a function with input and output channels as the first
+# two arguments can run as a SimProcess.
+# Then it runs in a loop, so no need to have a loop here
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
     @printf("%5.2f: %s %d took token %d\n", τ(), name, id, token)
-    d = delay!(rand())           # after a delay
+    delay!(rand())               # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create and register 8 SimProcesses
-    process!(𝐶, SimProcess(i, simple, ch1, ch2, "foo", i, +))
-    process!(𝐶, SimProcess(i+1, simple, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create and register 8 SimProcesses (alias 𝐏)
+    process!(𝐏(i, simple, ch1, ch2, "foo", i, +))
+    process!(𝐏(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
-start!(𝐶)     # start all registered processes
+start!(𝐶)     # start all processes, registered to the central clock 𝐶
 put!(ch1, 1)  # put first token into channel 1
 
 sleep(0.1)    # give the processes some time to startup
@@ -81,18 +83,8 @@ julia> include("docs/examples/channels.jl")
  0.55: bar 2 took token 35
  1.21: foo 5 took token 70
  1.33: bar 8 took token 75
- 1.47: foo 1 took token 600
- 1.57: bar 6 took token 601
- 2.07: foo 7 took token 3606
- 3.00: bar 4 took token 3613
- 3.68: foo 3 took token 14452
- 4.33: bar 2 took token 14455
- 5.22: foo 5 took token 28910
- 6.10: bar 8 took token 28915
- 6.50: foo 1 took token 231320
- 6.57: bar 6 took token 231321
- 7.13: foo 7 took token 1387926
- 8.05: bar 4 took token 1387933
+...
+...
  8.90: foo 3 took token 5551732
  9.10: bar 2 took token 5551735
  9.71: foo 5 took token 11103470

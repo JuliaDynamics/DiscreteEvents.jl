@@ -60,6 +60,7 @@ step!
 ## Other internal types and functions
 ```@docs
 SimEvent
+SimCond
 Sample
 sconvert
 simExec

@@ -43,32 +43,14 @@ event!(𝐶, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
 run!(𝐶, 20) # and run the simulation
 ```
 
-## Types and constants
+## The clock
 
 ```@docs
 Clock
-Timing
-SimFunction
-SimExpr
-SimProcess
-SimException
-```
-
-## Central time
-```@docs
 𝐶
-```
-
-## Functions
-
-```@docs
 setUnit!
 τ
 sample_time!
-event!
-sample!
-process!
-delay!
 start!
 incr!
 run!
@@ -76,6 +58,23 @@ stop!
 resume!
 sync!
 reset!
+```
+
+## Events and sampling
+```@docs
+Timing
+SimExpr
+SimFunction
+event!
+sample!
+```
+
+## Processes
+```@docs
+SimProcess
+SimException
+process!
+delay!
 ```
 
 ## Logging

@@ -63,18 +63,8 @@ julia> include("docs/examples/channels.jl")
  0.55: bar 2 took token 35
  1.21: foo 5 took token 70
  1.33: bar 8 took token 75
- 1.47: foo 1 took token 600
- 1.57: bar 6 took token 601
- 2.07: foo 7 took token 3606
- 3.00: bar 4 took token 3613
- 3.68: foo 3 took token 14452
- 4.33: bar 2 took token 14455
- 5.22: foo 5 took token 28910
- 6.10: bar 8 took token 28915
- 6.50: foo 1 took token 231320
- 6.57: bar 6 took token 231321
- 7.13: foo 7 took token 1387926
- 8.05: bar 4 took token 1387933
+...
+...
  8.90: foo 3 took token 5551732
  9.10: bar 2 took token 5551735
  9.71: foo 5 took token 11103470
@@ -87,10 +77,11 @@ For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl
 
 ## Changes in v0.2.0 (development)
 
-- **next**: conditional events with `event!(sim, ex, cond)` and `wait!(cond)` where `cond::Union{SimExpr, Array{SimExpr,1}}`,
-- `event!` can be called without the first clock argument, it then goes to `𝐶`.
+- **next** conditional `wait!(cond)`
+- conditional events with `event!(sim, ex, cond)` are executed when the conditions are met,
+- `event!` can be called without the first clock argument, it then goes to `𝐶`,
 - `event!` takes an expression or a SimFunction or a tuple or an array of them,
 - introduced aliases: `𝐅` for `SimFunction` and `𝐏` for `SimProcess`
 - introduced process-based simulation with `SimProcess` and `process!`,
-- extensive documentation
-- more examples
+- extensive documentation,
+- more examples,
