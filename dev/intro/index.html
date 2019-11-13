@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Introduction · Simulate.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Simulate.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li class="current"><a class="toctext" href>Introduction</a><ul class="internal"><li><a class="toctext" href="#A-first-example-(process-oriented)-1">A first example (process-oriented)</a></li></ul></li><li><a class="toctext" href="../overview/">Overview</a></li><li><a class="toctext" href="../usage/">Usage</a></li><li><a class="toctext" href="../approach/">Modeling approaches</a></li><li><a class="toctext" href="../examples/examples/">Examples</a></li><li><a class="toctext" href="../internals/">Internals</a></li><li><a class="toctext" href="../troubleshooting/">Troubeshooting</a></li><li><a class="toctext" href="../history/">History</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href>Introduction</a></li></ul><a class="edit-page" href="https://github.com/pbayer/Simulate.jl/blob/master/docs/src/intro.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Introduction</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Introduction-1" href="#Introduction-1">Introduction</a></h1><p><code>Simulate.jl</code> supports different approaches to modeling and simulation of discrete event systems (DES). It provides three major schemes:</p><ul><li>event-scheduling scheme,</li><li>process-oriented scheme and</li><li>continuous sampling.</li></ul><p>With them different modeling strategies can be applied.</p><h2><a class="nav-anchor" id="A-first-example-(process-oriented)-1" href="#A-first-example-(process-oriented)-1">A first example (process-oriented)</a></h2><p>A server takes something from its input and puts it out modified after some time. We implement that in a function, create input and output channels and some &quot;foo&quot; and &quot;bar&quot; processes operating reciprocally on the channels:  </p><pre><code class="language-julia">using Simulate, Printf
+reset!(𝐶) # reset the central clock
+
+# a function with input and output channels as the first
+# two arguments can run as a SimProcess.
+# Then it runs in a loop, so no need to have a loop here
+function serve(input::Channel, output::Channel, name, id, op)
+    token = take!(input)         # take something from the input
+    @printf(&quot;%5.2f: %s %d took token %d\n&quot;, τ(), name, id, token)
+    delay!(rand())               # after a delay
+    put!(output, op(token, id))  # put it out with some op applied
+end
+
+ch1 = Channel(32)  # create two channels
+ch2 = Channel(32)
+
+for i in 1:2:8    # create and register 8 SimProcesses (alias 𝐏)
+    process!(𝐏(i, serve, ch1, ch2, &quot;foo&quot;, i, +))
+    process!(𝐏(i+1, serve, ch2, ch1, &quot;bar&quot;, i+1, *))
+end
+
+start!(𝐶)     # start all processes, registered to the central clock 𝐶
+put!(ch1, 1)  # put first token into channel 1
+
+sleep(0.1)    # give the processes some time to startup
+
+run!(𝐶, 10)   # an run for 10 time units</code></pre><p>If we source this program, it runs a simulation:</p><pre><code class="language-julia">julia&gt; include(&quot;docs/examples/channels.jl&quot;)
+ 0.00: foo 7 took token 1
+ 0.25: bar 4 took token 8
+ 0.29: foo 3 took token 32
+ 0.55: bar 2 took token 35
+ 1.21: foo 5 took token 70
+ 1.33: bar 8 took token 75
+...
+...
+ 8.90: foo 3 took token 5551732
+ 9.10: bar 2 took token 5551735
+ 9.71: foo 5 took token 11103470
+ 9.97: bar 8 took token 11103475
+10.09: foo 1 took token 88827800
+&quot;run! finished with 22 clock events, simulation time: 10.0&quot;</code></pre><footer><hr/><a class="previous" href="../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../overview/"><span class="direction">Next</span><span class="title">Overview</span></a></footer></article></body></html>
