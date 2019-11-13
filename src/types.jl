@@ -221,7 +221,7 @@ mutable struct SimProcess
                 arg...; kw...) =
         new(id, nothing, Undefined(), func, input, output, arg, kw)
 end
-
+𝐏 = SimProcess
 
 """
 ```

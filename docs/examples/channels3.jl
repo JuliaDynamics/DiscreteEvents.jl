@@ -1,41 +1,38 @@
 # the channel example using an activity-based approach
 #
+using Simulate, Printf, Random
 
 mutable struct Server
   id::Int64
   name::AbstractString
   input::Channel
   output::Channel
-  op     # operation to take
+  op     # operation
   token  # current token
 
   Server(id, name, input, output, op) = new(id, name, input, output, op, nothing)
 end
 
-cond(en) = !isempty(en.input) && en.state == Idle
+arrive(S::Server) = event!(𝐅(serve, S), 𝐅(isready, S.input))
 
-function serve(en::Server)
-    if isempty(en.input)
-      event!(𝐅(take, en), !isempty(en.input))
-    else
-      en.token = take!(en.input)
-      @printf("%5.2f: %s %d took token %d\n", τ(), en.name, en.id, en.token)
-      event!((𝐅(put!, en.output, token), 𝐅(serve, en)), after, rand())
-    end
+function serve(S::Server)
+    S.token = take!(S.input)
+    @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+    event!((𝐅(put!, S.output, S.op(S.id, S.token)), 𝐅(arrive, S)), after, rand())
 end
 
 reset!(𝐶)
+Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
+s = shuffle(1:8)
 for i in 1:2:8
-    serve(Server(i, "foo", ch1, ch2, +))
-    serve(Server(i+1, "bar", ch2, ch1, *))
+    arrive(Server(s[i], "foo", ch1, ch2, +))
+    arrive(Server(s[i+1], "bar", ch2, ch1, *))
 end
 
 put!(ch1, 1) # put first token into channel 1
 
-# run!(𝐶, 10)
-
-println("conditional events are not yet implemented !!")
+run!(𝐶, 10)

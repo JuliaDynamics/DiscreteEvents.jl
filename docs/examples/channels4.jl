@@ -4,18 +4,17 @@
 # pb, 2019-11-09
 #
 
-using Simulate, Printf
-reset!(𝐶) # reset the central clock
+using Simulate, Printf, Random
 
-# a function with Channels input and output as the first
-# two arguments can be registered as a SimProcess
-# the function is put in a loop, so no need to have a loop here
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
     @printf("%5.2f: %s %d took token %d\n", τ(), name, id, token)
     d = delay!(rand())           # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
+
+reset!(𝐶)
+Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)

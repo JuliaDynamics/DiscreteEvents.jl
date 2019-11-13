@@ -61,3 +61,5 @@ julia> include("docs/examples/channels.jl")
 10.09: foo 1 took token 88827800
 "run! finished with 22 clock events, simulation time: 10.0"
 ```
+
+For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).

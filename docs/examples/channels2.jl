@@ -18,37 +18,37 @@ mutable struct Server
     state::Q
     token  # current token
 
-    Server(id, name, input, output, op) = new(id, name, input, output, op, Idle, nothing)
+    Server(id, name, input, output, op) = new(id, name, input, output, op, Idle(), nothing)
 end
 
-δ(A::Server, ::Idle, ::Arrive) = (A.state=Busy(); event!(𝐅(δ,A,A.state,Leave()), after, rand())
-δ(A::Server, ::Busy, ::Leave) = put(A)
-δ(A::Server, q::Q, σ::Σ) = println(stderr, "$(A.name) $(A.id) undefined transition $q, $σ")
+arrive(A::Server) = event!(𝐅(δ, A, A.state, Arrive()), 𝐅(isready, A.input))
 
-function take(A::Server)
-    if isempty(A.input)
-        event!(𝐅(take, A), !isempty(A.input))
-    else
-        A.token = take!(en.input)
-        @printf("%5.2f: %s %d took token %d\n", τ(), A.name, A.id, A.token)
-        δ(A,Idle(),Arrive())
-    end
+function δ(A::Server, ::Idle, ::Arrive)
+    A.token = take!(A.input)
+    @printf("%5.2f: %s %d took token %d\n", τ(), A.name, A.id, A.token)
+    A.state=Busy()
+    event!(𝐅(δ, A, A.state, Leave()), after, rand())
 end
 
-function put(A::Server)
+function δ(A::Server, ::Busy, ::Leave)
     put!(A.output, A.op(A.id,A.token))
     A.state=Idle()
-    take(A))
+    arrive(A)
 end
 
+δ(A::Server, q::Q, σ::Σ) =               # fallback transition
+        println(stderr, "$(A.name) $(A.id) undefined transition $q, $σ")
+
 reset!(𝐶)
+Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
+s = shuffle(1:8)
 for i in 1:2:8
-    serve(Server(i, "foo", ch1, ch2, +))
-    serve(Server(i+1, "bar", ch2, ch1, *))
+    arrive(Server(s[i], "foo", ch1, ch2, +))
+    arrive(Server(s[i+1], "bar", ch2, ch1, *))
 end
 
 put!(ch1, 1) # put first token into channel 1

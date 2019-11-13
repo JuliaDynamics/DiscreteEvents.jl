@@ -34,27 +34,32 @@ mutable struct Server
   Server(id, name, input, output, op) = new(id, name, input, output, op, nothing)
 end
 
-function take(en::Server)
-    isempty(en.input) || event!(𝐶, SimFunction(take, en), :(!isempty(en.input)))
-    en.token = take!(en.input)
-    @printf("%5.2f: %s %d took token %d\n", τ(), en.name, en.id, en.token)
-    proc(en)
+function take(S::Server)
+    if isready(S.input)
+        S.token = take!(S.input)
+        @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+        event!(𝐅(put, S), after, rand())         # call put after some time
+    else
+        event!(𝐅(take, S), 𝐅(isready, S.input)) # call again if input is ready
+    end
 end
 
-proc(en) = event!(𝐶, SimFunction(put, en), after, rand())
-
-function put(en)
-    put!(en.output, en.op(en.id, en.token))
-    en.token = nothing
-    take(en)
+function put(S::Server)
+    put!(S.output, S.op(S.id, S.token))
+    S.token = nothing
+    take(S)
 end
+
+reset!(𝐶)
+Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
+s = shuffle(1:8)
 for i in 1:2:8
-    take(Server(i, "foo", ch1, ch2, +))
-    take(Server(i+1, "bar", ch2, ch1, *))
+    take(Server(s[i], "foo", ch1, ch2, +))
+    take(Server(s[i+1], "bar", ch2, ch1, *))
 end
 
 put!(ch1, 1) # put first token into channel 1
@@ -65,8 +70,29 @@ run!(𝐶, 10)
 When running, this gives us as output:
 
 ```julia
-julia>
-conditional events are not yet implemented !!
+julia> include("docs/examples/channels1.jl")
+ 0.01: foo 4 took token 1
+ 0.12: bar 6 took token 5
+ 0.29: foo 1 took token 30
+ 0.77: bar 8 took token 31
+ 1.64: foo 2 took token 248
+ 2.26: bar 3 took token 250
+ 2.55: foo 7 took token 750
+ 3.02: bar 5 took token 757
+ 3.30: foo 4 took token 3785
+ 3.75: bar 6 took token 3789
+ 4.34: foo 1 took token 22734
+ 4.60: bar 8 took token 22735
+ 5.31: foo 2 took token 181880
+ 5.61: bar 3 took token 181882
+ 5.90: foo 7 took token 545646
+ 6.70: bar 5 took token 545653
+ 6.91: foo 4 took token 2728265
+ 7.83: bar 6 took token 2728269
+ 8.45: foo 1 took token 16369614
+ 9.26: bar 8 took token 16369615
+ 9.82: foo 2 took token 130956920
+"run! finished with 20 clock events, simulation time: 10.0"
 ```
 
 ## State based modeling
@@ -78,6 +104,8 @@ Here our server has three states: **Idle**, **Busy** and **End** (where *End* do
 Again we have a data structure for the server (containing a state). We define states and events and implement a `δ` transition function with two methods. Thereby we dispatch on states and events. Since we don't implement all combinations of states and events, we may implement a fallback transition.
 
 ```julia
+using Simulate, Printf, Random
+
 abstract type Q end  # states
 struct Idle <: Q end
 struct Busy <: Q end
@@ -86,45 +114,45 @@ struct Arrive <: Σ end
 struct Leave <: Σ end
 
 mutable struct Server
-  id::Int64
-  name::AbstractString
-  input::Channel
-  output::Channel
-  op     # operation to take
-  state::Q
-  token  # current token
+    id::Int64
+    name::AbstractString
+    input::Channel
+    output::Channel
+    op     # operation to take
+    state::Q
+    token  # current token
 
-  Server(id, name, input, output, op) = new(id, name, input, output, op, Idle, nothing)
+    Server(id, name, input, output, op) = new(id, name, input, output, op, Idle(), nothing)
 end
 
-δ(A::Server, ::Idle, ::Arrive) = (A.state=Busy(); event!(𝐶,SimFunction(δ,A,A.state,Leave()),after,rand())
-δ(A::Server, ::Busy, ::Leave) = put(A)
-δ(A::Server, q::Q, σ::Σ) = println(stderr, "$(A.name) $(A.id) undefined transition $q, $σ")
+arrive(A) = event!(𝐅(δ, A, A.state, Arrive()), 𝐅(isready, A.input))
 
-function take(A::Server)
-  if isempty(A.input)
-    event!(𝐶, SimFunction(take, A), !isempty(A.input))
-  else
-    A.token = take!(en.input)
+function δ(A::Server, ::Idle, ::Arrive)
+    A.token = take!(A.input)
     @printf("%5.2f: %s %d took token %d\n", τ(), A.name, A.id, A.token)
-    δ(A,Idle(),Arrive())
-  end
+    A.state=Busy()
+    event!(𝐅(δ, A, A.state, Leave()), after, rand())
 end
 
-function put(A::Server)
-  put!(A.output, A.op(A.id,A.token))
-  A.state=Idle()
-  take(A))
+function δ(A::Server, ::Busy, ::Leave)
+    put!(A.output, A.op(A.id,A.token))
+    A.state=Idle()
+    arrive(A)
 end
+
+δ(A::Server, q::Q, σ::Σ) =               # fallback transition
+        println(stderr, "$(A.name) $(A.id) undefined transition $q, $σ")
 
 reset!(𝐶)
+Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
+s = shuffle(1:8)
 for i in 1:2:8
-    serve(Server(i, "foo", ch1, ch2, +))
-    serve(Server(i+1, "bar", ch2, ch1, *))
+    arrive(Server(s[i], "foo", ch1, ch2, +))
+    arrive(Server(s[i+1], "bar", ch2, ch1, *))
 end
 
 put!(ch1, 1) # put first token into channel 1
@@ -135,8 +163,29 @@ run!(𝐶, 10)
 When running, this gives us as output:
 
 ```julia
-julia>
-conditional events are not yet implemented !!
+julia> include("docs/examples/channels2.jl")
+ 0.01: foo 4 took token 1
+ 0.12: bar 6 took token 5
+ 0.29: foo 1 took token 30
+ 0.77: bar 8 took token 31
+ 1.64: foo 2 took token 248
+ 2.26: bar 3 took token 250
+ 2.55: foo 7 took token 750
+ 3.02: bar 5 took token 757
+ 3.30: foo 4 took token 3785
+ 3.75: bar 6 took token 3789
+ 4.34: foo 1 took token 22734
+ 4.60: bar 8 took token 22735
+ 5.31: foo 2 took token 181880
+ 5.61: bar 3 took token 181882
+ 5.90: foo 7 took token 545646
+ 6.70: bar 5 took token 545653
+ 6.91: foo 4 took token 2728265
+ 7.83: bar 6 took token 2728269
+ 8.45: foo 1 took token 16369614
+ 9.26: bar 8 took token 16369615
+ 9.82: foo 2 took token 130956920
+"run! finished with 20 clock events, simulation time: 10.0"
 ```
 
 ## Activity based modeling
@@ -150,37 +199,37 @@ The **arrive** transition puts a token in the **Queue**. If both places **Idle**
 The server's activity is described by the blue box. Following the Petri net, we should implement a state variable with states Idle and Busy, but we don't need to if we separate the activities in time. We need a data structure for the server and define a function for the activity:
 
 ```julia
+using Simulate, Printf, Random
+
 mutable struct Server
   id::Int64
   name::AbstractString
   input::Channel
   output::Channel
-  op     # operation to take
+  op     # operation
   token  # current token
 
   Server(id, name, input, output, op) = new(id, name, input, output, op, nothing)
 end
 
-cond(en) = !isempty(en.input) && en.state == Idle
+arrive(S::Server) = event!(𝐅(serve, S), 𝐅(isready, S.input))
 
-function serve(en::Server)
-    if isempty(en.input)
-      event!(𝐶, SimFunction(take, en), !isempty(en.input))
-    else
-      en.token = take!(en.input)
-      @printf("%5.2f: %s %d took token %d\n", τ(), en.name, en.id, en.token)
-      event!(𝐶, (SimFunction(put!, en.output, token), SimFunction(serve, en)), after, rand())
-    end
+function serve(S::Server)
+    S.token = take!(S.input)
+    @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+    event!((𝐅(put!, S.output, S.op(S.id, S.token)), 𝐅(arrive, S)), after, rand())
 end
 
 reset!(𝐶)
+Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
+s = shuffle(1:8)
 for i in 1:2:8
-    serve(Server(i, "foo", ch1, ch2, +))
-    serve(Server(i+1, "bar", ch2, ch1, *))
+    arrive(Server(s[i], "foo", ch1, ch2, +))
+    arrive(Server(s[i+1], "bar", ch2, ch1, *))
 end
 
 put!(ch1, 1) # put first token into channel 1
@@ -191,13 +240,34 @@ run!(𝐶, 10)
 When running, this gives us as output:
 
 ```julia
-julia>
-conditional events are not yet implemented !!
+julia> include("docs/examples/channels3.jl")
+ 0.01: foo 4 took token 1
+ 0.12: bar 6 took token 5
+ 0.29: foo 1 took token 30
+ 0.77: bar 8 took token 31
+ 1.64: foo 2 took token 248
+ 2.26: bar 3 took token 250
+ 2.55: foo 7 took token 750
+ 3.02: bar 5 took token 757
+ 3.30: foo 4 took token 3785
+ 3.75: bar 6 took token 3789
+ 4.34: foo 1 took token 22734
+ 4.60: bar 8 took token 22735
+ 5.31: foo 2 took token 181880
+ 5.61: bar 3 took token 181882
+ 5.90: foo 7 took token 545646
+ 6.70: bar 5 took token 545653
+ 6.91: foo 4 took token 2728265
+ 7.83: bar 6 took token 2728269
+ 8.45: foo 1 took token 16369614
+ 9.26: bar 8 took token 16369615
+ 9.82: foo 2 took token 130956920
+"run! finished with 20 clock events, simulation time: 10.0"
 ```
 
 ## Process based modeling
 
-Here we combine it all in a simple function of **take!**-**delay!**-**put!**, like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data:
+Here we combine it all in a simple function of **take!**-**delay!**-**put!** like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data:
 
 ```julia
 reset!(𝐶)
@@ -228,26 +298,38 @@ run!(𝐶, 10)
 and runs like:
 
 ```julia
-julia> include("docs/examples/channels.jl")
+julia> include("docs/examples/channels4.jl")
  0.00: foo 7 took token 1
- 0.25: bar 4 took token 8
- 0.29: foo 3 took token 32
- 0.55: bar 2 took token 35
- 1.21: foo 5 took token 70
- 1.33: bar 8 took token 75
-...
-...
- 8.90: foo 3 took token 5551732
- 9.10: bar 2 took token 5551735
- 9.71: foo 5 took token 11103470
- 9.97: bar 8 took token 11103475
-10.09: foo 1 took token 88827800
-"run! finished with 22 events, simulation time: 10.0"
+ 0.77: bar 4 took token 8
+ 1.71: foo 3 took token 32
+ 2.38: bar 2 took token 35
+ 2.78: foo 5 took token 70
+ 3.09: bar 8 took token 75
+ 3.75: foo 1 took token 600
+ 4.34: bar 6 took token 601
+ 4.39: foo 7 took token 3606
+ 4.66: bar 4 took token 3613
+ 4.77: foo 3 took token 14452
+ 4.93: bar 2 took token 14455
+ 5.41: foo 5 took token 28910
+ 6.27: bar 8 took token 28915
+ 6.89: foo 1 took token 231320
+ 7.18: bar 6 took token 231321
+ 7.64: foo 7 took token 1387926
+ 7.91: bar 4 took token 1387933
+ 8.36: foo 3 took token 5551732
+ 8.94: bar 2 took token 5551735
+ 9.20: foo 5 took token 11103470
+ 9.91: bar 8 took token 11103475
+"run! finished with 21 clock events, simulation time: 10.0"
 ```
+
 
 ## Comparison
 
-All four approaches can be expressed in `Simulate.jl`. Process based modeling seems to be the simplest and the most intuitive approach, while the first three are more complicated. But they are also more structured, which comes in handy for more complicated examples. After all parallel processes are often tricky to control and to debug. But you can combine the approaches and take the best from all worlds.
+The output of the last example is different from the first three approaches because we did not need to shuffle and the shuffling of the processes is done by the scheduler. So if the output depends very much on the sequence of events and you need to have reproducible results, explicitly controlling for the events like in the first three examples is preferable. If you are more interested in statistical evaluation - which is often the case -, the 4th approach is also appropriate.
+
+All four approaches can be expressed in `Simulate.jl`. Process based modeling seems to be the simplest and the most intuitive approach, while the first three are more complicated. But they are also more structured and controllable , which comes in handy for more complicated examples. After all, parallel processes are often tricky to control and to debug. But you can combine the approaches and take the best from all worlds.
 
 ## Combined approach
 

@@ -204,6 +204,7 @@ function reset!(sim::Clock, Δt::Number=0;
         sim.evcount = 0
         sim.Δt = Δt
         sim.events = PriorityQueue{SimEvent,Float64}()
+        sim.cevents = SimCond[]
         sim.processes = Dict{Any, SimProcess}()
     else
         sync!(sim, Clock(Δt, t0=t0, unit=unit))
@@ -379,8 +380,10 @@ event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; sco
 Schedule a conditional event.
 
 It is executed immediately if the conditions are met, else the condition is
-checked at each clock tick Δt. If no sampling rate Δt is setup, a default
-sampling is setup.
+checked at each clock tick Δt. After a conditional event is triggered, it is
+removed from the clock. If no sampling rate Δt is setup, a default
+sampling rate is setup depending on the scale of the remaining simulation time
+``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
 
 # Arguments
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
@@ -590,7 +593,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
     sim.time = sim.end_time
     sim.state = Idle()
     sleep(0.1)
-    "run! finished with $(sim.evcount) events, simulation time: $(sim.time)"
+    "run! finished with $(sim.evcount) clock events, simulation time: $(sim.time)"
 end
 
 """

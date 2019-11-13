@@ -3,8 +3,10 @@
 #
 
 """
-    process!(sim::Clock, p::SimProcess)
+```
+process!(sim::Clock, p::SimProcess)
 
+```
 Register a `SimProcess` to a clock and return the `id` it was registered with.
 It can then be found under `sim.processes[id]`.
 """
@@ -25,6 +27,7 @@ function process!(sim::Clock, p::SimProcess)
     sim.processes[id] = p
     p.id = id
 end
+process!(p::SimProcess) = process!(𝐶, p)
 
 """
     loop(p::SimProcess)
