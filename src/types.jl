@@ -19,16 +19,17 @@ Enumeration type for scheduling events and timed conditions:
 SimFunction(func::Function, arg...; kw...)
 𝐅(func::Function, arg...; kw...)
 ```
-Prepare a function to be called as event in a simulation (bold 𝐅 is `\\bfF`+`Tab`).
+Prepare a function to be called as event in a simulation (𝐅 = \\bfF+tab).
 
 # Arguments
 - `func::Function`: function to be executed at a later simulation time
 - `arg...`: arguments to the function
 - `kw...`: keyword arguments
 
-Be aware that, if the variables stored in a SimFunction are composite types,
-they can change until they are evaluated later by `func`. But that's the nature
-of simulation.
+!!! note
+    Be aware that, if the variables stored in a SimFunction are composite types,
+    they can change until they are evaluated later by `func`. But that's the nature
+    of simulation.
 
 # Example
 ```jldoctest
@@ -185,7 +186,7 @@ SimProcess( id, func::Function, body,
 𝐏(id, func::Function, body,
   input::Channel=Channel(Inf), output::Channel=Channel(Inf), arg...; kw...)
 ```
-Prepare a function to run as a process in a simulation (bold 𝐏 is `\\bfP`+`Tab`).
+Prepare a function to run as a process in a simulation (𝐏 = \\bfP+tab).
 
 # Arguments
 - `id`: some unique identification
@@ -195,12 +196,13 @@ Prepare a function to run as a process in a simulation (bold 𝐏 is `\\bfP`+`Ta
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
-**Note:** A function `f` running as a SimProcess is put in a loop. So it has to
-give back control by e.g. doing a `take!(input)` on its input channel or by calling
-`delay!` etc., which will `yield` it. Otherwise it will after start starve
-everything else!
+!!! note
+    A function `f` running as a SimProcess is put in a loop. So it has to
+    give back control by e.g. doing a `take!(input)` on its input channel or by calling
+    `delay!` etc., which will `yield` it. Otherwise it will after start starve
+    everything else!
 
-#Examples
+# Examples
 ```jldoctest
 ```
 """
@@ -228,14 +230,12 @@ Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)
 Create a new simulation clock.
 
 # Arguments
-- `Δt::Number=0`: time increment
+- `Δt::Number=0`: time increment. If no Δt is given, the simulation doesn't tick,
+    but jumps from event to event. Δt can be set later with `sample_time!`.
 - `t0::Number=0`: start time for simulation
 - `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
-setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
-t0 to a time, e.g. `t0=60s`.
-
-If no Δt is given, the simulation doesn't tick, but jumps from event to event.
-Δt can be set later with `sample_time!`.
+    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
+    t0 to a time, e.g. `t0=60s`.
 
 # Examples
 ```jldoctest

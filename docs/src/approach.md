@@ -1,27 +1,24 @@
 # Approaches to modeling and simulation
 
-`Simulate.jl` aims to support four major approaches to modeling and simulation of **discrete event systems (DES)**:
+`Simulate.jl` supports different approaches to modeling and simulation of **discrete event systems (DES)** and to enable combinations thereof. Therefore it provides three major schemes:
 
-1. **event based**: *events* occur in time and trigger actions causing further events …
-2. **state based**: events cause transitions between  *states*. State actions cause further events …
-3. **activity based**: *activities* occur in time and cause other activities …
-4. **process based**: *processes* wait for and act according to events and their current state …
+- an event-scheduling scheme,
+- a process-oriented scheme and
+- continuous sampling.
 
-Choi and Kang [1](#ref1) have written an entire book about the first three approaches. Basically they can be converted to each other. Cassandras and Lafortune [2](#ref2) call those "the event scheduling scheme" and the 4th approach "the process-oriented simulation scheme" [3](#ref3). There are communities behind the various views and `Simulate.jl` wants to be useful for them all.
+With them different modeling strategies can be applied. We look at how a simple problem can be expressed differently through various modeling approaches:
 
-`Simulate.jl` allows arbitrary Julia functions or expressions to be registered as "events" on the clock's time line and thus enables the first three approaches. Under a few conditions Julia functions can run as "processes" simulating entities in a DES.
+**Simple problem:**<br>
+A server **takes** something from an input, **processes** it for some time and **puts** it out to an output. We have 8 servers in our system, 4 foos and 4 bars, which communicate with each other via two channels.
 
-Then there are **continuous systems**, which are usually modeled by taking an action each time step Δt. We can register expressions or functions to the clock as sampling functions, which then are executed at each clock tick or we can register them as repeating events.  
-
-All approaches fit together: e.g. functions registered as events can communicate with other functions running as processes acting on states and triggering other events or processes to start … Functions operating continuously can modify or evaluate conditions and states or trigger events … Thus we can model and simulate **hybrid systems** combining continuous processes and discrete events. All this gives us an expressive framework for simulation.
 
 ## Event based modeling
 
-A simple server `takes` something from an input, `processes` it for some time and `puts` it out to an output. Here the three actions are seen as events and described in an event graph:
+In this view *events* occur in time and trigger further events. Here the three server actions are seen as events and can be described in an event graph:
 
 ![event graph](images/event.png)
 
-In our example we want to have 8 such entities in our system, 4 foos and 4 bars, which communicate with each other via two channels. Therefore we have to define a data structure for the entity:
+We define a data structure for the server, provide functions for the three actions, create channels and servers and start:
 
 ```julia
 using Simulate, Printf, Random
@@ -74,11 +71,11 @@ conditional events are not yet implemented !!
 
 ## State based modeling
 
-Our server has three states: `Idle`, `Busy` and `End` (where *End* does nothing). On an arrival event it resets its internal clock ``x=0`` and determines the service time ``t_s``, moves to *Busy*, *works* on its input and puts it out when service time is over. Then it goes back to *Idle*. A state transition diagram (Mealy model) of the timed automaton would look like:
+Here our server has three states: **Idle**, **Busy** and **End** (where *End* does nothing). On an arrival event it resets its internal clock ``x=0`` and determines the service time ``t_s``, moves to *Busy*, *works* on its input and puts it out when service time is over. Then it goes back to *Idle*. A state transition diagram (Mealy model) of the timed automaton would look like:
 
 ![timed automaton](images/state.png)
 
-We define states and events and implement a `δ` transition function with two methods. Thereby we dispatch on states and events. Since we don't implement all combinations of states and events, we may implement a fallback transition.
+Again we have a data structure for the server (containing a state). We define states and events and implement a `δ` transition function with two methods. Thereby we dispatch on states and events. Since we don't implement all combinations of states and events, we may implement a fallback transition.
 
 ```julia
 abstract type Q end  # states
@@ -144,11 +141,13 @@ conditional events are not yet implemented !!
 
 ## Activity based modeling
 
-Our server's activity is the processing of the token. A timed Petri net would look like:
+Our server's *activity* is the processing of the token. A timed Petri net would look like:
 
 ![timed petri net](images/activity.png)
 
-The `arrive` transition puts a token in the `Queue`. If both places `Idle` and `Queue` have tokens, the server `take`s them, shifts one to `Busy` and `put`s out two after a timed transition with delay ``v_{put}``. Then it is `Idle` again and the cycle restarts. The serve activity is described by the blue box. Following the Petri net, we should implement a state variable with states Idle and Busy, but we don't need to if we separate the activities in time.
+The **arrive** transition puts a token in the **Queue**. If both places **Idle** and **Queue** have tokens, the server **takes** them, shifts one to **Busy** and **puts** out two after a timed transition with delay ``v_{put}``. Then it is *Idle* again and the cycle restarts.
+
+The server's activity is described by the blue box. Following the Petri net, we should implement a state variable with states Idle and Busy, but we don't need to if we separate the activities in time. We need a data structure for the server and define a function for the activity:
 
 ```julia
 mutable struct Server
@@ -198,7 +197,7 @@ conditional events are not yet implemented !!
 
 ## Process based modeling
 
-Here we combine it all in a simple process of `take!`-`delay!`-`put!` running in a loop. This is much like in the activity based scheme. But implementation is simpler because processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. We don't need to handle events explicitly here and we don't need a server type since each process contains its own data:
+Here we combine it all in a simple function of **take!**-**delay!**-**put!**, like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data:
 
 ```julia
 reset!(𝐶)
@@ -236,18 +235,8 @@ julia> include("docs/examples/channels.jl")
  0.55: bar 2 took token 35
  1.21: foo 5 took token 70
  1.33: bar 8 took token 75
- 1.47: foo 1 took token 600
- 1.57: bar 6 took token 601
- 2.07: foo 7 took token 3606
- 3.00: bar 4 took token 3613
- 3.68: foo 3 took token 14452
- 4.33: bar 2 took token 14455
- 5.22: foo 5 took token 28910
- 6.10: bar 8 took token 28915
- 6.50: foo 1 took token 231320
- 6.57: bar 6 took token 231321
- 7.13: foo 7 took token 1387926
- 8.05: bar 4 took token 1387933
+...
+...
  8.90: foo 3 took token 5551732
  9.10: bar 2 took token 5551735
  9.71: foo 5 took token 11103470
@@ -262,15 +251,18 @@ All four approaches can be expressed in `Simulate.jl`. Process based modeling se
 
 ## Combined approach
 
+Physical systems can be modeled as **continuous systems** (nature does not jump), **discrete systems** (nature jumps here!) or **hybrid systems** (nature jumps sometimes).
+
+While continuous systems are the domain of differential equations, discrete and hybrid systems may be modeled easier with `Simulate.jl` by combining the *event-scheduling*, the *process-based* and the *continuous-sampling* schemes.
+
+### A hybrid system
+
 (empty)
 
-## Hybrid systems
+## Theories
 
-(empty)
+There are some theories about the different approaches (1) event based, (2) state based, (3) activity based and (4) process based. Choi and Kang [^1] have written an entire book about the first three approaches. Basically they can be converted to each other. Cassandras and Lafortune [^2] call those "the event scheduling scheme" and the 4th approach "the process-oriented simulation scheme" [^3]. There are communities behind the various views and `Simulate.jl` wants to be useful for them all.
 
-## References, Footnotes
-
-- <a name="ref1">[1]</a>:  [Choi and Kang: *Modeling and Simulation of Discrete-Event Systems*, Wiley, 2013](https://books.google.com/books?id=0QpwAAAAQBAJ)
-- <a name="ref2">[2]</a>:  [Cassandras and Lafortune: *Introduction to Discrete Event Systems*, Springer, 2008, Ch. 10](https://books.google.com/books?id=AxguNHDtO7MC)
-- <a name="ref3">[3]</a>: to be fair, the 4th approach is called by Choi and Kang "parallel simulation".
-- <a name="ref4">[4]</a>: since the two separate take and put functions are initiated by setting the state to Idle or Busy, we don't in this case really need the state variable.
+[^1]:  [Choi and Kang: *Modeling and Simulation of Discrete-Event Systems*, Wiley, 2013](https://books.google.com/books?id=0QpwAAAAQBAJ)
+[^2]:  [Cassandras and Lafortune: *Introduction to Discrete Event Systems*, Springer, 2008, Ch. 10](https://books.google.com/books?id=AxguNHDtO7MC)
+[^3]: to be fair, the 4th approach is called by Choi and Kang "parallel simulation".

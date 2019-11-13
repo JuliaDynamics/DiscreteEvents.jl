@@ -12,7 +12,7 @@ current clock times to the new unit.
 # Arguments
 - `sim::Clock`
 - `new::FreeUnits`: new is one of `ms`, `s`, `minute` or `hr` or another Unitful
-`Time` unit.
+    `Time` unit.
 
 # Examples
 ```jldoctest
@@ -73,7 +73,8 @@ end
 𝐶
 Clk
 ```
-italic 𝐶 (`\\itC`+Tab) or `Clk` is the central `Clock()`-variable.
+`𝐶` (𝐶=\\itC+tab) or `Clk` is the central simulation clock. Since most
+simulations work with **one** time, 𝐶 should be used for them.
 
 # Examples
 
@@ -95,9 +96,9 @@ julia> 𝐶.time
 """
 ```
 τ(sim::Clock=𝐶)
-tau(sim::Clock=Tau)
+tau(sim::Clock=𝐶)
 ```
-Return the current simulation time (τ=\tau+Tab).
+Return the current simulation time (τ = \\tau+tab).
 
 # Examples
 
@@ -157,11 +158,11 @@ reset a clock
 - `Δt::Number=0`: time increment
 - `t0::Float64=0` or `t0::Time`: start time
 - `hard::Bool=true`: time is reset, all scheduled events and sampling are
-deleted. If hard=false, then only time is reset, event and
-sampling times are adjusted accordingly.
+    deleted. If hard=false, then only time is reset, event and
+    sampling times are adjusted accordingly.
 - `unit=NoUnits`: the Time unit for the clock after reset. If a `Δt::Time` is
-given, its Time unit goes into the clock Time unit. If only t0::Time is given,
-its Time unit goes into the clock time unit.
+    given, its Time unit goes into the clock Time unit. If only t0::Time is given,
+    its Time unit goes into the clock time unit.
 
 # Examples
 
@@ -385,8 +386,8 @@ sampling is setup.
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
 - `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
-or an array or tuple of them. It is true if all expressions or SimFunctions
-therein return true.
+    or an array or tuple of them. It is true if all expressions or SimFunctions
+    therein return true.
 - `scope::Module=Main`: scope for the expressions to be evaluated
 - `cycle::Float64=0.0`: repeat cycle time for an event
 

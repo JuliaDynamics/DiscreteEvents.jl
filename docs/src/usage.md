@@ -1,5 +1,7 @@
 # User guide
 
+## Installation
+
 ```@meta
 CurrentModule = Simulate
 ```
@@ -16,65 +18,80 @@ The package is then loaded with
 using Simulate
 ```
 
-## Modeling and simulation
+## Modeling
 
-A virtual `Clock` allows to schedule Julia functions or expressions as timed events or as sampling actions, which occur at predefined clock ticks. When we `run` the `Clock`, it fires the events at their scheduled times and executes the sampling actions at each tick.
+Before we can do a simulation, we have to develop a model. Apart from Julia expressions and functions we have four elements here:
 
-### Silly example
-
-```@repl usage
-m = @__MODULE__ # catching the current module is needed for documentation
-using Printf
-comm = ["Hi, nice to meet you!", "How are you?", "Have a nice day!"];
-greet(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
-function foo(n) # 1st passerby
-    greet("Foo", n)
-    event!(𝐶, :(bar($n)), after, 2*rand(), scope = m)
-end
-function bar(n) # 2nd passerby
-    greet("Bar", n)
-    if n < 3
-       event!(𝐶, :(foo($n+1)), after, 2*rand(), scope = m)
-    else
-       println("bye bye")
-    end
-end
-event!(𝐶, :(foo(1)), at, 10*rand(), scope = m); # create an event for a start
-run!(𝐶, 20) # and run the simulation
-```
+- a clock,
+- events,
+- processes and
+- sampling
 
 ## The clock
 
+The clock is central to any model and simulation, since it establishes the timeline. Here the clock contains not only the time, but also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt.
+
 ```@docs
 Clock
+```
+
+We introduce a central clock 𝐶, can set time units and query the current simulation time.
+
+```@docs
 𝐶
 setUnit!
 τ
+```
+
+## Events
+
+Julia expressions and functions can be scheduled on the clock's timeline to be executed later at a given simulation time or under given conditions which may become true during simulation. Thereby expressions and functions can be mixed or given in an array or tuple to an event or to a event condition.
+
+```@docs
+Timing
+SimExpr
+SimFunction
+event!
+```
+
+## Processes
+
+Julia functions can be registered and run as processes if they have an input and an output channel as their first two arguments. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
+
+```@docs
+SimProcess
+SimException
+process!
+delay!
+```
+
+!!! note
+    Functions running as processes operate in a loop. They have to give back control
+    to other processes by e.g. doing a `take!(input)` on its input channel or by calling
+    `delay!` etc., which will `yield` them. Otherwise they will after start starve
+    everything else!
+
+## Continuous sampling
+
+Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt.
+
+```@docs
 sample_time!
+sample!
+```
+
+## Running simulations
+
+If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are executed … Thus we run a simulation. We can also step through a simulation or stop and resume a clock, reset ist and so on.
+
+```@docs
+reset!
 start!
 incr!
 run!
 stop!
 resume!
 sync!
-reset!
-```
-
-## Events and sampling
-```@docs
-Timing
-SimExpr
-SimFunction
-event!
-sample!
-```
-
-## Processes
-```@docs
-SimProcess
-SimException
-process!
-delay!
 ```
 
 ## Logging
