@@ -27,7 +27,7 @@ Internally `Simulate` clocks work with a `Float64` time and it works per default
 
 At the moment I find it unconvenient to work with units if you trace simulation times in a table or you do plots. It seems easier not to use them as long you need automatic time conversion in your simulation projects.
 
-## Functions and expressions as Events
+## Events
 
 Julia functions or expressions are scheduled as events on the clock's time line:
 
@@ -39,16 +39,7 @@ Julia functions or expressions are scheduled as events on the clock's time line:
 
 Events are called later as we `step` or `run` through the simulation. They may at runtime create further events and thus cause chains of events to be scheduled and called during simulation.
 
-## Sampling expressions
-
-If we provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
-
-- `sample_time!(sim::Clock, Δt::Number)`: set the clock's sampling time starting from now (`τ(sim)`).
-- `sample!(sim::Clock, ex::Union{Expr,SimFunction})`: enqueue a function or expression for sampling.
-
-Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
-
-## Functions as processes
+## Processes
 
 If they match certain conditions, functions can be started as processes, which
 wait for inputs, respond accordingly and create some output.
@@ -60,11 +51,20 @@ wait for inputs, respond accordingly and create some output.
 - `delay!(sim::Clock, t::Number)`: a process can call for a delay, which creates
 an event on the clock's timeline and wakes up the process after the given `t`.
 
-!!! note
-    A function `func` running as a `SimProcess` is put in a loop. So it has to
+!!! warning
+    A function running as a `SimProcess` is put in a loop. So it has to
     give back control by e.g. doing a `take!(input)` on its input channel or by calling
     `delay!` etc., which will `yield` it. Otherwise it will after start starve
     everything else!
+
+## Sampling
+
+If we provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
+
+- `sample_time!(sim::Clock, Δt::Number)`: set the clock's sampling time starting from now (`τ(sim)`).
+- `sample!(sim::Clock, ex::Union{Expr,SimFunction})`: enqueue a function or expression for sampling.
+
+Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
 
 ## Running a simulation
 

@@ -22,7 +22,7 @@ export  Logger, switch!, setup!, init!, record!, clear!,
         sample_time!, event!, sample!,
         incr!, run!, stop!, resume!, reset!, sync!,
         𝐶, Clk, Timing, at, after, every, before,
-        SimException, SimProcess, 𝐏, process!, start!, delay!
+        SimException, SimProcess, 𝐏, process!, start!, delay!, wait!
 
 Random.seed!(123)
 𝐶.state == Undefined() ? init!(𝐶) : nothing

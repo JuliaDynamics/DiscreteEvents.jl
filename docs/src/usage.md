@@ -47,12 +47,50 @@ setUnit!
 
 Julia expressions and functions can be scheduled on the clock's timeline to be executed later at a given simulation time or under given conditions which may become true during simulation. Thereby expressions and functions can be mixed or given in an array or tuple to an event or to a event condition.
 
+### Expressions and functions as events and conditions
+
 ```@docs
 Timing
-SimExpr
 SimFunction
-event!
+SimExpr
 ```
+
+SimFunctions and expressions can be given to events on their own  or in arrays or tuples, even mixed:
+
+```julia
+function events()
+    event!(:(i += 1), after, 10)  # one expression
+    event!(𝐅(f, 1, 2, 3, diff=pi), every, 1)  # one SimFunction
+    event!((:(i += 1), 𝐅(g, j)), [:(τ() ≥ 50), 𝐅(isready, input), :(a ≤ 10)]) # two SimExpr under three conditions
+end
+```
+
+All given expressions or functions are then evaluated at a certain event or when checking for conditions.
+
+### Timed events
+
+SimFunctions and expressions can be scheduled for execution at given clock times.
+
+```@docs
+event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)
+```
+
+As a convenience the timing can be also choosen using a `Timing` like `at`, `after` or `every` `t`.
+
+```@docs
+event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Timing, ::Number)
+```
+
+### Conditional events
+
+They are evaluated at each clock tick (like sampling functions) and are fired when all conditions are met.
+
+```@docs
+event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})
+```
+
+!!! note
+    Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. ``:(τ() ≥ 100)`` is preferable to ``:(τ() == 100)``.
 
 ## Processes
 
@@ -62,14 +100,24 @@ Julia functions can be registered and run as processes if they have an input and
 SimProcess
 SimException
 process!
-delay!
+start!
+stop!(::SimProcess, ::SEvent)
 ```
 
-!!! note
-    Functions running as processes operate in a loop. They have to give back control
-    to other processes by e.g. doing a `take!(input)` on its input channel or by calling
-    `delay!` etc., which will `yield` them. Otherwise they will after start starve
-    everything else!
+### Delay and wait …
+
+Processes must not handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. This usually comes in handy. They are then suspended until certain conditions are met or requested resources are available.
+
+```@docs
+delay!
+wait!
+```
+
+!!! warning
+    `SimProcess`es operate in a loop. They have to give back control
+    to other processes by calling suspending functions, which will `yield()` them. Otherwise they will after start starve everything else!
+
+    On the other hand, functions running in the `Main` scope **must not call** those functions since they may suspend the main program.
 
 ## Continuous sampling
 
@@ -86,10 +134,9 @@ If we run the clock, events are triggered, conditions are evaluated, sampling is
 
 ```@docs
 reset!
-start!
 incr!
 run!
-stop!
+stop!(::Clock)
 resume!
 sync!
 ```

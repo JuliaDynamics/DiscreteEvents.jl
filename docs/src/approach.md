@@ -1,6 +1,6 @@
 # Approaches to modeling and simulation
 
-`Simulate.jl` supports different approaches to modeling and simulation of **discrete event systems (DES)** and to enable combinations thereof. Therefore it provides three major schemes:
+`Simulate.jl` supports different approaches to modeling and simulation of **discrete event systems (DES)**. It provides three major schemes:
 
 - an event-scheduling scheme,
 - a process-oriented scheme and

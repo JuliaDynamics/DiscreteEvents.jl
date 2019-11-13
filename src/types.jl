@@ -19,7 +19,7 @@ Enumeration type for scheduling events and timed conditions:
 SimFunction(func::Function, arg...; kw...)
 𝐅(func::Function, arg...; kw...)
 ```
-Prepare a function to be called as event in a simulation (𝐅 = \\bfF+tab).
+Prepare a function for being called as event in a simulation (𝐅 = \\bfF+tab).
 
 # Arguments
 - `func::Function`: function to be executed at a later simulation time
@@ -75,7 +75,7 @@ struct SimFunction
 
     SimFunction(func, arg...; kw...) = new(func, arg, kw)
 end
-𝐅 = SimFunction
+const 𝐅 = SimFunction
 
 """
     SimExpr = Union{Expr, SimFunction}
@@ -221,7 +221,7 @@ mutable struct SimProcess
                 arg...; kw...) =
         new(id, nothing, Undefined(), func, input, output, arg, kw)
 end
-𝐏 = SimProcess
+const 𝐏 = SimProcess
 
 """
 ```

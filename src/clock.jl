@@ -73,8 +73,8 @@ end
 𝐶
 Clk
 ```
-`𝐶` (𝐶=\\itC+tab) or `Clk` is the central simulation clock. Since most
-simulations work with **one** time, 𝐶 should be used for them.
+`𝐶` (𝐶 = \\itC+tab) or `Clk` is the central simulation clock. Since most
+simulations work with **one** time, they should use 𝐶 for time keeping.
 
 # Examples
 
@@ -91,7 +91,7 @@ julia> 𝐶.time
 0.0
 ```
 """
-𝐶 = Clk = Clock()
+const 𝐶 = Clk = Clock()
 
 """
 ```
@@ -114,7 +114,7 @@ julia> tau() # alias, gives the central time
 ```
 """
 τ(sim::Clock=𝐶) = sim.time*sim.unit
-tau = τ
+const tau = τ
 
 """
 ```
@@ -269,8 +269,6 @@ function checktime(sim::Clock, t::Number)::Float64
 end
 
 """
-### Event
-
 ```
 event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
 event!(ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)
@@ -325,13 +323,11 @@ event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::
             event!(𝐶, ex, t, scope=scope, cycle=cycle)
 
 """
-### Timed event
-
 ```
 event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
 event!(ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)
 ```
-Schedule a timed event.
+Schedule a timed event, that is an event with a timing.
 
 # Arguments
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
@@ -372,7 +368,6 @@ event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Ma
             event!(𝐶, ex, T, t; scope=scope)
 
 """
-### Conditional event
 ```
 event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
 event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)

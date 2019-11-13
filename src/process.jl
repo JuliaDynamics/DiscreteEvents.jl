@@ -69,13 +69,16 @@ function step!(p::SimProcess, ::Idle, ::Stop)
 end
 
 """
-    delay!(sim::Clock, t::Number)
+```
+delay!(sim::Clock, t::Number)
+delay!(t::Number)
+```
+Delay a process for a time interval `t` on the clock `sim`. Suspend the calling
+process until being reactivated by the clock at the appropriate time.
 
-delay the calling process or function for a time `t` on the clock `sim`.
-
-Other methods:
-
-- `delay!(t::Number)`: equivalent to `delay!(𝐶, t)`
+# Arguments
+- `sim::Clock`: clock, if no clock is given, the delay goes to `𝐶`.
+- `t::Number`: the time interval for the delay.
 """
 function delay!(sim::Clock, t::Number)
     c = Channel(0)
@@ -84,6 +87,29 @@ function delay!(sim::Clock, t::Number)
 end
 delay!(t::Number) = delay!(𝐶, t)
 
+"""
+```
+wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+```
+Wait on a clock for a condition to become true. Suspend the calling process
+until the given condition is true.
+
+# Arguments
+- `sim::Clock`: clock, if no clock is given, the delay goes to `𝐶`.
+- `cond::Union{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
+    or an array or tuple of them. It is true if all expressions or SimFunctions
+    therein return true.
+- `scope::Module=Main`: evaluation scope for given expressions
+"""
+function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+    c = Channel(0)
+    event!(sim, SimFunction(put!, c, 1), cond, scope=scope)
+    take!(c)
+end
+wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main) = wait!(𝐶, cond, scope=scope)
+
+"start all registered processes."
 function step!(sim::Clock, ::Idle, ::Start)
     for p ∈ values(sim.processes)
         startup!(p)
@@ -98,8 +124,11 @@ Start all registered processes in a clock.
 start!(sim::Clock) = step!(sim, sim.state, Start())
 
 """
-    stop!(p::SimProcess)
+    stop!(p::SimProcess, ev::SEvent, value=nothing)
 
 Stop a `SimProcess` by throwing a `SimException` to it.
 """
-stop!(p::SimProcess)
+function stop!(p::SimProcess, ev::SEvent, value=nothing)
+    schedule(p.task, SimException(ev, value), error=true)
+    yield()
+end
