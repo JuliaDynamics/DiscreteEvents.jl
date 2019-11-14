@@ -206,6 +206,7 @@ function reset!(sim::Clock, Δt::Number=0;
         sim.events = PriorityQueue{SimEvent,Float64}()
         sim.cevents = SimCond[]
         sim.processes = Dict{Any, SimProcess}()
+        sim.sexpr = Sample[]
     else
         sync!(sim, Clock(Δt, t0=t0, unit=unit))
     end
@@ -440,16 +441,19 @@ function sample_time!(sim::Clock, Δt::Number)
 end
 
 """
-    sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main)
-
+```
+sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main)
+sample!(ex::Union{Expr, SimFunction}; scope::Module=Main)
+```
 enqueue an expression for sampling.
 # Arguments
-- `sim::Clock`
+- `sim::Clock`: if no clock is given it samples on 𝐶
 - `ex::Union{Expr, SimFunction}`: an expression or function
 - `scope::Module=Main`: optional, a scope for the expression to be evaluated in
 """
 sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main) =
                             push!(sim.sexpr, Sample(ex, scope))
+sample!(ex::Union{Expr, SimFunction}; scope::Module=Main) = sample!(𝐶, ex, scope=scope)
 
 """
     step!(sim::Clock, ::Undefined, ::Init)

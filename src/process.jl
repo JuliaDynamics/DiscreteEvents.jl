@@ -5,7 +5,6 @@
 """
 ```
 process!(sim::Clock, p::SimProcess)
-
 ```
 Register a `SimProcess` to a clock and return the `id` it was registered with.
 It can then be found under `sim.processes[id]`.
@@ -21,7 +20,7 @@ function process!(sim::Clock, p::SimProcess)
             s = split(id, "#")
             id = length(s) > 1 ? chop(id)*string(s[end][end]+1) : id*"#1"
         else
-            error("process id $id is duplicate, cannot convert!")
+            throw(ArgumentError("process id $id is duplicate, cannot convert!"))
         end
     end
     sim.processes[id] = p
@@ -58,10 +57,13 @@ function startup!(p::SimProcess)
     yield() # let the process start
 end
 
+"start a new SimProcess"
 step!(p::SimProcess, ::Undefined, ::Start) = startup!(p)
 
+"start a halted SimProcess"
 step!(p::SimProcess, ::Halted, ::Resume) = startup!(p)
 
+"stop a SimProcess"
 function step!(p::SimProcess, ::Idle, ::Stop)
     schedule(p.task, SimException(Stop()))
     yield()
@@ -103,9 +105,13 @@ until the given condition is true.
 - `scope::Module=Main`: evaluation scope for given expressions
 """
 function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
-    c = Channel(0)
-    event!(sim, SimFunction(put!, c, 1), cond, scope=scope)
-    take!(c)
+    if all(simExec(sconvert(cond)))   # all conditions met
+        return         # return immediately
+    else
+        c = Channel(0)
+        event!(sim, SimFunction(put!, c, 1), cond, scope=scope)
+        take!(c)
+    end
 end
 wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main) = wait!(𝐶, cond, scope=scope)
 

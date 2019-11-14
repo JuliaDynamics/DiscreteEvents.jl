@@ -1,8 +1,3 @@
-# the channel example using an event-based approach
-#
-
-using Simulate, Printf, Random
-
 mutable struct Server
   id::Int64
   name::AbstractString
@@ -14,10 +9,12 @@ mutable struct Server
   Server(id, name, input, output, op) = new(id, name, input, output, op, nothing)
 end
 
+A = []
+
 function take(S::Server)
     if isready(S.input)
         S.token = take!(S.input)
-        @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+        push!(A, (τ(), S.name, S.id, S.token))
         event!(𝐅(put, S), after, rand())         # call put after some time
     else
         event!(𝐅(take, S), 𝐅(isready, S.input)) # call again if input is ready
@@ -43,5 +40,10 @@ for i in 1:2:8
 end
 
 put!(ch1, 1) # put first token into channel 1
-
 run!(𝐶, 10)
+
+@test length(A) > 20
+p = [i[3] for i in A]
+for i in 1:8
+    @test i ∈ p  # all processes did something
+end
