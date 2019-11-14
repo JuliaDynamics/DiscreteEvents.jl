@@ -9,15 +9,13 @@ A new⭐ Julia package for **discrete event simulation**.
 [![codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/pbayer/Simulate.jl?branch=master)
 
-**Development Documentation** is at https://pbayer.github.io/Simulate.jl/dev
-
-`Simulate.jl` supports different approaches to modeling and simulation of discrete event systems (DES). It provides three major schemes:
+`Simulate.jl` provides three major schemes for modeling and simulation of discrete event systems:
 
 - an event-scheduling scheme,
 - a process-oriented scheme and
 - continuous sampling.
 
-With them different modeling strategies can be applied.
+With them different approaches and modeling strategies can be used.
 
 ## A first example
 
@@ -73,6 +71,8 @@ julia> include("docs/examples/channels.jl")
 "run! finished with 22 clock events, simulation time: 10.0"
 ```
 
+For further examples see the [documentation](https://pbayer.github.io/Simulate.jl/dev),  [notebooks](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks) or [example programs](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples).
+
 ## Installation
 
 The development (and sometimes not so stable) version can be installed with:
@@ -88,7 +88,5 @@ pkg> add Simulate
 ```
 
 Please use, test and help to develop `Simulate.jl`! 😄
-
-For further examples see [`docs/examples`](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples) or [`docs/notebooks`](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks).
 
 **Author:** Paul Bayer
