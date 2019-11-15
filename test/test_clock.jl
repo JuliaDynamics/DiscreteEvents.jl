@@ -10,10 +10,10 @@ g(a) = a+4
 conv = Simulate.sconvert
 @test isa(conv(ex1), Array{SimExpr,1})
 @test isa(conv([ex1, ex2]), Array{SimExpr,1})
-@test isa(conv(𝐅(f,1)), Array{SimExpr,1})
-@test isa(conv([𝐅(f,1),𝐅(g,1)]), Array{SimExpr,1})
-@test isa(conv([ex1,𝐅(f,1),𝐅(g,1),ex2]), Array{SimExpr,1})
-@test isa(conv((ex1,𝐅(f,1),𝐅(g,1),ex2)), Array{SimExpr,1})
+@test isa(conv(SF(f,1)), Array{SimExpr,1})
+@test isa(conv([SF(f,1),SF(g,1)]), Array{SimExpr,1})
+@test isa(conv([ex1,SF(f,1),SF(g,1),ex2]), Array{SimExpr,1})
+@test isa(conv((ex1,SF(f,1),SF(g,1),ex2)), Array{SimExpr,1})
 
 # one expression
 ev = Simulate.SimEvent(conv(:(1+1)), Main, 10, 0)
@@ -26,21 +26,21 @@ ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 15, 0)
 @test ev.t == 15
 
 # one SimFunction
-ev = Simulate.SimEvent(conv(𝐅(f, 1)), Main, 10, 0)
+ev = Simulate.SimEvent(conv(SF(f, 1)), Main, 10, 0)
 @test Simulate.simExec(ev.ex) == (4,)
 
 # two SimFunctions
-ev = Simulate.SimEvent(conv([𝐅(f, 1), 𝐅(g, 1)]), Main, 10, 0)
+ev = Simulate.SimEvent(conv([SF(f, 1), SF(g, 1)]), Main, 10, 0)
 @test Simulate.simExec(ev.ex) == (4, 5)
 
 # expressions and SimFunctions mixed in an array
-ev = Simulate.SimEvent(conv([:(1+1), 𝐅(g,2), :(1+2), 𝐅(f, 1)]), Main, 10, 0)
+ev = Simulate.SimEvent(conv([:(1+1), SF(g,2), :(1+2), SF(f, 1)]), Main, 10, 0)
 @test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
 # expressions and SimFunctions mixed in a tuple
-ev = Simulate.SimEvent(conv((:(1+1), 𝐅(g,2), :(1+2), 𝐅(f, 1))), Main, 10, 0)
+ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
 @test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)

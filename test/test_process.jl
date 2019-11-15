@@ -12,13 +12,13 @@ incr(c1::Channel, c2::Channel, a) = (a+1, yield())
 a = [1,1,3.0,3.0,"A","A","A","A"]
 b = [1,2,3.0,nextfloat(3.0),"A","A#1","A#2","A#3"]
 for i in 1:8
-    @test process!(𝐏(a[i], incr, ch1, ch2, 1)) == b[i]
+    @test process!(SP(a[i], incr, ch1, ch2, 1)) == b[i]
 end
 for i in 1:8
     @test 𝐶.processes[b[i]].id == b[i]
 end
-@test process!(𝐏((1,2), incr, ch1, ch2, 1)) == (1,2)
-@test_throws ArgumentError process!(𝐏((1,2), incr, ch1, ch2, 1))
+@test process!(SP((1,2), incr, ch1, ch2, 1)) == (1,2)
+@test_throws ArgumentError process!(SP((1,2), incr, ch1, ch2, 1))
 
 println("... test channel 4 example ...")
 A = []
@@ -33,9 +33,9 @@ end
 reset!(𝐶)
 Random.seed!(123)
 
-for i in 1:2:8    # create and register 8 SimProcesses 𝐏
-    process!(𝐏(i, simple, ch1, ch2, "foo", i, +))
-    process!(𝐏(i+1, simple, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create and register 8 SimProcesses SP
+    process!(SP(i, simple, ch1, ch2, "foo", i, +))
+    process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
 @test length(𝐶.processes) == 8
@@ -78,18 +78,18 @@ checka(x) = a == x
 checkb(x) = b ≥ x
 
 function testwait(c1::Channel, c2::Channel)
-    wait!((𝐅(checktime, 2), 𝐅(checka, 1)))
+    wait!((SF(checktime, 2), SF(checka, 1)))
     push!(res, (τ(), 1, a, b))
-    wait!(𝐅(isa, a, Int)) # must return immediately
+    wait!(SF(isa, a, Int)) # must return immediately
     push!(res, (τ(), 2, a, b))
-    sample!(𝐅(incb))
-    wait!(𝐅(checkb, 201))
+    sample!(SF(incb))
+    wait!(SF(checkb, 201))
     push!(res, (τ(), 3, a, b))
     take!(c1)
 end
 
 reset!(𝐶)
-process!(𝐏(1, testwait, ch1, ch2))
+process!(SP(1, testwait, ch1, ch2))
 start!(𝐶)
 
 run!(𝐶, 10)

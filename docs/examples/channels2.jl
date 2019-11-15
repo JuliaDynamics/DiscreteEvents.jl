@@ -21,13 +21,13 @@ mutable struct Server
     Server(id, name, input, output, op) = new(id, name, input, output, op, Idle(), nothing)
 end
 
-arrive(A::Server) = event!(𝐅(δ, A, A.state, Arrive()), 𝐅(isready, A.input))
+arrive(A::Server) = event!(SF(δ, A, A.state, Arrive()), SF(isready, A.input))
 
 function δ(A::Server, ::Idle, ::Arrive)
     A.token = take!(A.input)
     @printf("%5.2f: %s %d took token %d\n", τ(), A.name, A.id, A.token)
     A.state=Busy()
-    event!(𝐅(δ, A, A.state, Leave()), after, rand())
+    event!(SF(δ, A, A.state, Leave()), after, rand())
 end
 
 function δ(A::Server, ::Busy, ::Leave)

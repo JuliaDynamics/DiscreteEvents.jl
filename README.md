@@ -38,9 +38,9 @@ end
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create and register 8 SimProcesses (alias 𝐏)
-    process!(𝐏(i, serve, ch1, ch2, "foo", i, +))
-    process!(𝐏(i+1, serve, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create and register 8 SimProcesses (alias SP)
+    process!(SP(i, serve, ch1, ch2, "foo", i, +))
+    process!(SP(i+1, serve, ch2, ch1, "bar", i+1, *))
 end
 
 start!(𝐶)     # start all processes, registered to the central clock 𝐶

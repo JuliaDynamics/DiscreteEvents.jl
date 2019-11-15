@@ -19,9 +19,9 @@ Random.seed!(123)
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create and register 8 SimProcesses 𝐏
-    process!(𝐏(i, simple, ch1, ch2, "foo", i, +))
-    process!(𝐏(i+1, simple, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create and register 8 SimProcesses SP
+    process!(SP(i, simple, ch1, ch2, "foo", i, +))
+    process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
 start!(𝐶)     # start all registered processes

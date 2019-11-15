@@ -52,6 +52,7 @@ Julia expressions and functions can be scheduled on the clock's timeline to be e
 ```@docs
 Timing
 SimFunction
+@SF
 SimExpr
 ```
 
@@ -60,8 +61,8 @@ SimFunctions and expressions can be given to events on their own  or in arrays o
 ```julia
 function events()
     event!(:(i += 1), after, 10)  # one expression
-    event!(𝐅(f, 1, 2, 3, diff=pi), every, 1)  # one SimFunction
-    event!((:(i += 1), 𝐅(g, j)), [:(τ() ≥ 50), 𝐅(isready, input), :(a ≤ 10)]) # two SimExpr under three conditions
+    event!(SF(f, 1, 2, 3, diff=pi), every, 1)  # one SimFunction
+    event!((:(i += 1), SF(g, j)), [:(τ() ≥ 50), SF(isready, input), :(a ≤ 10)]) # two SimExpr under three conditions
 end
 ```
 
@@ -92,12 +93,24 @@ event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})
 !!! note
     Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. ``:(τ() ≥ 100)`` is preferable to ``:(τ() == 100)``.
 
+There are some helper functions and macros for defining conditions. It is usually
+more convenient to use the macros since the generate the necessary SimFunctions
+directly:
+
+```@docs
+tauis
+@tauis
+checkval
+@checkval
+```
+
 ## Processes
 
 Julia functions can be registered and run as processes if they have an input and an output channel as their first two arguments. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
 
 ```@docs
 SimProcess
+@SP
 SimException
 process!
 start!

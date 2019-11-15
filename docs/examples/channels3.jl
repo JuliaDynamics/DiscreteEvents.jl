@@ -13,12 +13,12 @@ mutable struct Server
   Server(id, name, input, output, op) = new(id, name, input, output, op, nothing)
 end
 
-arrive(S::Server) = event!(𝐅(serve, S), 𝐅(isready, S.input))
+arrive(S::Server) = event!(SF(serve, S), SF(isready, S.input))
 
 function serve(S::Server)
     S.token = take!(S.input)
     @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
-    event!((𝐅(put!, S.output, S.op(S.id, S.token)), 𝐅(arrive, S)), after, rand())
+    event!((SF(put!, S.output, S.op(S.id, S.token)), SF(arrive, S)), after, rand())
 end
 
 reset!(𝐶)

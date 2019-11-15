@@ -17,9 +17,9 @@ Enumeration type for scheduling events and timed conditions:
 """
 ```
 SimFunction(func::Function, arg...; kw...)
-𝐅(func::Function, arg...; kw...)
+SF(func::Function, arg...; kw...)
 ```
-Prepare a function for being called as event in a simulation (𝐅 = \\bfF+tab).
+Prepare a function for being called as event in a simulation.
 
 # Arguments
 - `func::Function`: function to be executed at a later simulation time
@@ -75,7 +75,7 @@ struct SimFunction
 
     SimFunction(func, arg...; kw...) = new(func, arg, kw)
 end
-const 𝐅 = SimFunction
+const SF = SimFunction
 
 """
     SimExpr = Union{Expr, SimFunction}
@@ -133,14 +133,14 @@ create a condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
 # Arguments
-- `cond::Array{SimExpr, 1}`: Expr or 𝐅s to be evaluated as conditions
-- `ex::Array{SimExpr, 1}`: Expr or 𝐅s to be evaluated if conditions are all true
+- `cond::Array{SimExpr, 1}`: Expr or SFs to be evaluated as conditions
+- `ex::Array{SimExpr, 1}`: Expr or SFs to be evaluated if conditions are all true
 - `scope::Module`: evaluation scope
 """
 struct SimCond
-    "Expr or 𝐅s to be evaluated as conditions"
+    "Expr or SFs to be evaluated as conditions"
     cond::Array{SimExpr, 1}
-    "Expr or 𝐅s to be evaluated if all conditions are True"
+    "Expr or SFs to be evaluated if all conditions are True"
     ex::Array{SimExpr, 1}
     "evaluation scope"
     scope::Module
@@ -183,10 +183,10 @@ end
 SimProcess( id, func::Function, body,
             input::Channel=Channel(Inf), output::Channel=Channel(Inf),
             arg...; kw...)
-𝐏(id, func::Function, body,
+SP(id, func::Function, body,
   input::Channel=Channel(Inf), output::Channel=Channel(Inf), arg...; kw...)
 ```
-Prepare a function to run as a process in a simulation (𝐏 = \\bfP+tab).
+Prepare a function to run as a process in a simulation.
 
 # Arguments
 - `id`: some unique identification
@@ -221,7 +221,7 @@ mutable struct SimProcess
                 arg...; kw...) =
         new(id, nothing, Undefined(), func, input, output, arg, kw)
 end
-const 𝐏 = SimProcess
+const SP = SimProcess
 
 """
 ```
