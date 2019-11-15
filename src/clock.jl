@@ -202,6 +202,7 @@ function reset!(sim::Clock, Δt::Number=0;
         sim.tev = t0
         sim.end_time = t0
         sim.evcount = 0
+        sim.scount = 0
         sim.Δt = Δt
         sim.events = PriorityQueue{SimEvent,Float64}()
         sim.cevents = SimCond[]
@@ -241,7 +242,7 @@ function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
     function sexec(x::SimExpr)
         if x isa SimFunction
             ret = x.func(x.arg...; x.kw...)
-            yield()  # to an eventually triggered process
+#            yield()  # to an eventually triggered process
         else
             return Core.eval(m, x)
         end
@@ -519,16 +520,13 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
-        cond = []
-        for c ∈ sim.cevents
-            if all(simExec(c.cond))
-                push!(cond, true)
-                simExec(c.ex)
-            else
-                push!(cond, false)
-            end
+        cond = [all(simExec(c.cond)) for c in sim.cevents]
+        if any(cond)
+            ex = sim.cevents[cond]
+            sim.cevents = sim.cevents[.!cond]
+            [simExec(c.ex) for c in ex]
         end
-        any(cond) ? sim.cevents = sim.cevents[.!cond] : nothing
+        sim.scount +=1
     end
 
     if (sim.tev ≤ sim.time) && (length(sim.events) ≥ 1)
@@ -559,7 +557,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     else
         println(stderr, "step!: nothing to evaluate")
     end
-    length(sim.processes) == 0 || sleep(0.01) # let processes run
+    length(sim.processes) == 0 || yield() # let processes run
 end
 
 """
@@ -592,7 +590,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
     sim.time = sim.end_time
     sim.state = Idle()
     sleep(0.1)
-    "run! finished with $(sim.evcount) clock events, simulation time: $(sim.time)"
+    "run! finished with $(sim.evcount) clock events, $(sim.scount) sample steps, simulation time: $(sim.time)"
 end
 
 """

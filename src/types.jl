@@ -274,6 +274,8 @@ mutable struct Clock <: SEngine
     end_time::Float64
     "event evcount"
     evcount::Int64
+    "sample count"
+    scount::Int64
     "next event time"
     tev::Float64
 
@@ -300,7 +302,7 @@ mutable struct Clock <: SEngine
             nothing
         end
         new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(), SimCond[],
-            Dict{Any, SimProcess}(), t0, 0, t0, Δt, Sample[], t0 + Δt)
+            Dict{Any, SimProcess}(), t0, 0, 0, t0, Δt, Sample[], t0 + Δt)
     end
 end
 
