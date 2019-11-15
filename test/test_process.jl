@@ -80,7 +80,7 @@ checkb(x) = b ≥ x
 function testwait(c1::Channel, c2::Channel)
     wait!((𝐅(checktime, 2), 𝐅(checka, 1)))
     push!(res, (τ(), 1, a, b))
-    wait!(𝐅(isa, a, Int64)) # must return immediately
+    wait!(𝐅(isa, a, Int)) # must return immediately
     push!(res, (τ(), 2, a, b))
     sample!(𝐅(incb))
     wait!(𝐅(checkb, 201))
@@ -91,8 +91,6 @@ end
 reset!(𝐶)
 process!(𝐏(1, testwait, ch1, ch2))
 start!(𝐶)
-
-sleep(0.1) # long wait for x86 machines
 
 run!(𝐶, 10)
 r = [i[1] for i in res]

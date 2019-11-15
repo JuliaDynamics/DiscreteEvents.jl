@@ -33,7 +33,8 @@ process!(p::SimProcess) = process!(𝐶, p)
 
 Put a `SimProcess` in a loop, which can be broken by a `SimException`.
 """
-function loop(p::SimProcess)
+function loop(p::SimProcess, start::Channel)
+    take!(start)
     while true
         try
             p.func(p.input, p.output, p.arg...; p.kw...)
@@ -52,9 +53,10 @@ end
 Start a `SimProcess` as a task in a loop.
 """
 function startup!(p::SimProcess)
-    p.task = @async loop(p)
+    start = Channel(0)
+    p.task = @async loop(p, start)
     p.state = Idle()
-    yield() # let the process start
+    put!(start, 1) # let the process start
 end
 
 "start a new SimProcess"
