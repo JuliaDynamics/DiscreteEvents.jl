@@ -92,11 +92,12 @@ reset!(𝐶)
 process!(𝐏(1, testwait, ch1, ch2))
 start!(𝐶)
 
-sleep(0.01)
+sleep(0.1) # long wait for x86 machines
 
 run!(𝐶, 10)
-@test res[1][1] ≈ 2
-@test res[2][1] ≈ 2
-@test res[3][1] ≈ 4
+r = [i[1] for i in res]
+@test r[1] ≈ 2
+@test r[2] ≈ 2
+@test r[3] ≈ 4
 @test res[3][4] == 201
 @test b == 801
