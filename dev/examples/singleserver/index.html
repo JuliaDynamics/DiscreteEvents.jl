@@ -25,15 +25,15 @@ df = DataFrame(time = Float64[], buffer=Int[], machine=Int[], finished=Int[])
 count = 1
 printing = true
 
-stats() = push!(df, (τ(), length(Q), M.state == Busy() ? 1 : 0, length(S)))</code></pre><p>We can model our system <strong>activity-based</strong> und therefore implement functions for the three main activities (arrive, load, unload), which call each other during simulation.</p><p>We use the arrival-function for modeling arrival rate <span>$t_a$</span> with an Erlang and service time <span>$t_s$</span> with a Normal distribution. We determine the capacity of the server with a <span>$c$</span> variable such that <span>$c &gt; 1$</span> gives us overcapacity and <span>$c = 1$</span> means that mean service time equals mean arrival rate <span>$\bar{t_s} = \bar{t_a}$</span>.</p><pre><code class="language-julia">function arrive(μ, σ, c)
+stats() = push!(df, (tau(), length(Q), M.state == Busy() ? 1 : 0, length(S)))</code></pre><p>We can model our system <strong>activity-based</strong> und therefore implement functions for the three main activities (arrive, load, unload), which call each other during simulation.</p><p>We use the arrival-function for modeling arrival rate <span>$t_a$</span> with an Erlang and service time <span>$t_s$</span> with a Normal distribution. We determine the capacity of the server with a <span>$c$</span> variable such that <span>$c &gt; 1$</span> gives us overcapacity and <span>$c = 1$</span> means that mean service time equals mean arrival rate <span>$\bar{t_s} = \bar{t_a}$</span>.</p><pre><code class="language-julia">function arrive(μ, σ, c)
     @assert μ ≥ 1 &quot;μ must be ≥ 1&quot;
     ts = rand(Normal(μ, σ))/c
-    job = Job(count, ts, τ(), 0, 0)
+    job = Job(count, ts, tau(), 0, 0)
     global count += 1
     push!(Q, job)
     ta = rand(Erlang())*μ
     event!(𝐶, SimFunction(arrive, μ, σ, c), after, ta)  # we schedule the next arrival
-    printing ? println(τ(), &quot;: job $(job.no) has arrived&quot;) : nothing # τ() is the current time
+    printing ? println(tau(), &quot;: job $(job.no) has arrived&quot;) : nothing # tau() is the current time
     if M.state == Idle()
         load()
     else
@@ -44,17 +44,17 @@ end
 function load()
     M.state = Busy()
     M.job = popfirst!(Q)
-    M.job.t2 = τ()
+    M.job.t2 = tau()
     event!(𝐶, SimFunction(unload), after, M.job.ts)  # we schedule the unload
-    printing ? println(τ(), &quot;: job $(M.job.no) has been loaded&quot;) : nothing
+    printing ? println(tau(), &quot;: job $(M.job.no) has been loaded&quot;) : nothing
     stats()
 end
 
 function unload()
     M.state = Idle()
-    M.job.t3 = τ()
+    M.job.t3 = tau()
     push!(S, M.job)
-    printing ? println(τ(), &quot;: job $(M.job.no) has been finished&quot;) : nothing
+    printing ? println(tau(), &quot;: job $(M.job.no) has been finished&quot;) : nothing
     stats()
     M.job = 0
     if !isempty(Q)

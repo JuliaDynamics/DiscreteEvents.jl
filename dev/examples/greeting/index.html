@@ -18,7 +18,7 @@ struct Response &lt;: Encounter
     from
 end
 
-comm = (&quot;Nice to meet you!&quot;, &quot;How are you?&quot;, &quot;Have a nice day!&quot;, &quot;bye bye&quot;)</code></pre><p>We implement the behavior of the &quot;guys&quot; as <code>step!</code>-δ-functions of a state machine. For that we use some features of <code>Sim.jl</code>:</p><ul><li><code>𝐶</code> or <code>Tau</code> is the central clock,</li><li><code>SimFunction</code> prepares a Julia function for later execution,</li><li><code>event!</code> schedules it for execution <code>after</code> some time,</li><li><code>τ()</code> gives the central time (<code>T.time</code>).</li></ul><pre><code class="language-julia">say(name, n) =  @printf(&quot;%5.2f s, %s: %s\n&quot;, τ(), name, comm[n])
+comm = (&quot;Nice to meet you!&quot;, &quot;How are you?&quot;, &quot;Have a nice day!&quot;, &quot;bye bye&quot;)</code></pre><p>We implement the behavior of the &quot;guys&quot; as <code>step!</code>-δ-functions of a state machine. For that we use some features of <code>Sim.jl</code>:</p><ul><li><code>𝐶</code> or <code>Clk</code> is the central clock,</li><li><code>SimFunction</code> prepares a Julia function for later execution,</li><li><code>event!</code> schedules it for execution <code>after</code> some time,</li><li><code>tau()</code> gives the central time (<code>Clk.time</code>).</li></ul><pre><code class="language-julia">say(name, n) =  @printf(&quot;%5.2f s, %s: %s\n&quot;, tau(), name, comm[n])
 
 function step!(me::Guy, σ::Meet)
     event!(𝐶, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())
