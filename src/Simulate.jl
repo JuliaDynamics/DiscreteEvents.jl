@@ -19,12 +19,12 @@ include("logger.jl")
 
 
 export  Logger, switch!, setup!, init!, record!, clear!,
-        Clock, setUnit!, SimExpr, SimFunction, SF, @SF, τ, tau,
-        sample_time!, event!, sample!,
-        incr!, run!, stop!, resume!, reset!, sync!,
+        Clock, setUnit!, SimExpr, SimFunction, SF, @SF,
         𝐶, Clk, Timing, at, after, every, before,
-        SimException, SimProcess, SP, @SP, process!, start!, delay!, wait!,
-        tauis, @tauis, checkval, @checkval
+        tau, τ, @tau, sample_time!, event!, sample!, val, @val,
+        incr!, run!, stop!, resume!, reset!, sync!,
+        SimException, SimProcess, SP, @SP, process!, start!, delay!, wait!
+
 
 Random.seed!(123)
 𝐶.state == Undefined() ? init!(𝐶) : nothing
