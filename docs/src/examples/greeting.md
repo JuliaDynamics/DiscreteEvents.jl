@@ -29,14 +29,14 @@ comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
 
 We implement the behavior of the "guys" as `step!`-δ-functions of a state machine. For that we use some features of `Sim.jl`:
 
-- `𝐶` or `Tau` is the central clock,
+- `𝐶` or `Clk` is the central clock,
 - `SimFunction` prepares a Julia function for later execution,
 - `event!` schedules it for execution `after` some time,
-- `τ()` gives the central time (`T.time`).
+- `tau()` gives the central time (`Clk.time`).
 
 
 ```julia
-say(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
+say(name, n) =  @printf("%5.2f s, %s: %s\n", tau(), name, comm[n])
 
 function step!(me::Guy, σ::Meet)
     event!(𝐶, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())

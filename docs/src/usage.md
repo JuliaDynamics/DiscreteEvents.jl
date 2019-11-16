@@ -40,12 +40,13 @@ We introduce a central clock 𝐶, can set time units and query the current simu
 ```@docs
 𝐶
 setUnit!
-τ
+tau(::Clock)
+@tau(::Clock)
 ```
 
 ## Events
 
-Julia expressions and functions can be scheduled on the clock's timeline to be executed later at a given simulation time or under given conditions which may become true during simulation. Thereby expressions and functions can be mixed or given in an array or tuple to an event or to a event condition.
+Julia expressions and functions can be scheduled on the clock's timeline to be executed later at a given simulation time or under conditions which may become true during simulation. Expressions and functions can be given mixed in an array or tuple to an event or to a event condition.
 
 ### Expressions and functions as events and conditions
 
@@ -56,13 +57,13 @@ SimFunction
 SimExpr
 ```
 
-SimFunctions and expressions can be given to events on their own  or in arrays or tuples, even mixed:
+SimFunctions and expressions can be given to events on their own or in arrays or tuples, even mixed:
 
 ```julia
 function events()
     event!(:(i += 1), after, 10)  # one expression
     event!(SF(f, 1, 2, 3, diff=pi), every, 1)  # one SimFunction
-    event!((:(i += 1), SF(g, j)), [:(τ() ≥ 50), SF(isready, input), :(a ≤ 10)]) # two SimExpr under three conditions
+    event!((:(i += 1), SF(g, j)), [:(tau() ≥ 50), SF(isready, input), :(a ≤ 10)]) # two SimExpr under three conditions
 end
 ```
 
@@ -76,7 +77,7 @@ SimFunctions and expressions can be scheduled for execution at given clock times
 event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)
 ```
 
-As a convenience the timing can be also choosen using a `Timing` like `at`, `after` or `every` `t`.
+As a convenience the `Timing` can be also choosen using `at`, `after` or `every` `t`.
 
 ```@docs
 event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Timing, ::Number)
@@ -91,17 +92,17 @@ event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})
 ```
 
 !!! note
-    Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. ``:(τ() ≥ 100)`` is preferable to ``:(τ() == 100)``.
+    Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. ``:(tau() ≥ 100)`` is preferable to ``:(tau() == 100)``.
 
 There are some helper functions and macros for defining conditions. It is usually
 more convenient to use the macros since the generate the necessary SimFunctions
 directly:
 
 ```@docs
-tauis
-@tauis
-checkval
-@checkval
+tau(::Clock, ::Symbol, ::Union{Number,Symbol})
+@tau(::Any, ::Symbol, ::Union{Number, QuoteNode})
+val
+@val
 ```
 
 ## Processes

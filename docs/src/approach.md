@@ -37,7 +37,7 @@ end
 function take(S::Server)
     if isready(S.input)
         S.token = take!(S.input)
-        @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+        @printf("%5.2f: %s %d took token %d\n", tau(), S.name, S.id, S.token)
         event!(SF(put, S), after, rand())         # call put after some time
     else
         event!(SF(take, S), SF(isready, S.input)) # call again if input is ready
@@ -129,7 +129,7 @@ arrive(A) = event!(SF(δ, A, A.state, Arrive()), SF(isready, A.input))
 
 function δ(A::Server, ::Idle, ::Arrive)
     A.token = take!(A.input)
-    @printf("%5.2f: %s %d took token %d\n", τ(), A.name, A.id, A.token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), A.name, A.id, A.token)
     A.state=Busy()
     event!(SF(δ, A, A.state, Leave()), after, rand())
 end
@@ -216,7 +216,7 @@ arrive(S::Server) = event!(SF(serve, S), SF(isready, S.input))
 
 function serve(S::Server)
     S.token = take!(S.input)
-    @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), S.name, S.id, S.token)
     event!((SF(put!, S.output, S.op(S.id, S.token)), SF(arrive, S)), after, rand())
 end
 
@@ -274,7 +274,7 @@ reset!(𝐶)
 
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something, eventually wait for it
-    @printf("%5.2f: %s %d took token %d\n", τ(), name, id, token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), name, id, token)
     d = delay!(rand())           # wait for a given time
     put!(output, op(token, id))  # put something else out, eventually wait
 end

@@ -25,7 +25,7 @@ arrive(A::Server) = event!(SF(δ, A, A.state, Arrive()), SF(isready, A.input))
 
 function δ(A::Server, ::Idle, ::Arrive)
     A.token = take!(A.input)
-    @printf("%5.2f: %s %d took token %d\n", τ(), A.name, A.id, A.token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), A.name, A.id, A.token)
     A.state=Busy()
     event!(SF(δ, A, A.state, Leave()), after, rand())
 end

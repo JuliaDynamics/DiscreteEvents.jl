@@ -11,7 +11,7 @@ analysis or visualization.
 
 - `Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)`: create a new clock with sampling time `Δt`, start time `t0` and a choosen `Unitful` time unit.
 - italic `𝐶` (`\itC`+Tab) or `Clk` : is the central Clock() variable.
-- `τ(sim::Clock=𝐶)`: return the current clock time.
+- `tau(sim::Clock=𝐶)`: return the current clock time.
 - `sample_time!(sim::Clock, Δt::Number)`: set the clock's sample rate starting from `now(sim)`.
 - `reset!(sim::Clock, Δt::Number=0; t0::Time=0, hard::Bool=true)`: reset a clock.
 - `sync!(sim::Clock, to::Clock=𝐶)`: Force a synchronization of two clocks.
@@ -20,10 +20,10 @@ If no Δt ≠ 0 is given, the simulation doesn't tick with a fixed interval, but
 
 #### A note on using time units
 
-Internally `Simulate` clocks work with a `Float64` time and it works per default with `Unitful.NoUnits` but you can set them to work with `Unitful.Time` units like `ms, s, minute, hr`. In this case `τ(c)` returns a time, e.g. `1 s`. You can also provide time values to clocks or in scheduling events. They then are converted to the defined unit as long as the clock is set to a time unit.
+Internally `Simulate` clocks work with a `Float64` time and it works per default with `Unitful.NoUnits` but you can set them to work with `Unitful.Time` units like `ms, s, minute, hr`. In this case `tau(c)` returns a time, e.g. `1 s`. You can also provide time values to clocks or in scheduling events. They then are converted to the defined unit as long as the clock is set to a time unit.
 
 - `setUnit(sim::Clock, unit::FreeUnits)`: set a clock unit.
-- `τ(sim::Clock).val`: return unitless number for current time.
+- `tau(sim::Clock).val`: return unitless number for current time.
 
 At the moment I find it unconvenient to work with units if you trace simulation times in a table or you do plots. It seems easier not to use them as long you need automatic time conversion in your simulation projects.
 
@@ -61,7 +61,7 @@ an event on the clock's timeline and wakes up the process after the given `t`.
 
 If we provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
 
-- `sample_time!(sim::Clock, Δt::Number)`: set the clock's sampling time starting from now (`τ(sim)`).
+- `sample_time!(sim::Clock, Δt::Number)`: set the clock's sampling time starting from now (`tau(sim)`).
 - `sample!(sim::Clock, ex::Union{Expr,SimFunction})`: enqueue a function or expression for sampling.
 
 Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.

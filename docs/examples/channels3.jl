@@ -17,7 +17,7 @@ arrive(S::Server) = event!(SF(serve, S), SF(isready, S.input))
 
 function serve(S::Server)
     S.token = take!(S.input)
-    @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), S.name, S.id, S.token)
     event!((SF(put!, S.output, S.op(S.id, S.token)), SF(arrive, S)), after, rand())
 end
 

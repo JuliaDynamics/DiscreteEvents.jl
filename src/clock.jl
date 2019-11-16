@@ -22,23 +22,23 @@ julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60) # setup a new clock with t0=60
 Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
-julia> τ(c) # current time is 60.0 NoUnits
+julia> tau(c) # current time is 60.0 NoUnits
 60.0
 julia> setUnit!(c, s)  # set clock unit to Unitful.s
 60.0 s
-julia> τ(c) # current time is now 60.0 s
+julia> tau(c) # current time is now 60.0 s
 60.0 s
 julia> setUnit!(c, minute)  # set clock unit to Unitful.minute
 1.0 minute
-julia> τ(c) # current time is now 1.0 minute
+julia> tau(c) # current time is now 1.0 minute
 1.0 minute
-julia> typeof(τ(c))  # τ(c) now returns a time Quantity ...
+julia> typeof(tau(c))  # tau(c) now returns a time Quantity ...
 Quantity{Float64,𝐓,Unitful.FreeUnits{(minute,),𝐓,nothing}}
-julia> isa(τ(c), Time)
+julia> isa(tau(c), Time)
 true
-julia> uconvert(s, τ(c)) # ... which can be converted to other time units
+julia> uconvert(s, tau(c)) # ... which can be converted to other time units
 60.0 s
-julia> τ(c).val  # it has a value of 1.0
+julia> tau(c).val  # it has a value of 1.0
 1.0
 julia> c.time  # internal clock time is set to 1.0 (is a Float64)
 1.0
@@ -65,7 +65,7 @@ function setUnit!(sim::Clock, new::FreeUnits)
     else
         sim.unit = NoUnits
     end
-    τ(sim)
+    tau(sim)
 end
 
 """
@@ -95,8 +95,8 @@ const 𝐶 = Clk = Clock()
 
 """
 ```
-τ(sim::Clock=𝐶)
 tau(sim::Clock=𝐶)
+τ(sim::Clock=𝐶)
 ```
 Return the current simulation time (τ = \\tau+tab).
 
@@ -107,14 +107,14 @@ julia> using Simulate
 
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
-julia> τ() # gives the central time
+julia> tau() # gives the central time
 0.0
-julia> tau() # alias, gives the central time
+julia> τ() # alias, gives the central time
 0.0
 ```
 """
-τ(sim::Clock=𝐶) = sim.time*sim.unit
-const tau = τ
+tau(sim::Clock=𝐶) = sim.time*sim.unit
+const τ = tau
 
 """
 ```
@@ -392,7 +392,7 @@ sampling rate is setup depending on the scale of the remaining simulation time
 - `cycle::Float64=0.0`: repeat cycle time for an event
 
 # returns
-current simulation time `τ(sim)`.
+current simulation time `tau(sim)`.
 
 # Examples
 ```jldoctest
@@ -431,7 +431,7 @@ event!( ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple};
 """
     sample_time!(sim::Clock, Δt::Number)
 
-set the clock's sampling time starting from now (`τ(sim)`).
+set the clock's sampling time starting from now (`tau(sim)`).
 # Arguments
 - `sim::Clock`
 - `Δt::Number`: sample rate, time interval for sampling
@@ -571,6 +571,7 @@ sampling expressions at each tick in that timeframe.
 function step!(sim::Clock, ::Idle, σ::Run)
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
+    sim.scount = 0
     sim.state = Busy()
     setTimes(sim)
     while any(i->(sim.time < i ≤ sim.end_time), (sim.tsa, sim.tev))

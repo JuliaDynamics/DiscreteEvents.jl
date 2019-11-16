@@ -30,7 +30,7 @@ reset!(𝐶) # reset the central clock
 # Then it runs in a loop, so no need to have a loop here
 function serve(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
-    @printf("%5.2f: %s %d took token %d\n", τ(), name, id, token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), name, id, token)
     delay!(rand())               # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end

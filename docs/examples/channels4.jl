@@ -8,7 +8,7 @@ using Simulate, Printf, Random
 
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
-    @printf("%5.2f: %s %d took token %d\n", τ(), name, id, token)
+    @printf("%5.2f: %s %d took token %d\n", tau(), name, id, token)
     d = delay!(rand())           # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end

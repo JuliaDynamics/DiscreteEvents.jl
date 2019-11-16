@@ -42,10 +42,10 @@ function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
     if (rand() ≤ p.accuracy) && (p.state == Wait())
         event!(𝐶, :(step!($(p.opp), Serve())), after, ts)
-        @printf("%.2f: %s serves %s\n", τ()+ts, p.name, p.opp.name)
+        @printf("%.2f: %s serves %s\n", tau()+ts, p.name, p.opp.name)
     else
         event!(𝐶, :(step!($(p.opp), Miss())), after, ts)
-        @printf("%.2f: %s serves and misses %s\n", τ()+ts, p.name, p.opp.name)
+        @printf("%.2f: %s serves and misses %s\n", tau()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
         p.state = Unalert()
@@ -56,10 +56,10 @@ function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
         event!(𝐶, :(step!($(p.opp), Return())), after, tr)
-        @printf("%.2f: %s returns %s\n", τ()+tr, p.name, p.opp.name)
+        @printf("%.2f: %s returns %s\n", tau()+tr, p.name, p.opp.name)
     else
         event!(𝐶, :(step!($(p.opp), Miss())), after, tr)
-        @printf("%.2f: %s returns and misses %s\n", τ()+tr, p.name, p.opp.name)
+        @printf("%.2f: %s returns and misses %s\n", tau()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
         p.state = Unalert()
@@ -78,7 +78,7 @@ step!(p::Player, ::Wait, ::Union{Serve, Return}) = ret(p)
 
 "player p is unalert and gets served or returned"
 function step!(p::Player, ::Unalert, ::Union{Serve, Return})
-    @printf("%.2f: %s looses ball\n", τ(), p.name)
+    @printf("%.2f: %s looses ball\n", tau(), p.name)
     p.opp.score += 1
     p.state = Wait()
     serve(p)

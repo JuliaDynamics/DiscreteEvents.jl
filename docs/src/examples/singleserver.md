@@ -46,7 +46,7 @@ df = DataFrame(time = Float64[], buffer=Int[], machine=Int[], finished=Int[])
 count = 1
 printing = true
 
-stats() = push!(df, (τ(), length(Q), M.state == Busy() ? 1 : 0, length(S)))
+stats() = push!(df, (tau(), length(Q), M.state == Busy() ? 1 : 0, length(S)))
 ```
 
 We can model our system **activity-based** und therefore implement functions for the three main activities (arrive, load, unload), which call each other during simulation.
@@ -57,12 +57,12 @@ We use the arrival-function for modeling arrival rate ``t_a`` with an Erlang and
 function arrive(μ, σ, c)
     @assert μ ≥ 1 "μ must be ≥ 1"
     ts = rand(Normal(μ, σ))/c
-    job = Job(count, ts, τ(), 0, 0)
+    job = Job(count, ts, tau(), 0, 0)
     global count += 1
     push!(Q, job)
     ta = rand(Erlang())*μ
     event!(𝐶, SimFunction(arrive, μ, σ, c), after, ta)  # we schedule the next arrival
-    printing ? println(τ(), ": job $(job.no) has arrived") : nothing # τ() is the current time
+    printing ? println(tau(), ": job $(job.no) has arrived") : nothing # tau() is the current time
     if M.state == Idle()
         load()
     else
@@ -73,17 +73,17 @@ end
 function load()
     M.state = Busy()
     M.job = popfirst!(Q)
-    M.job.t2 = τ()
+    M.job.t2 = tau()
     event!(𝐶, SimFunction(unload), after, M.job.ts)  # we schedule the unload
-    printing ? println(τ(), ": job $(M.job.no) has been loaded") : nothing
+    printing ? println(tau(), ": job $(M.job.no) has been loaded") : nothing
     stats()
 end
 
 function unload()
     M.state = Idle()
-    M.job.t3 = τ()
+    M.job.t3 = tau()
     push!(S, M.job)
-    printing ? println(τ(), ": job $(M.job.no) has been finished") : nothing
+    printing ? println(tau(), ": job $(M.job.no) has been finished") : nothing
     stats()
     M.job = 0
     if !isempty(Q)

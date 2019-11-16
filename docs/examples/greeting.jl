@@ -18,7 +18,7 @@ struct Response <: Encounter
 end
 
 comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
-say(name, n) =  @printf("%5.2f s, %s: %s\n", τ(), name, comm[n])
+say(name, n) =  @printf("%5.2f s, %s: %s\n", tau(), name, comm[n])
 
 function step!(me::Guy, σ::Meet)
     event!(𝐶, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())

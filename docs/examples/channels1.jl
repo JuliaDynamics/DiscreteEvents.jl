@@ -17,7 +17,7 @@ end
 function take(S::Server)
     if isready(S.input)
         S.token = take!(S.input)
-        @printf("%5.2f: %s %d took token %d\n", τ(), S.name, S.id, S.token)
+        @printf("%5.2f: %s %d took token %d\n", tau(), S.name, S.id, S.token)
         event!(SF(put, S), after, rand())         # call put after some time
     else
         event!(SF(take, S), SF(isready, S.input)) # call again if input is ready
