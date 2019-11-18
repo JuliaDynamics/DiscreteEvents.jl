@@ -196,11 +196,11 @@ run!(𝐶, 10)</code></pre><p>When running, this gives us as output:</p><pre><co
  8.45: foo 1 took token 16369614
  9.26: bar 8 took token 16369615
  9.82: foo 2 took token 130956920
-&quot;run! finished with 20 clock events, simulation time: 10.0&quot;</code></pre><h2><a class="nav-anchor" id="Process-based-modeling-1" href="#Process-based-modeling-1">Process based modeling</a></h2><p>Here we combine it all in a simple function of <strong>take!</strong>-<strong>delay!</strong>-<strong>put!</strong> like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia&#39;s scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data:</p><pre><code class="language-julia">reset!(𝐶)
+&quot;run! finished with 20 clock events, simulation time: 10.0&quot;</code></pre><h2><a class="nav-anchor" id="Process-based-modeling-1" href="#Process-based-modeling-1">Process based modeling</a></h2><p>Here we combine it all in a simple function of <strong>take!</strong>-<strong>delay!</strong>-<strong>put!</strong> like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia&#39;s scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data. But processes must look to their timing and therefore they must enclose the IO-operation in a <code>now!</code> call:</p><pre><code class="language-julia">reset!(𝐶)
 
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something, eventually wait for it
-    @printf(&quot;%5.2f: %s %d took token %d\n&quot;, tau(), name, id, token)
+    now!(SF(println, @sprintf(&quot;%5.2f: %s %d took token %d&quot;, tau(), name, id, token)))
     d = delay!(rand())           # wait for a given time
     put!(output, op(token, id))  # put something else out, eventually wait
 end
@@ -213,10 +213,7 @@ for i in 1:2:8    # create and register 8 SimProcesses
     process!(𝐶, SimProcess(i+1, simple, ch2, ch1, &quot;bar&quot;, i+1, *))
 end
 
-start!(𝐶) # start all registered processes
 put!(ch1, 1) # put first token into channel 1
-
-sleep(0.1) # we give the processes some time to startup
 
 run!(𝐶, 10)</code></pre><p>and runs like:</p><pre><code class="language-julia">julia&gt; include(&quot;docs/examples/channels4.jl&quot;)
  0.00: foo 7 took token 1
