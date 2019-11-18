@@ -27,7 +27,8 @@ reset!(𝐶) # reset the central clock
 
 function serve(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
-    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))    delay!(rand())               # after a delay
+    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
+    delay!(rand())               # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
 
