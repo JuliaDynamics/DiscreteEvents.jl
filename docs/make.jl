@@ -8,7 +8,6 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Introduction" => "intro.md",
-        "Overview" => "overview.md",
         "Usage" => "usage.md",
         "Modeling approaches" => "approach.md",
         hide("Examples" => "examples/examples.md",

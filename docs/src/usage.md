@@ -6,10 +6,16 @@
 CurrentModule = Simulate
 ```
 
-`Simulate.jl` is not yet an registered package and is installed with
+The current stable, registered version of `Simulate.jl` is installed with
 
 ```julia
-pkg> add("https://github.com/pbayer/jl")
+pkg> add Simulate
+```
+
+The development version is installed with:
+
+```julia
+pkg> add("https://github.com/pbayer/Simulate.jl")
 ```
 
 The package is then loaded with
@@ -18,24 +24,13 @@ The package is then loaded with
 using Simulate
 ```
 
-## Modeling
-
-Before we can do a simulation, we have to develop a model. Apart from Julia expressions and functions we have four elements here:
-
-- a clock,
-- events,
-- processes and
-- sampling
-
 ## The clock
-
-The clock is central to any model and simulation, since it establishes the timeline. Here the clock contains not only the time, but also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt.
 
 ```@docs
 Clock
 ```
 
-We introduce a central clock 𝐶, can set time units and query the current simulation time.
+The central clock  is 𝐶. You can set time units and query the current simulation time.
 
 ```@docs
 𝐶
@@ -46,9 +41,11 @@ tau(::Clock)
 
 ## Events
 
-Julia expressions and functions can be scheduled on the clock's timeline to be executed later at a given simulation time or under conditions which may become true during simulation. Expressions and functions can be given mixed in an array or tuple to an event or to a event condition.
+Events are scheduled on the clock's timeline and are triggered at a given simulation time or under conditions which may become true during simulation.
 
 ### Expressions and functions as events and conditions
+
+Julia expressions and functions can be scheduled as events.
 
 ```@docs
 Timing
@@ -67,7 +64,7 @@ function events()
 end
 ```
 
-All given expressions or functions are then evaluated at a certain event or when checking for conditions.
+All given expressions or functions are then evaluated at a given simulation time or when during simulation the given conditions become true.
 
 ### Timed events
 
@@ -114,7 +111,7 @@ SimProcess
 @SP
 SimException
 process!
-start!
+interrupt!
 stop!(::SimProcess, ::SEvent)
 ```
 
@@ -127,11 +124,13 @@ delay!
 wait!
 ```
 
-!!! warning
-    `SimProcess`es operate in a loop. They have to give back control
-    to other processes by calling suspending functions, which will `yield()` them. Otherwise they will after start starve everything else!
+### Now
 
-    On the other hand, functions running in the `Main` scope **must not call** those functions since they may suspend the main program.
+If processes want IO-operations to finish before letting the clock proceed, they can enclose those operations in a `now!` call.
+
+```@docs
+now!
+```
 
 ## Continuous sampling
 
