@@ -267,14 +267,14 @@ julia> include("docs/examples/channels3.jl")
 
 ## Process based modeling
 
-Here we combine it all in a simple function of **take!**-**delay!**-**put!** like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data:
+Here we combine it all in a simple function of **take!**-**delay!**-**put!** like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data. But processes must look to their timing and therefore they must enclose the IO-operation in a `now!` call:
 
 ```julia
 reset!(𝐶)
 
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something, eventually wait for it
-    @printf("%5.2f: %s %d took token %d\n", tau(), name, id, token)
+    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
     d = delay!(rand())           # wait for a given time
     put!(output, op(token, id))  # put something else out, eventually wait
 end
@@ -287,10 +287,7 @@ for i in 1:2:8    # create and register 8 SimProcesses
     process!(𝐶, SimProcess(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
-start!(𝐶) # start all registered processes
 put!(ch1, 1) # put first token into channel 1
-
-sleep(0.1) # we give the processes some time to startup
 
 run!(𝐶, 10)
 ```

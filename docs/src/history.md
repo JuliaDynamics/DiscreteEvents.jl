@@ -1,13 +1,14 @@
 # Version history
 
 ## v0.2.0 (development)
-- functions and macros for defining conditions
-- conditional `wait!(cond)`
-- conditional events with `event!(sim, ex, cond)` are executed when the conditions are met,
-- `event!` can be called without the first clock argument, it then goes to `𝐶`,
+- `now!` for encapsulating IO-operations of processes,
+- functions and macros for defining conditions,
+- conditional `wait!(cond)`,
+- conditional events with `event!(sim, ex, cond)`,
+- everything can be called without the first clock argument, it then goes to `𝐶`,
 - `event!` takes an expression or a SimFunction or a tuple or an array of them,
 - introduced aliases: `SF` for `SimFunction` and `SP` for `SimProcess`
-- introduced process-based simulation with `SimProcess` and `process!`,
+- introduced process-based simulation: `SimProcess` and `process!` and delay!
 - extensive documentation,
 - more examples,
 

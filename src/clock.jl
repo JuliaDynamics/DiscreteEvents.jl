@@ -572,8 +572,8 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     else
         println(stderr, "step!: nothing to evaluate")
     end
-#    length(sim.processes) == 0 || sleep(0.001) # yield() # let processes run
-    for i in 1:length(sim.processes)
+#    length(sim.processes) == 0 || yield() # let processes run
+    for i in 1:length(sim.processes) # brute force yield
         yield()
     end
 end

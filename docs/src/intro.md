@@ -2,9 +2,9 @@
 
 `Simulate.jl` provides 4 major building blocks for modeling and simulation of discrete event systems:
 
-1. a **clock** providing a virtual simulation time,
-2. **events** are Julia expressions or functions scheduled for execution at given times or conditions,
-3. **processes** are Julia functions running asynchronously waiting for a given time or condition,
+1. a **clock** provides a virtual simulation time,
+2. **events** are expressions or functions scheduled for execution at given times or conditions,
+3. **processes** are functions, that run asynchronously and can wait for a time or condition,
 4. a mechanism for **continuous sampling**.
 
 ## The clock
@@ -35,7 +35,7 @@ julia> run!(c, 10)                           ### run the clock for 10 time units
 "run! finished with 11 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-Usually you can simply use Simulate's **central clock** `Clk` alias `𝐶` (\it𝐶+tab):
+Usually you can simply use the **central clock** `Clk` alias `𝐶` (\it𝐶+tab):
 
 ```jldoctest intro
 julia> tick() = println(tau(), ": tick!")         ### the tick function now uses the central time tau()
@@ -76,12 +76,12 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
 
 ## Events
 
-Julia **functions** or **expressions** are scheduled as events on the clock's time line. In order to not be executed immediately,
+Julia **functions** or **expressions** are scheduled as events on the clock's time line. In order to not be invoked immediately,
 
-- expressions must be quoted with `:()` and
+- expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
 - functions must be enclosed inside a `SimFunction`, alias `SF`
 
-The following illustration uses **timed events**:
+Quoted expressions and SimFunctions can be given to events mixed in a tuple or array. The following illustration uses **timed events**:
 
 ```jldoctest intro
 julia> ev1 = :(println(tau(), ": I'm a quoted expression"))
@@ -119,7 +119,7 @@ julia> y = 0                                    ### create a variable
 0
 julia> sample!( SF(() -> global y = tau()/2) ); ### a sampling function
 
-julia> 𝐶                                        ### a sample rate Δt=0.01 was set implicitly
+julia> 𝐶                                        ### the sample rate Δt=0.01 was set implicitly
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 1, sample rate Δt=0.01
 julia> event!( SF(()->println(tau(),": now y ≥ π") ), (@val :y :≥ π) ) ### a conditional event
 0.0
@@ -145,7 +145,7 @@ It can be seen: (1) the sample rate has some uncertainty in detecting events and
 
 ## Processes
 
-Functions can be started as asynchronous **processes**, which aside from doing something useful can coordinate with the clock and other events by delaying for some time or waiting for conditions, taking inputs from events, triggering events or starting other processes …
+Functions can be started as asynchronous **processes** or [coroutines](https://docs.julialang.org/en/v1/manual/control-flow/#man-tasks-1), which aside from doing something useful can coordinate with the clock and other events by delaying for some time or waiting for conditions, taking inputs from events or other processes, triggering events or starting other processes …
 
 Processes are a powerful modeling device, but you need to take care that
 
@@ -154,24 +154,23 @@ Processes are a powerful modeling device, but you need to take care that
 
 #### Create and start a process
 
-The function gets enclosed in a `SimProcess`, alias `SP` with its own id assigned. Next `process!` registers it to the clock and starts it as a process in a loop. You can thereby define, how many loops the function should take, but the default is `Inf`.
+The function gets enclosed in a `SimProcess`, alias `SP` with its own id assigned.  `process!` registers it to the clock and starts it as a process in a loop. You can define how many loops the function should take, but the default is `Inf`. You can create as many instances of a function as processes as you like.
 
 ```jldoctest intro
 ```
 
 #### Delay, wait, take and put
 
-In order to synchronize with the clock, a process can call for a `delay!`, which creates
-an event on the clock's timeline and wakes up the process after the given time `t`. A conditional `wait!` goes also to the clock and gets treated the same way as conditional events. When the conditions become true, the clock gives back control to the process.
+In order to synchronize with the clock, a process can get the simulation time `tau()`, call for a `delay!`, which suspends it, creates an event on the clock's timeline and wakes up the process after the given time `t`. A conditional `wait!` goes also to the clock and gets treated in the same way: when the conditions become true, the clock gives back control to the process.
 
-Processes can also interact directly via Julia channels with `take!` and `put!`. This also may suspend them until there is something to take or until they can put something in a channel. 
+Processes can also interact directly e.g. via Julia's [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with `take!` and `put!`. This also may suspend them until there is something to take or until they can put something in a channel. In simulations they must take care that they keep synchronized with the clock.
 
 ```jldoctest intro
 ```
 
 #### Lock and unlock the clock
 
-When a process does IO-operations like printing, reading or writing from or to files, it gives control back to the Julia scheduler. Therefore before it can finish its operation, the clock may proceed further. In order to avoid this situation, a process must encapsulate the critical operation in a `now!` call. This will lock the clock, execute the given operations and unlock the clock again.
+When a process does IO-operations like printing, reading or writing from or to files, it gives control back to the Julia scheduler. Then, before the operation gets completed, the clock may proceed further. In order to avoid this situation, processes should encapsulate  critical operations in a `now!` call. This will tell the clock that there are some operations to complete and then unlock it again.
 
 ```jldoctest intro
 ```

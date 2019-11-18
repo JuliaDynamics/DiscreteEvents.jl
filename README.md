@@ -25,13 +25,9 @@ A server takes something from its input and puts it out modified after some time
 using Simulate, Printf
 reset!(𝐶) # reset the central clock
 
-# a function with input and output channels as the first
-# two arguments can run as a SimProcess.
-# Then it runs in a loop, so no need to have a loop here
 function serve(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
-    @printf("%5.2f: %s %d took token %d\n", tau(), name, id, token)
-    delay!(rand())               # after a delay
+    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))    delay!(rand())               # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
 
@@ -43,10 +39,7 @@ for i in 1:2:8    # create and register 8 SimProcesses (alias SP)
     process!(SP(i+1, serve, ch2, ch1, "bar", i+1, *))
 end
 
-start!(𝐶)     # start all processes, registered to the central clock 𝐶
 put!(ch1, 1)  # put first token into channel 1
-
-sleep(0.1)    # give the processes some time to startup
 
 run!(𝐶, 10)   # an run for 10 time units
 ```
