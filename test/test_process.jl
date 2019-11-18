@@ -1,5 +1,5 @@
 println("... basic tests: processes ...")
-simex = SimException(Simulate.Stop())
+simex = Simulate.SimException(Simulate.Stop())
 @test simex.ev == Simulate.Stop()
 @test isnothing(simex.value)
 
@@ -33,23 +33,19 @@ end
 reset!(𝐶)
 Random.seed!(123)
 
-for i in 1:2:8    # create and register 8 SimProcesses SP
+for i in 1:2:8    # create, register and start 8 SimProcesses SP
     process!(SP(i, simple, ch1, ch2, "foo", i, +))
     process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
 @test length(𝐶.processes) == 8
 for p in values(𝐶.processes)
-    @test p.state == Simulate.Undefined()
-end
-start!(𝐶)
-for p in values(𝐶.processes)
     @test p.state == Simulate.Idle()
     @test istaskstarted(p.task)
 end
 
 put!(ch1, 1)
-sleep(0.1)
+sleep(0.01)    
 run!(𝐶, 10)
 
 @test length(A) > 20
@@ -90,7 +86,6 @@ end
 
 reset!(𝐶)
 process!(SP(1, testwait, ch1, ch2))
-start!(𝐶)
 
 run!(𝐶, 10)
 r = [i[1] for i in res]

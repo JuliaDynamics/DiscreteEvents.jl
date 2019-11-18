@@ -23,7 +23,7 @@ export  Logger, switch!, setup!, init!, record!, clear!,
         𝐶, Clk, Timing, at, after, every, before,
         tau, τ, @tau, sample_time!, event!, sample!, val, @val,
         incr!, run!, stop!, resume!, reset!, sync!,
-        SimException, SimProcess, SP, @SP, process!, start!, delay!, wait!
+        SimProcess, SP, @SP, process!, interrupt!, delay!, wait!, now!
 
 
 Random.seed!(123)

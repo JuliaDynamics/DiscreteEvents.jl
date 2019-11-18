@@ -7,19 +7,20 @@
 
 Enumeration type for scheduling events and timed conditions:
 
-- `at`: schedule an event at a given time
-- `after`: schedule an event a given time after current time
-- `every`: schedule an event every given time from now on
-- `before`: a timed condition is true before a given time.
+- `at`: schedule an event at a given time,
+- `after`: schedule an event a given time after current time,
+- `every`: schedule an event every given time from now on,
+- `before`: a timed condition is true before a given time,
+- `until`: delay until t.
 """
-@enum Timing at after every before
+@enum Timing at after every before until
 
 """
 ```
 SimFunction(func::Function, arg...; kw...)
 SF(func::Function, arg...; kw...)
 ```
-Prepare a function for being called as event in a simulation.
+Prepare a function for being called as an event in a simulation.
 
 # Arguments
 - `func::Function`: function to be executed at a later simulation time
@@ -180,46 +181,39 @@ end
 
 """
 ```
-SimProcess( id, func::Function, body,
-            input::Channel=Channel(Inf), output::Channel=Channel(Inf),
-            arg...; kw...)
-SP(id, func::Function, body,
-  input::Channel=Channel(Inf), output::Channel=Channel(Inf), arg...; kw...)
+SimProcess( id, func::Function, arg...; kw...)
+SP(id, func::Function, arg...; kw...)
 ```
 Prepare a function to run as a process in a simulation.
 
 # Arguments
-- `id`: some unique identification
-- `func::Function`: a function `f(in::Channel, out::Channel, arg...; kw...)`
-- `input::Channel=Channel(Inf)`: `f`s input channel
-- `output::Channel=Channel(Inf)`: `f`s output channel
+- `id`: some unique identification, it should get registered with
+- `func::Function`: a function `f(arg...; kw...)`
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
 !!! note
-    A function `f` running as a SimProcess is put in a loop. So it has to
-    give back control by e.g. doing a `take!(input)` on its input channel or by calling
-    `delay!` etc., which will `yield` it. Otherwise it will after start starve
-    everything else!
+    A function as a SimProcess most often runs in a loop. It has to
+    give back control by e.g. doing a `take!(input)` or by calling
+    `delay!` etc., which will `yield` it. Otherwise it will starve everything else!
 
 # Examples
 ```jldoctest
+julia> using Simulate
+
 ```
 """
 mutable struct SimProcess
     id
     task
+    sim
     state::SState
     func::Function
-    input::Channel
-    output::Channel
     arg::Tuple
     kw::Base.Iterators.Pairs
 
-    SimProcess( id, func::Function,
-                input::Channel=Channel(Inf), output::Channel=Channel(Inf),
-                arg...; kw...) =
-        new(id, nothing, Undefined(), func, input, output, arg, kw)
+    SimProcess( id, func::Function, arg...; kw...) =
+        new(id, nothing, nothing, Undefined(), func, arg, kw)
 end
 const SP = SimProcess
 
@@ -270,6 +264,8 @@ mutable struct Clock <: SEngine
     cevents::Array{SimCond,1}
     "registered processes"
     processes::Dict{Any, SimProcess}
+    "process lock"
+    lock::ReentrantLock
     "end time for simulation"
     end_time::Float64
     "event evcount"
@@ -302,7 +298,8 @@ mutable struct Clock <: SEngine
             nothing
         end
         new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(), SimCond[],
-            Dict{Any, SimProcess}(), t0, 0, 0, t0, Δt, Sample[], t0 + Δt)
+            Dict{Any, SimProcess}(), ReentrantLock(), t0, 0, 0, t0, Δt, Sample[],
+            t0 + Δt)
     end
 end
 

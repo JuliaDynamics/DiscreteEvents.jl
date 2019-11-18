@@ -29,30 +29,32 @@ julia> tau(:<=, :a)
 true
 ```
 """
-tau(sim::Clock, check::Symbol, x::Union{Number,Symbol}; m::Module=Main) =
+tau(sim::Clock, check::Symbol, x::Union{Number,Symbol}, m::Module=Main) =
         x isa Number ? eval(check)(tau(sim), x) : eval(check)(tau(sim), Core.eval(m, x))
-tau(check::Symbol, x::Union{Number,Symbol}; m::Module=Main) = tau(𝐶, check, x, m=m)
+tau(check::Symbol, x::Union{Number,Symbol}, m::Module=Main) = tau(𝐶, check, x, m)
 
 """
 ```
-val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol}; m::Module=Main)
+val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol}, m::Module=Main)
 ```
 Compare two variables or numbers.
 
 # Examples
-```@jldoctest
+```jldoctest
 julia> using Simulate
+
+julia> m = @__MODULE__;  # necessary for doctest
 
 julia> val(1, :<=, 2)
 true
 julia> a = 1
 1
-julia> val(:a, :<=, 2)
+julia> val(:a, :<=, 2, m)
 true
 ```
 """
-function val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol};
-                  m::Module=Main)
+function val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol},
+             m::Module=Main)
     a = a isa Number ? a : Core.eval(m, a)
     x = x isa Number ? x : Core.eval(m, x)
     eval(check)(a, x)
@@ -107,7 +109,7 @@ julia> a
 ```
 """
 macro SF(f::QuoteNode, arg...)
-    return :( SimFunction( Core.eval(Main,$f), $(arg...) ) )
+    return :( SimFunction( Core.eval(@__MODULE__, $f), $(arg...) ) )
 end
 
 """
@@ -145,9 +147,9 @@ end
 
 """
 ```
-@tau(sim::Clock, check::Symbol, val::Union{Number, QuoteNode}, m::Module=Main)
+@tau(sim::Clock, check::Symbol, val)
 @tau sim check val
-@tau(check::Symbol, val::Number)
+@tau(check::Symbol, val)
 @tau check val
 ```
 create a `SimFunction` comparing current simulation time with a given value or
@@ -157,8 +159,6 @@ variable.
 - `sim::Clock`: if no clock is given, it compares with 𝐶's time,
 - `check::Symbol`: the check operator must be given as a symbol e.g. `:<`,
 - `val::Union{Number, QuoteNode}`: a value or a symbolic variable,
-- `m::Module=Main`: evaluation scope for given symbolic variables.
-
 
 !!! note
     If you give @tau as argument(s) to a function, you must enclose it/them
@@ -168,46 +168,47 @@ variable.
 ```jldoctest
 julia> using Simulate
 
+julia> reset!(𝐶)
+"clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> s = @tau :≥ 100
-SimFunction(Simulate.tau, (:≥, 100), Base.Iterators.Pairs(:m => Main))
+SimFunction(Simulate.tau, (:≥, 100, Main), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
 julia> Simulate.simExec(s)
 false
-julia> Simulate.simExec(@tau < 100)         # wrong !!
+julia> Simulate.simExec(@tau < 100)                ### wrong !!
 ERROR: syntax: "<" is not a unary operator
-julia> Simulate.simExec(@tau :< 100)
+julia> Simulate.simExec(@tau :< 100)               ### correct
 true
 julia> a = 1
 1
 julia> Simulate.simExec(@tau :< :a)
 true
-julia> event!(:(a += 1), (@tau :>= 3))      # create a conditional event
+julia> event!(SF(()->global a+=1), (@tau :>= 3))   ### create a conditional event
 0.0
 julia> a
 1
-julia> run!(𝐶, 5)
+julia> run!(𝐶, 5)                                  ### run
 "run! finished with 0 clock events, 500 sample steps, simulation time: 5.0"
 julia> a
 2
 ```
 """
-macro tau(sim, check::Symbol, val::Union{Number, QuoteNode}, m::Module=Main)
-    return :( SimFunction(tau, $sim, $check, $val, m=$m) )
+macro tau(sim, check::Symbol, val::Union{Number, QuoteNode})
+    return :( SimFunction(tau, $sim, $check, $val, @__MODULE__) )
 end
-macro tau(check::QuoteNode, val::Union{Number, QuoteNode}, m::Module=Main)
-    return :( SimFunction(tau, $check, $val, m=$m) )
+macro tau(check::QuoteNode, val::Union{Number, QuoteNode})
+    return :( SimFunction(tau, $check, $val, @__MODULE__) )
 end
 
 """
 ```
-@val(a::Union{Number, QuoteNode}, check::QuoteNode, b::Union{Number, QuoteNode}, m::Module=Main)
-@val a check b m
+@val(a, check::QuoteNode, x)
 @val a check b
 ```
 Create a Simfunction comparing two values a and b or two symbolic variables
 :a and :b. The comparison operator must be given symbolically, e.g. `:≤`.
 
 # Arguments
-- `a,b::Union{Number, QuoteNode}`: a number or a symbol like `:a`
+- `a, b::: a number, expression or symbol
 - `check::QuoteNode`: a comparison operator as a symbol like `:≤`
 - `, m::Module=Main`: a module scope for evaluation of given symbolic variables
 
@@ -216,18 +217,20 @@ Create a Simfunction comparing two values a and b or two symbolic variables
     in parentheses ( @val ... ) or e.g. ( (@tau ...), (@val ...) )!
 
 # Examples
-```@jldoctest
+```jldoctest
 julia> using Simulate
 
+julia> reset!(𝐶)
+"clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> @val 1 :≤ 2
-SimFunction(val, (1, :≤, 2), Base.Iterators.Pairs(:m => Main))
+SimFunction(Simulate.val, (1, :≤, 2, Main), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
 julia> Simulate.simExec(@val 1 :≤ 2)
 true
 julia> a = 1
 1
 julia> Simulate.simExec(@val :a :≤ 2)
 true
-julia> event!(:(a += 1), ((@tau :>= 3), (@val :a :<= 3))) # a conditional event
+julia> event!(SF(()->global a+=1), ((@tau :>= 3), (@val :a :<= 3))) ### a conditional event
 0.0
 julia> run!(𝐶, 5)
 "run! finished with 0 clock events, 500 sample steps, simulation time: 5.0"
@@ -235,6 +238,6 @@ julia> a
 2
 ```
 """
-macro val(a::Union{Number, QuoteNode}, check::QuoteNode, x::Union{Number, QuoteNode}, m::Module=Main)
-    return :( SimFunction(val, $a, $check, $x, m=$m) )
+macro val(a, check::QuoteNode, x)
+    return :( SimFunction(val, $a, $check, $x, @__MODULE__) )
 end

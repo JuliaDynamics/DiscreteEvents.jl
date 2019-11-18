@@ -242,10 +242,10 @@ function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
     function sexec(x::SimExpr)
         if x isa SimFunction
             ret = x.func(x.arg...; x.kw...)
-#            yield()  # to an eventually triggered process
         else
             return Core.eval(m, x)
         end
+        yield()  # to an eventually triggered process
         return ret
     end
 
@@ -369,6 +369,20 @@ end
 event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main) =
             event!(𝐶, ex, T, t; scope=scope)
 
+"calculate the scale form a given number"
+function scale(n::Number)
+    if n > 0
+        i = 1.0
+        while !(10^i ≤ n < 10^(i+1))
+            n < 10^i ? i -= 1 : i += 1
+        end
+        return 10^i
+    else
+        return 1
+    end
+end
+
+
 """
 ```
 event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
@@ -404,19 +418,6 @@ julia> import Unitful: s, minute, hr
 """
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
                 cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
-
-    function scale(n::Number)
-        if n > 0
-            i = 1.0
-            while !(10^i ≤ n < 10^(i+1))
-                n < 10^i ? i -= 1 : i += 1
-            end
-            return 10^i
-        else
-            return 1
-        end
-    end
-
     if all(simExec(sconvert(cond)))   # all conditions met
         simExec(sconvert(ex))         # execute immediately
     else
@@ -429,17 +430,21 @@ event!( ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple};
         scope::Module=Main) = event!(𝐶, ex, cond, scope=scope)
 
 """
-    sample_time!(sim::Clock, Δt::Number)
+```
+sample_time!(sim::Clock, Δt::Number)
+sample_time!(Δt::Number)
+```
+set the clock's sample rate starting from now (`tau(sim)`).
 
-set the clock's sampling time starting from now (`tau(sim)`).
 # Arguments
-- `sim::Clock`
+- `sim::Clock`: if no clock is given, set the sample rate on 𝐶,
 - `Δt::Number`: sample rate, time interval for sampling
 """
 function sample_time!(sim::Clock, Δt::Number)
     sim.Δt = checktime(sim, Δt)
     sim.tsa = sim.time + sim.Δt
 end
+sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
@@ -448,13 +453,19 @@ sample!(ex::Union{Expr, SimFunction}; scope::Module=Main)
 ```
 enqueue an expression for sampling.
 # Arguments
-- `sim::Clock`: if no clock is given it samples on 𝐶
-- `ex::Union{Expr, SimFunction}`: an expression or function
-- `scope::Module=Main`: optional, a scope for the expression to be evaluated in
+- `sim::Clock`: if no clock is given, it samples on 𝐶,
+- `ex::Union{Expr, SimFunction}`: an expression or function,
+- `Δt::Number=sim.Δt`: set the clock's sampling rate, if no Δt is given, it takes
+    the current sampling rate, if that is 0, it calculates one,
+- `scope::Module=Main`: optional, an evaluation scope for a given expression.
 """
-sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main) =
-                            push!(sim.sexpr, Sample(ex, scope))
-sample!(ex::Union{Expr, SimFunction}; scope::Module=Main) = sample!(𝐶, ex, scope=scope)
+function sample!(sim::Clock, ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt;
+                 scope::Module=Main)
+    sim.Δt = Δt == 0 ? scale(sim.end_time - sim.time)/100 : Δt
+    push!(sim.sexpr, Sample(ex, scope))
+end
+sample!(ex::Union{Expr, SimFunction}, Δt::Number=𝐶.Δt; scope::Module=Main) =
+    sample!(𝐶, ex, Δt, scope=scope)
 
 """
     step!(sim::Clock, ::Undefined, ::Init)
@@ -505,7 +516,9 @@ at least `sim.time`.
 function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
     function exec_next_event()
+        lock(sim.lock)
         sim.time = sim.tev
+        unlock(sim.lock)
         ev = dequeue!(sim.events)
         simExec(ev.ex, ev.scope)
         sim.evcount += 1
@@ -516,7 +529,9 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     end
 
     function exec_next_tick()
+        lock(sim.lock)
         sim.time = sim.tsa
+        unlock(sim.lock)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
@@ -557,7 +572,10 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     else
         println(stderr, "step!: nothing to evaluate")
     end
-    length(sim.processes) == 0 || yield() # let processes run
+#    length(sim.processes) == 0 || sleep(0.001) # yield() # let processes run
+    for i in 1:length(sim.processes)
+        yield()
+    end
 end
 
 """
@@ -569,6 +587,7 @@ The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function step!(sim::Clock, ::Idle, σ::Run)
+    length(sim.processes) > 0 ? sleep(0.01) : nothing  # let processes startup
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
     sim.scount = 0

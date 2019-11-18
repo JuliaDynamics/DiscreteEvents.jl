@@ -3,13 +3,57 @@
 #
 
 """
-```
-process!(sim::Clock, p::SimProcess)
-```
-Register a `SimProcess` to a clock and return the `id` it was registered with.
-It can then be found under `sim.processes[id]`.
+    loop(p::SimProcess, start::Channel, cycles::Number)
+
+Put a `SimProcess` in a loop, which can be broken by a `SimException`.
+
+# Arguments
+- `p::SimProcess`:
+- `start::Channel`:
+- `cycles=Inf`:
 """
-function process!(sim::Clock, p::SimProcess)
+function loop(p::SimProcess, start::Channel, cycles::Number)
+    take!(start)
+    while cycles > 0
+        try
+            p.func(p.arg...; p.kw...)
+        catch exc
+            if isa(exc, SimException)
+                exc.ev == Stop() ? break : nothing
+            end
+            rethrow(exc)
+        end
+        cycles -= 1
+    end
+    p.sim.processes = delete!(p.sim.processes, p.id)
+end
+
+"""
+    startup!(p::SimProcess)
+
+Start a `SimProcess` as a task in a loop.
+"""
+function startup!(p::SimProcess, cycles::Number)
+    start = Channel(0)
+    p.task = @async loop(p, start, cycles)
+    p.state = Idle()
+    put!(start, 1) # let the process start
+end
+
+"""
+```
+process!(sim::Clock, p::SimProcess, cycles=Inf)
+process!(p::SimProcess, cycles=Inf)
+```
+Register a `SimProcess` to a clock, start it as an asynchronous process and
+return the `id` it was registered with. It can then be found under `sim.processes[id]`.
+
+# Arguments
+- `sim::Clock`: clock, if no clock is given, it runs under 𝐶,
+- `p::SimProcess`
+- `cycles::Number=Inf`: number of cycles, the process should run.
+"""
+function process!(sim::Clock, p::SimProcess, cycles::Number=Inf)
     id = p.id
     while haskey(sim.processes, id)
         if isa(id, Float64)
@@ -25,45 +69,12 @@ function process!(sim::Clock, p::SimProcess)
     end
     sim.processes[id] = p
     p.id = id
+    p.sim = sim
+    startup!(p, cycles)
+    id
 end
-process!(p::SimProcess) = process!(𝐶, p)
+process!(p::SimProcess, cycles=Inf) = process!(𝐶, p, cycles)
 
-"""
-    loop(p::SimProcess)
-
-Put a `SimProcess` in a loop, which can be broken by a `SimException`.
-"""
-function loop(p::SimProcess, start::Channel)
-    take!(start)
-    while true
-        try
-            p.func(p.input, p.output, p.arg...; p.kw...)
-        catch exc
-            if isa(exc, SimException)
-                exc.ev == Stop() ? break : nothing
-            end
-            rethrow(exc)
-        end
-    end
-end
-
-"""
-    startup!(p::SimProcess)
-
-Start a `SimProcess` as a task in a loop.
-"""
-function startup!(p::SimProcess)
-    start = Channel(0)
-    p.task = @async loop(p, start)
-    p.state = Idle()
-    put!(start, 1) # let the process start
-end
-
-"start a new SimProcess"
-step!(p::SimProcess, ::Undefined, ::Start) = startup!(p)
-
-"start a halted SimProcess"
-step!(p::SimProcess, ::Halted, ::Resume) = startup!(p)
 
 "stop a SimProcess"
 function step!(p::SimProcess, ::Idle, ::Stop)
@@ -86,7 +97,7 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(sim::Clock, t::Number)
     c = Channel(0)
-    event!(sim, SimFunction(put!, c, t), after, t)
+    event!(sim, SF(put!, c, t), after, t)
     take!(c)
 end
 delay!(t::Number) = delay!(𝐶, t)
@@ -111,32 +122,39 @@ function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Mai
         return         # return immediately
     else
         c = Channel(0)
-        event!(sim, SimFunction(put!, c, 1), cond, scope=scope)
+        event!(sim, SF(put!, c, 1), cond, scope=scope)
         take!(c)
     end
 end
 wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main) = wait!(𝐶, cond, scope=scope)
 
-"start all registered processes."
-function step!(sim::Clock, ::Idle, ::Start)
-    for p ∈ values(sim.processes)
-        startup!(p)
-    end
-end
-
 """
-    start!(sim::Clock)
+    interrupt!(p::SimProcess, ev::SEvent, value=nothing)
 
-Start all registered processes in a clock.
+Interrupt a `SimProcess` by throwing a `SimException` to it.
 """
-start!(sim::Clock) = step!(sim, sim.state, Start())
-
-"""
-    stop!(p::SimProcess, ev::SEvent, value=nothing)
-
-Stop a `SimProcess` by throwing a `SimException` to it.
-"""
-function stop!(p::SimProcess, ev::SEvent, value=nothing)
+function interrupt!(p::SimProcess, ev::SEvent, value=nothing)
     schedule(p.task, SimException(ev, value), error=true)
     yield()
 end
+
+"Stop a SimProcess"
+stop!(p::SimProcess, value=nothing) = interrupt!(p, Stop(), value)
+
+"""
+```
+now!(sim::Clock, ex::Union{SimExpr, Array, Tuple})
+now!(ex::Union{SimExpr, Array, Tuple})
+```
+Lock the clock, execute the given expression, then unlock the clock again.
+
+# Arguments
+- `sim::Clock`:
+- `ex::Union{SimExpr, Array, Tuple}`:
+"""
+function now!(sim::Clock, ex::Union{SimExpr, Array, Tuple})
+    lock(sim.lock)
+    simExec(sconvert(ex))
+    unlock(sim.lock)
+end
+now!(ex::Union{SimExpr, Array, Tuple}) = now!(𝐶, ex)

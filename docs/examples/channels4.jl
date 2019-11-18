@@ -8,7 +8,7 @@ using Simulate, Printf, Random
 
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
-    @printf("%5.2f: %s %d took token %d\n", tau(), name, id, token)
+    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
     d = delay!(rand())           # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
@@ -24,9 +24,5 @@ for i in 1:2:8    # create and register 8 SimProcesses SP
     process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
-start!(𝐶)     # start all registered processes
 put!(ch1, 1)  # put first token into channel 1
-
-sleep(0.1)    # give the processes some time to startup
-
-run!(𝐶, 10)   # an run for 10 time units
+run!(𝐶, 10)   # and run for 10 time units
