@@ -1,14 +1,14 @@
 # Version history
 
 ## v0.2.0 (development)
-- `now!` for encapsulating IO-operations of processes,
+- [`now!`](@ref) for encapsulating IO-operations of processes,
 - functions and macros for defining conditions,
-- conditional `wait!(cond)`,
-- conditional events with `event!(sim, ex, cond)`,
-- everything can be called without the first clock argument, it then goes to `𝐶`,
-- `event!` takes an expression or a SimFunction or a tuple or an array of them,
-- introduced aliases: `SF` for `SimFunction` and `SP` for `SimProcess`
-- introduced process-based simulation: `SimProcess` and `process!` and delay!
+- conditional [`wait!(cond)`](@ref wait!),
+- conditional events with [`event!(sim, ex, cond)`](@ref event!),
+- everything can be called without the first clock argument, it then goes to [`𝐶`](@ref),
+- [`event!`](@ref) takes an expression or a [`SimFunction`](@ref) or a tuple or an array of them,
+- introduced aliases: [`SF`](@ref SimFunction) for [`SimFunction`](@ref) and [`SP`](@ref SimProcess) for [`SimProcess`](@ref)
+- introduced process-based simulation: [`SimProcess`](@ref) and [`process!`](@ref) and [delay!](@ref),
 - extensive documentation,
 - more examples,
 

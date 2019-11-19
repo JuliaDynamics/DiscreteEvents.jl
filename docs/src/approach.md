@@ -1,15 +1,12 @@
 # Approaches to modeling and simulation
 
-`Simulate.jl` supports different approaches to modeling and simulation of **discrete event systems (DES)**. It provides three major schemes:
+`Simulate.jl` supports different approaches to modeling and simulation of **discrete event systems (DES)**. It provides three major schemes: 1) an [event-scheduling scheme](@ref event_scheme), 2) a [process-oriented scheme](@ref process_scheme) and 3) [continuous sampling](@ref continuous_sampling). With them different modeling strategies can be applied.
 
-- an event-scheduling scheme,
-- a process-oriented scheme and
-- continuous sampling.
+A problem can be expressed differently through various modeling approaches. We illustrate this with a simple problem:
 
-With them different modeling strategies can be applied. We look at how a simple problem can be expressed differently through various modeling approaches:
-
-**Simple problem:**<br>
-A server **takes** something from an input, **processes** it for some time and **puts** it out to an output. We have 8 servers in our system, 4 foos and 4 bars, which communicate with each other via two channels.
+> A server *takes* something from an input, *processes* it for some time and
+> *puts* it out to an output. There are 8 servers in the system, 4 foos and 4 bars
+> interacting with each other via two channels.
 
 
 ## Event based modeling
@@ -67,7 +64,7 @@ put!(ch1, 1) # put first token into channel 1
 run!(𝐶, 10)
 ```
 
-When running, this gives us as output:
+When running, this gives as output:
 
 ```julia
 julia> include("docs/examples/channels1.jl")
@@ -77,15 +74,7 @@ julia> include("docs/examples/channels1.jl")
  0.77: bar 8 took token 31
  1.64: foo 2 took token 248
  2.26: bar 3 took token 250
- 2.55: foo 7 took token 750
- 3.02: bar 5 took token 757
- 3.30: foo 4 took token 3785
- 3.75: bar 6 took token 3789
- 4.34: foo 1 took token 22734
- 4.60: bar 8 took token 22735
- 5.31: foo 2 took token 181880
- 5.61: bar 3 took token 181882
- 5.90: foo 7 took token 545646
+...
  6.70: bar 5 took token 545653
  6.91: foo 4 took token 2728265
  7.83: bar 6 took token 2728269
@@ -94,14 +83,15 @@ julia> include("docs/examples/channels1.jl")
  9.82: foo 2 took token 130956920
 "run! finished with 20 clock events, simulation time: 10.0"
 ```
+**see:** [`tau`](@ref), [`event!`](@ref), [`SF`](@ref SimFunction), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
 
 ## State based modeling
 
-Here our server has three states: **Idle**, **Busy** and **End** (where *End* does nothing). On an arrival event it resets its internal clock ``x=0`` and determines the service time ``t_s``, moves to *Busy*, *works* on its input and puts it out when service time is over. Then it goes back to *Idle*. A state transition diagram (Mealy model) of the timed automaton would look like:
+Here the server has three states: *Idle*, *Busy* and *End* (where *End* does nothing). On an arrival event it resets its internal clock ``x=0`` and determines the service time ``t_s``, moves to *Busy*, *works* on its input and puts it out when ``t_s`` is over. Then it goes back to *Idle*. A state transition diagram (Mealy model) of the timed automaton would look like:
 
 ![timed automaton](images/state.png)
 
-Again we have a data structure for the server (containing a state). We define states and events and implement a `δ` transition function with two methods. Thereby we dispatch on states and events. Since we don't implement all combinations of states and events, we may implement a fallback transition.
+Again we need a data structure for the server (state …). We define states and events and implement a `δ` transition function with two methods. Thereby we dispatch on states and events. Since we don't implement all combinations of states and events, we may implement a fallback transition.
 
 ```julia
 using Simulate, Printf, Random
@@ -170,15 +160,7 @@ julia> include("docs/examples/channels2.jl")
  0.77: bar 8 took token 31
  1.64: foo 2 took token 248
  2.26: bar 3 took token 250
- 2.55: foo 7 took token 750
- 3.02: bar 5 took token 757
- 3.30: foo 4 took token 3785
- 3.75: bar 6 took token 3789
- 4.34: foo 1 took token 22734
- 4.60: bar 8 took token 22735
- 5.31: foo 2 took token 181880
- 5.61: bar 3 took token 181882
- 5.90: foo 7 took token 545646
+ ...
  6.70: bar 5 took token 545653
  6.91: foo 4 took token 2728265
  7.83: bar 6 took token 2728269
@@ -187,6 +169,7 @@ julia> include("docs/examples/channels2.jl")
  9.82: foo 2 took token 130956920
 "run! finished with 20 clock events, simulation time: 10.0"
 ```
+**see:** [`tau`](@ref), [`event!`](@ref), [`SF`](@ref SimFunction), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
 
 ## Activity based modeling
 
@@ -194,7 +177,7 @@ Our server's *activity* is the processing of the token. A timed Petri net would 
 
 ![timed petri net](images/activity.png)
 
-The **arrive** transition puts a token in the **Queue**. If both places **Idle** and **Queue** have tokens, the server **takes** them, shifts one to **Busy** and **puts** out two after a timed transition with delay ``v_{put}``. Then it is *Idle* again and the cycle restarts.
+The *arrive* "transition" puts a "token" in the *Queue*. If both "places" *Idle* and *Queue* have tokens, the server *takes* them, shifts one to *Busy* and *puts* out two after a timed transition with delay ``v_{put}``. Then it is *Idle* again and the cycle restarts.
 
 The server's activity is described by the blue box. Following the Petri net, we should implement a state variable with states Idle and Busy, but we don't need to if we separate the activities in time. We need a data structure for the server and define a function for the activity:
 
@@ -247,15 +230,7 @@ julia> include("docs/examples/channels3.jl")
  0.77: bar 8 took token 31
  1.64: foo 2 took token 248
  2.26: bar 3 took token 250
- 2.55: foo 7 took token 750
- 3.02: bar 5 took token 757
- 3.30: foo 4 took token 3785
- 3.75: bar 6 took token 3789
- 4.34: foo 1 took token 22734
- 4.60: bar 8 took token 22735
- 5.31: foo 2 took token 181880
- 5.61: bar 3 took token 181882
- 5.90: foo 7 took token 545646
+ ...
  6.70: bar 5 took token 545653
  6.91: foo 4 took token 2728265
  7.83: bar 6 took token 2728269
@@ -264,14 +239,13 @@ julia> include("docs/examples/channels3.jl")
  9.82: foo 2 took token 130956920
 "run! finished with 20 clock events, simulation time: 10.0"
 ```
+**see:** [`tau`](@ref), [`event!`](@ref), [`SF`](@ref SimFunction), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
 
 ## Process based modeling
 
-Here we combine it all in a simple function of **take!**-**delay!**-**put!** like in the activity based example, but running in a loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server type since a process keeps its own data. But processes must look to their timing and therefore they must enclose the IO-operation in a `now!` call:
+Here we combine it all in a simple function of *take!*-*delay!*-*put!* like in the activity based example, but running in the loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server data type since a process keeps its own data. Processes must look careful to their timing and therefore  must enclose the IO-operation in a [`now!`](@ref) call:
 
 ```julia
-reset!(𝐶)
-
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something, eventually wait for it
     now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
@@ -283,9 +257,11 @@ ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
 for i in 1:2:8    # create and register 8 SimProcesses
-    process!(𝐶, SimProcess(i, simple, ch1, ch2, "foo", i, +))
-    process!(𝐶, SimProcess(i+1, simple, ch2, ch1, "bar", i+1, *))
+    process!(SP(i, simple, ch1, ch2, "foo", i, +))
+    process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
+
+reset!(𝐶)
 
 put!(ch1, 1) # put first token into channel 1
 
@@ -302,16 +278,7 @@ julia> include("docs/examples/channels4.jl")
  2.38: bar 2 took token 35
  2.78: foo 5 took token 70
  3.09: bar 8 took token 75
- 3.75: foo 1 took token 600
- 4.34: bar 6 took token 601
- 4.39: foo 7 took token 3606
- 4.66: bar 4 took token 3613
- 4.77: foo 3 took token 14452
- 4.93: bar 2 took token 14455
- 5.41: foo 5 took token 28910
- 6.27: bar 8 took token 28915
- 6.89: foo 1 took token 231320
- 7.18: bar 6 took token 231321
+ ...
  7.64: foo 7 took token 1387926
  7.91: bar 4 took token 1387933
  8.36: foo 3 took token 5551732
@@ -320,11 +287,12 @@ julia> include("docs/examples/channels4.jl")
  9.91: bar 8 took token 11103475
 "run! finished with 21 clock events, simulation time: 10.0"
 ```
+**see:** [`now!`](@ref), [`SF`](@ref SimFunction), [`tau`](@ref), [`delay!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`reset!`](@ref), [`run!`](@ref), [`𝐶`](@ref)
 
 
 ## Comparison
 
-The output of the last example is different from the first three approaches because we did not need to shuffle and the shuffling of the processes is done by the scheduler. So if the output depends very much on the sequence of events and you need to have reproducible results, explicitly controlling for the events like in the first three examples is preferable. If you are more interested in statistical evaluation - which is often the case -, the 4th approach is also appropriate.
+The output of the last example is different from the first three approaches because we did not shuffle (the shuffling of the processes is done by the scheduler). So if the output depends very much on the sequence of events and you need to have reproducible results, explicitly controlling for the events like in the first three examples is preferable. If you are more interested in statistical evaluation - which is often the case -, the 4th approach is also appropriate.
 
 All four approaches can be expressed in `Simulate.jl`. Process based modeling seems to be the simplest and the most intuitive approach, while the first three are more complicated. But they are also more structured and controllable , which comes in handy for more complicated examples. After all, parallel processes are often tricky to control and to debug. But you can combine the approaches and take the best from all worlds.
 

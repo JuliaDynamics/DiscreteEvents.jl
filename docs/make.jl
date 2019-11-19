@@ -7,16 +7,16 @@ makedocs(
     authors  = "Paul Bayer",
     pages = [
         "Home" => "index.md",
-        "Introduction" => "intro.md",
+        "Getting started" => "intro.md",
+        "Building models" => "approach.md",
         "Usage" => "usage.md",
-        "Modeling approaches" => "approach.md",
         hide("Examples" => "examples/examples.md",
                        ["examples/greeting.md",
                        "examples/tabletennis.md",
                        "examples/singleserver.md"]),
         "Internals" => "internals.md",
-        "Troubeshooting" => "troubleshooting.md",
-        "History" => "history.md"
+        "Troubleshooting" => "troubleshooting.md",
+        "Release notes" => "history.md"
     ]
 )
 

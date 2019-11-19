@@ -1,13 +1,70 @@
-# Introduction
+# Getting started
+
+Get an overview and learn the basics.
+
+## A first example
+
+A server takes something from its input and puts it out modified after some time. We implement that in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
+
+```julia
+using Simulate, Printf
+reset!(𝐶) # reset the central clock
+
+# describe the activity of the server
+function serve(input::Channel, output::Channel, name, id, op)
+    token = take!(input)         # take something from the input
+    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
+    delay!(rand())               # after a delay
+    put!(output, op(token, id))  # put it out with some op applied
+end
+
+ch1 = Channel(32)  # create two channels
+ch2 = Channel(32)
+
+for i in 1:2:8    # create, register and start 8 SimProcesses (alias SP)
+    process!(SP(i, serve, ch1, ch2, "foo", i, +))
+    process!(SP(i+1, serve, ch2, ch1, "bar", i+1, *))
+end
+
+put!(ch1, 1)  # put first token into channel 1
+
+run!(𝐶, 10)   # and run for 10 time units
+```
+
+If we source this program, it runs a simulation:
+
+```julia
+julia> include("docs/examples/channels4.jl")
+ 0.00: foo 7 took token 1
+ 0.25: bar 4 took token 8
+ 0.29: foo 3 took token 32
+ 0.55: bar 2 took token 35
+ 1.21: foo 5 took token 70
+ 1.33: bar 8 took token 75
+...
+...
+ 8.90: foo 3 took token 5551732
+ 9.10: bar 2 took token 5551735
+ 9.71: foo 5 took token 11103470
+ 9.97: bar 8 took token 11103475
+10.09: foo 1 took token 88827800
+"run! finished with 22 clock events, simulation time: 10.0"
+```
+#### Types and functions
+
+[`𝐶`](@ref), [`reset!`](@ref), [`now!`](@ref), [`delay!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`run!`](@ref)
+
+
+## Four building blocks
 
 `Simulate.jl` provides 4 major building blocks for modeling and simulation of discrete event systems:
 
-1. a **clock** provides a virtual simulation time,
-2. **events** are expressions or functions scheduled for execution at given times or conditions,
-3. **processes** are functions, that run asynchronously and can wait for a time or condition,
-4. a mechanism for **continuous sampling**.
+1. the [**clock**](@ref the_clock) gives a virtual simulation time,
+2. [**events**](@ref event_scheme) are expressions or functions scheduled for execution at given times or conditions,
+3. [**processes**](@ref process_scheme) run asynchronously and can delay for a time or wait for conditions,
+4. [**continuous sampling**](@ref continuous_sampling) allows continuous operations on the time line.
 
-## The clock
+## [The clock](@id the_clock)
 
 The clock is central to any model and simulation, since it establishes the timeline. It provides not only the time, but contains also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt.
 
@@ -35,25 +92,25 @@ julia> run!(c, 10)                           ### run the clock for 10 time units
 "run! finished with 11 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-Usually you can simply use the **central clock** `Clk` alias `𝐶` (\it𝐶+tab):
+Without a reference to a created clock you use simply the **central clock** [`𝐶`](@ref) (\it𝐶+tab), alias [`Clk`](@ref 𝐶):
 
 ```jldoctest intro
-julia> tick() = println(tau(), ": tick!")         ### the tick function now uses the central time tau()
+julia> tick() = println(tau(), ": tick!")         ### the tick function now uses central time tau()
 tick (generic function with 1 method)
 julia> sample_time!(1)                            ### set the sampling rate on the central clock to 1
 1.0
 julia> sample!( SF(tick) );                       ### set tick as a sampling function
 
-julia> 𝐶                                          ### now 𝐶 has one sampling entry and the sample rate set
+julia> 𝐶                                          ### 𝐶 now has one sampling entry and the sample rate set
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 1, sample rate Δt=1.0
-julia> run!(𝐶, 5)                                 ### run for 5 time units
+julia> run!(𝐶, 5)                                 ### run 𝐶 for 5 time units
 1.0: tick!
 2.0: tick!
 3.0: tick!
 4.0: tick!
 5.0: tick!
 "run! finished with 0 clock events, 5 sample steps, simulation time: 5.0"
-julia> run!(𝐶, 5)                                 ### run again
+julia> run!(𝐶, 5)                                 ### run it again
 6.0: tick!
 7.0: tick!
 8.0: tick!
@@ -67,21 +124,25 @@ julia> reset!(𝐶)                                  ### reset the clock
 If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event to event.
 
 !!! note
-    Clocks work with a `Float64` time and with `Unitful.NoUnits` but you can set them to work with `Unitful.Time` units like `ms, s, minute, hr`. In this case `tau(c)` returns a time, e.g. `1 s`. You can also provide time values to clocks or in scheduling events. They then are converted to the defined unit as long as the clock is set to a time unit.
+    Clocks work with a `Float64` time and with `Unitful.NoUnits` but you can set them to work with `Unitful.Time` units like `ms, s, minute, hr`. In this case [`tau`]((@ref)) returns a time, e.g. `1 s`. You can also provide time values to clocks or in scheduling events. They then are converted to the defined unit as long as the clock is set to a time unit.
 
-    - `setUnit(sim::Clock, unit::FreeUnits)`: set a clock unit.
+    - [`setUnit!(sim::Clock, unit::FreeUnits)`](@ref setUnit!): set a clock unit.
     - `tau(sim::Clock).val`: return unitless number for current time.
 
-    At the moment I find it unconvenient to work with units if you trace simulation times in a table or you do plots. It seems easier not to use them as long you need automatic time conversion in your simulation projects.
+    At the moment I find it unconvenient to work with units if you trace simulation times in a table or you do plots. It seems easier not to use them as long you don't need automatic time conversion in your simulation projects.
 
-## Events
+#### Types and functions
+
+[`Clock`](@ref), [`𝐶`](@ref), [`tau`](@ref), [`sample_time!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`incr!`](@ref), [`sync!`](@ref), [`stop!`](@ref stop!(::Clock)), [`resume!`](@ref),  
+
+## [Events](@id event_scheme)
 
 Julia **functions** or **expressions** are scheduled as events on the clock's time line. In order to not be invoked immediately,
 
 - expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
-- functions must be enclosed inside a `SimFunction`, alias `SF`
+- functions must be enclosed inside a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction)
 
-Quoted expressions and SimFunctions can be given to events mixed in a tuple or array. The following illustration uses **timed events**:
+Quoted expressions and SimFunctions can be given to events mixed in a tuple or array. The following example session uses **timed events**:
 
 ```jldoctest intro
 julia> ev1 = :(println(tau(), ": I'm a quoted expression"))
@@ -110,7 +171,7 @@ julia> run!(𝐶, 5)                              ### run
 "run! finished with 2 clock events, 0 sample steps, simulation time: 15.0"
 ```
 
-**Conditional events** execute under given conditions. Conditions can be formulated by using the `@tau` macro questioning the simulation time, the `@val`macro questioning a variable or any other logical expression or function or combinations of them.
+**Conditional events** execute under given conditions. Conditions can be formulated by using the [`@tau`](@ref tau(::Any, ::Symbol, ::Union{Number, QuoteNode})) macro questioning the simulation time, the [`@val`](@ref) macro questioning a variable or any other logical expression or function or combinations of them.
 
 ```jldoctest intro
 julia> reset!(𝐶)                                ### reset the clock
@@ -143,7 +204,10 @@ julia> asin(0.5) + 2π                           ### exact value
 
 It can be seen: (1) the sample rate has some uncertainty in detecting events and (2) conditional events are triggered only once.
 
-## Processes
+#### Types and functions
+[`tau`](@ref), [`SimFunction`](@ref), [`SF`](@ref SimFunction), [`event!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`sample!`](@ref), [`@val`](@ref), [`@tau`](@ref)
+
+## [Processes](@id process_scheme)
 
 Functions can be started as asynchronous **processes** or [coroutines](https://docs.julialang.org/en/v1/manual/control-flow/#man-tasks-1), which aside from doing something useful can coordinate with the clock and other events by delaying for some time or waiting for conditions, taking inputs from events or other processes, triggering events or starting other processes …
 
@@ -154,28 +218,30 @@ Processes are a powerful modeling device, but you need to take care that
 
 #### Create and start a process
 
-The function gets enclosed in a `SimProcess`, alias `SP` with its own id assigned.  `process!` registers it to the clock and starts it as a process in a loop. You can define how many loops the function should take, but the default is `Inf`. You can create as many instances of a function as processes as you like.
+The function gets enclosed in a [`SimProcess`](@ref), alias [`SP`](@ref SimProcess) with its own id assigned.  `process!` registers it to the clock and starts it as a process in a loop. You can define how many loops the function should take, but the default is `Inf`. You can create as many instances of a function as processes as you like.
 
 ```jldoctest intro
 ```
 
 #### Delay, wait, take and put
 
-In order to synchronize with the clock, a process can get the simulation time `tau()`, call for a `delay!`, which suspends it, creates an event on the clock's timeline and wakes up the process after the given time `t`. A conditional `wait!` goes also to the clock and gets treated in the same way: when the conditions become true, the clock gives back control to the process.
+In order to synchronize with the clock, a process can get the simulation time [`tau`](@ref), call for a [`delay!`](@ref), which suspends it, creates an event on the clock's timeline and wakes up the process after the given time `t`. A conditional [`wait!`]() goes also to the clock and gets treated in the same way: when the conditions become true, the clock gives back control to the process.
 
-Processes can also interact directly e.g. via Julia's [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with `take!` and `put!`. This also may suspend them until there is something to take or until they can put something in a channel. In simulations they must take care that they keep synchronized with the clock.
+Processes can also interact directly e.g. via Julia's [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with [`take!`](https://docs.julialang.org/en/v1/base/parallel/#Base.take!-Tuple{Channel}) and [`put!`](https://docs.julialang.org/en/v1/base/parallel/#Base.put!-Tuple{Channel,Any}). This also may suspend them until there is something to take or until they can put something in a channel. In simulations they must take care that they keep synchronized with the clock.
 
 ```jldoctest intro
 ```
 
 #### Lock and unlock the clock
 
-When a process does IO-operations like printing, reading or writing from or to files, it gives control back to the Julia scheduler. Then, before the operation gets completed, the clock may proceed further. In order to avoid this situation, processes should encapsulate  critical operations in a `now!` call. This will tell the clock that there are some operations to complete and then unlock it again.
+When a process does IO-operations like printing, reading or writing from or to files, it gives control back to the Julia scheduler. Then, before the operation gets completed, the clock may proceed further. In order to avoid that, processes should encapsulate  critical operations in a [`now!`](@ref) call. This will lock the clock for the operation to complete and then unlock it again.
 
 ```jldoctest intro
 ```
+#### Types and functions
+[`SimProcess`](@ref), [`SP`](@ref SimProcess), [`process!`](@ref), [`delay!`](@ref), [`wait!`](@ref), [`now!`](@ref), [`SF`](@ref SimFunction), [`run!`](@ref), [`𝐶`](@ref), [`reset!`](@ref),
 
-## Continuous sampling
+## [Continuous sampling](@id continuous_sampling)
 
 If we provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
 
@@ -183,6 +249,9 @@ If we provide the clock with a time interval `Δt`, it ticks with a fixed sample
 - `sample!(sim::Clock, ex::Union{Expr,SimFunction})`: enqueue a function or expression for sampling.
 
 Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
+
+#### Types and functions
+[``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref),
 
 ## Running a simulation
 
@@ -195,6 +264,9 @@ Now, after we have setup a clock, scheduled events or setup sampling, we can ste
 
 Now we can evaluate the results.
 
+#### Types and functions
+[``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref),
+
 ## Logging
 
 Logging enables us to trace variables over simulation time and such analyze their behaviour.
@@ -204,3 +276,6 @@ Logging enables us to trace variables over simulation time and such analyze thei
 - `setup!(L::Logger, vars::Array{Symbol})`: setup `L`, providing it with an array of logging variables `[:a, :b, :c ...]`
 - `switch!(L::Logger, to::Number=0)`: switch between `0`: only keep the last record, `1`: print, `2`: write records to the table
 - `record!(L::Logger)`: record the logging variables with current simulation time.
+
+#### Types and functions
+[``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref), [``](@ref),
