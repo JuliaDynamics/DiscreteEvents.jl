@@ -246,6 +246,8 @@ Create a new simulation clock.
 - `sexpr::Array{Sample,1}`: sampling expressions to evaluate at each tick
 - `tsa::Float64`: next sample time
 
+If necessary the fields can be accesses with `c.time` … if `c` is your clock variable.
+
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
