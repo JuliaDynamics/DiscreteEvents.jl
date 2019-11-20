@@ -279,7 +279,7 @@ Schedule an event for a given simulation time.
 # Arguments
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
-- `t::Float64` or `t::Time`: simulation time,
+- `t::Float64` or `t::Time`: simulation time, if t < sim.time set t = sim.time,
 - `scope::Module=Main`: scope for the expressions to be evaluated
 - `cycle::Float64=0.0`: repeat cycle time for an event
 
@@ -312,6 +312,7 @@ julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
                 scope::Module=Main, cycle::Number=0.0)::Float64
     t = checktime(sim, t)
+    t < sim.time ? t = sim.time : nothing
     cycle = checktime(sim, cycle)
     while any(i->i==t, values(sim.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
@@ -356,6 +357,7 @@ julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
 """
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number;
                 scope::Module=Main)
+    @assert T in (at, after, every) "bad Timing $T for event!"
     t = checktime(sim, t)
     if T == after
         event!(sim, sconvert(ex), t + sim.time, scope=scope)

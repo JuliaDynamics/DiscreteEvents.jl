@@ -20,7 +20,7 @@ include("logger.jl")
 
 export  Logger, switch!, setup!, init!, record!, clear!,
         Clock, setUnit!, SimExpr, SimFunction, SF, @SF,
-        𝐶, Clk, Timing, at, after, every, before,
+        𝐶, Clk, Timing, at, after, every, before, until,
         tau, τ, @tau, sample_time!, event!, sample!, val, @val,
         incr!, run!, stop!, resume!, reset!, sync!,
         SimProcess, SP, @SP, process!, interrupt!, delay!, wait!, now!

@@ -105,6 +105,28 @@ delay!(t::Number) = delay!(𝐶, t)
 
 """
 ```
+delay!(sim::Clock, T::Timing, t::Number)
+delay!(T::Timing, t::Number)
+```
+
+Used for delaying a process *until* a given time t.
+
+# Arguments
+- `sim::Clock`: if no clock is given, the delay goes to 𝐶,
+- `T::Timing`: only `until` is accepted,
+- `t::Number`: delay until time t if t > sim.time.
+"""
+function delay!(sim::Clock, T::Timing, t::Number)
+    @assert T == until "bad Timing $T for delay!"
+    if t > sim.time
+        c = Channel(0)
+        event!(sim, (SF(put!, c, t), SF(yield)), t)
+        take!(c)
+    end
+end
+delay!(T::Timing, t::Number) = delay!(𝐶, T, t)
+"""
+```
 wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
 wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
 ```
