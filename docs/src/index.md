@@ -16,7 +16,7 @@ A Julia package for discrete event simulation.
 
 ## New in dev v0.2.0
 
-- [`now!`](@ref) for locking IO-operations of processes,
+- [`now!`](@ref) for IO-operations of processes,
 - functions and macros for defining conditions,
 - conditional [`wait!(cond)`](@ref wait!),
 - conditional events with [`event!(sim, ex, cond)`](@ref event!),

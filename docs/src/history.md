@@ -1,7 +1,7 @@
 # Version history
 
 ## v0.2.0 (development)
-- [`now!`](@ref) for encapsulating IO-operations of processes,
+- [`now!`](@ref) for IO-operations of processes,
 - functions and macros for defining conditions,
 - conditional [`wait!(cond)`](@ref wait!),
 - conditional events with [`event!(sim, ex, cond)`](@ref event!),

@@ -22,7 +22,7 @@ SF(func::Function, arg...; kw...)
 ```
 Prepare a function for being called as an event in a simulation.
 
-# Arguments
+# Arguments, fields
 - `func::Function`: function to be executed at a later simulation time
 - `arg...`: arguments to the function
 - `kw...`: keyword arguments
@@ -107,7 +107,7 @@ SimEvent(ex::Array{SimExpr, 1}, scope::Module, t::Float64, Δt::Float64)
 Create a simulation event: a SimExpr or an array of SimExpr to be
 executed at event time.
 
-# Arguments
+# Arguments, fields
 - `ex::Array{SimExpr, 1}`: an array of SimExpr to be evaluated at event time,
 - `scope::Module`: evaluation scope,
 - `t::Float64`: event time,
@@ -133,7 +133,7 @@ end
 create a condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
-# Arguments
+# Arguments, fields
 - `cond::Array{SimExpr, 1}`: Expr or SFs to be evaluated as conditions
 - `ex::Array{SimExpr, 1}`: Expr or SFs to be evaluated if conditions are all true
 - `scope::Module`: evaluation scope
@@ -152,7 +152,7 @@ end
 
 Create a sampling expression.
 
-# Arguments
+# Arguments, fields
 - `ex::SimExpr`: expression or SimFunction to be called at sample time
 - `scope::Module`: evaluation scope
 """
@@ -168,7 +168,7 @@ end
 
 Define a SimException, which can be thrown to processes.
 
-# Parameters
+# Arguments, fields
 - `ev::SEvent`: delivers an event to the interrupted task
 - `value=nothing`: deliver some other value
 """
@@ -186,7 +186,7 @@ SP(id, func::Function, arg...; kw...)
 ```
 Prepare a function to run as a process in a simulation.
 
-# Arguments
+# Arguments, fields
 - `id`: some unique identification, it should get registered with
 - `func::Function`: a function `f(arg...; kw...)`
 - `arg...`: further arguments to `f`
@@ -231,6 +231,21 @@ Create a new simulation clock.
     setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
     t0 to a time, e.g. `t0=60s`.
 
+# Fields
+- `state::SState`: clock state
+- `time::Float64`: clock time
+- `unit::FreeUnits`: time unit
+- `events::PriorityQueue{SimEvent,Float64}`: scheduled events
+- `cevents::Array{SimCond,1}`: conditional events
+- `processes::Dict{Any, SimProcess}`: registered processes
+- `end_time::Float64`: end time for simulation
+- `evcount::Int64`: event counter
+- `scount::Int64`: sample count
+- `tev::Float64`: next event time
+- `Δt::Float64`: sampling time, timestep between ticks
+- `sexpr::Array{Sample,1}`: sampling expressions to evaluate at each tick
+- `tsa::Float64`: next sample time
+
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
@@ -252,34 +267,18 @@ Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, p
 ```
 """
 mutable struct Clock <: SEngine
-    "clock state"
     state::SState
-    "clock time"
     time::Float64
-    "time unit"
     unit::FreeUnits
-    "scheduled events"
     events::PriorityQueue{SimEvent,Float64}
-    "conditional events"
     cevents::Array{SimCond,1}
-    "registered processes"
     processes::Dict{Any, SimProcess}
-    "process lock"
-    lock::ReentrantLock
-    "end time for simulation"
     end_time::Float64
-    "event evcount"
     evcount::Int64
-    "sample count"
     scount::Int64
-    "next event time"
     tev::Float64
-
-    "sampling time, timestep between ticks"
     Δt::Float64
-    "Array of sampling expressions to evaluate at each tick"
     sexpr::Array{Sample,1}
-    "next sample time"
     tsa::Float64
 
     function Clock(Δt::Number=0;
@@ -298,7 +297,7 @@ mutable struct Clock <: SEngine
             nothing
         end
         new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(), SimCond[],
-            Dict{Any, SimProcess}(), ReentrantLock(), t0, 0, 0, t0, Δt, Sample[],
+            Dict{Any, SimProcess}(), t0, 0, 0, t0, Δt, Sample[],
             t0 + Δt)
     end
 end

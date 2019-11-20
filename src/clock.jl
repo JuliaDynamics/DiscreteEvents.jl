@@ -245,7 +245,6 @@ function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
         else
             return Core.eval(m, x)
         end
-        yield()  # to an eventually triggered process
         return ret
     end
 
@@ -516,9 +515,7 @@ at least `sim.time`.
 function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
     function exec_next_event()
-        lock(sim.lock)
         sim.time = sim.tev
-        unlock(sim.lock)
         ev = dequeue!(sim.events)
         simExec(ev.ex, ev.scope)
         sim.evcount += 1
@@ -529,9 +526,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     end
 
     function exec_next_tick()
-        lock(sim.lock)
         sim.time = sim.tsa
-        unlock(sim.lock)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
@@ -572,10 +567,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
     else
         println(stderr, "step!: nothing to evaluate")
     end
-#    length(sim.processes) == 0 || yield() # let processes run
-    for i in 1:length(sim.processes) # brute force yield
-        yield()
-    end
+    length(sim.processes) == 0 || yield() # let processes run
 end
 
 """
@@ -602,7 +594,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
     tend = sim.end_time
 
     # catch remaining events
-    while (length(sim.events) ≥ 1) && (sim.tev ≤ tend + Base.eps(tend)*10)
+    while (length(sim.events) ≥ 1) && (nextevtime(sim) ≤ tend + Base.eps(tend)*10)
         step!(sim, sim.state, Step())
         tend = nextfloat(tend)
     end

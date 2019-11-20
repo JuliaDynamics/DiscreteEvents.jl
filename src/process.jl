@@ -97,7 +97,8 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(sim::Clock, t::Number)
     c = Channel(0)
-    event!(sim, SF(put!, c, t), after, t)
+    event!(sim, (SF(put!, c, t), SF(yield)), after, t)
+#    event!(sim, (SF(put!, c, t), SF(yield, current_task())), after, t)
     take!(c)
 end
 delay!(t::Number) = delay!(𝐶, t)
@@ -122,7 +123,7 @@ function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Mai
         return         # return immediately
     else
         c = Channel(0)
-        event!(sim, SF(put!, c, 1), cond, scope=scope)
+        event!(sim, (SF(put!, c, 1), SF(yield)), cond, scope=scope)
         take!(c)
     end
 end
@@ -143,18 +144,15 @@ stop!(p::SimProcess, value=nothing) = interrupt!(p, Stop(), value)
 
 """
 ```
-now!(sim::Clock, ex::Union{SimExpr, Array, Tuple})
-now!(ex::Union{SimExpr, Array, Tuple})
+now!(sim::Clock, op::Union{SimExpr, Array, Tuple})
+now!(op::Union{SimExpr, Array, Tuple})
 ```
-Lock the clock, execute the given expression, then unlock the clock again.
+Let the given operation be executed now! by the clock. Thus it cannot proceed
+before it is finished.
 
 # Arguments
 - `sim::Clock`:
-- `ex::Union{SimExpr, Array, Tuple}`:
+- `op::Union{SimExpr, Array, Tuple}`:
 """
-function now!(sim::Clock, ex::Union{SimExpr, Array, Tuple})
-    lock(sim.lock)
-    simExec(sconvert(ex))
-    unlock(sim.lock)
-end
+now!(sim::Clock, ex::Union{SimExpr, Array, Tuple}) = event!(sim, ex, sim.time)
 now!(ex::Union{SimExpr, Array, Tuple}) = now!(𝐶, ex)
