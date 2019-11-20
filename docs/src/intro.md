@@ -2,9 +2,11 @@
 
 Get an overview and learn the basics.
 
+`Simulate.jl` provides a clock with a virtual simulation time and the ability to schedule Julia functions and expressions as events or run them as processes. It can invoke them continuously with a given sample rate.
+
 ## A first example
 
-A server takes something from its input and puts it out modified after some time. We implement that in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
+A server takes something from its input and puts it out modified after some time. We implement the server's activity in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
 
 ```julia
 using Simulate, Printf
@@ -286,14 +288,56 @@ In order to synchronize with the clock, a process can
 - [`delay!`](@ref), which suspends it until after the given time `t`
 - [`wait!`](@ref) for a condition, which suspends it until the conditions become true.
 
-Processes can also interact directly e.g. via [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with [`take!`](https://docs.julialang.org/en/v1/base/parallel/#Base.take!-Tuple{Channel}) and [`put!`](https://docs.julialang.org/en/v1/base/parallel/#Base.put!-Tuple{Channel,Any}). This also may suspend them until there is something to take or until they can put something in a channel. In simulations they must take care that they keep synchronized with the clock.
+Processes can also interact directly e.g. via [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with [`take!`](https://docs.julialang.org/en/v1/base/parallel/#Base.take!-Tuple{Channel}) and [`put!`](https://docs.julialang.org/en/v1/base/parallel/#Base.put!-Tuple{Channel,Any}). This also may suspend them until there is something to take from or until they are allowed to put something into a channel. In simulations they must take care that they keep synchronized with the clock.
 
-```jldoctest intro
+```julia
+using Simulate, Printf, Random
+
+function watchdog(name)
+    delay!(until, 6 + rand())                    ### delay until
+    now!(SF(println, @sprintf("%5.2f %s: yawn!, bark!, yawn!", tau(), name)))
+    wait!(((@val :hunger :≥ 7),(@tau :≥ 6.5)))   ### conditional wait
+    while 5 ≤ hunger ≤ 10
+        now!(SF(println, @sprintf("%5.2f %s: %s", tau(), name, repeat("wow ", Int(trunc(hunger))))))
+        delay!(rand()/2)                         ### simple delay
+        if scuff
+            now!(SF(println, @sprintf("%5.2f %s: smack smack smack", tau(), name)))
+            global hunger = 2
+            global scuff = false
+        end
+    end
+    delay!(rand())                               ### simple delay
+    now!(SF(println, @sprintf("%5.2f %s: snore ... snore ... snore", tau(), name)))
+end
+
+hunger = 0
+scuff = false
+reset!(𝐶)
+Random.seed!(111)
+
+sample!(SF(()-> global hunger += rand()), 0.5)
+event!(SF(()-> global scuff = true ), 7+rand())
+process!(SP(1, watchdog, "Snoopy"), 1)
+
+run!(𝐶, 10)
 ```
+If we run this example, it will output:
+```julia
+julia> include("docs/examples/snoopy.jl")
+ 6.24 Snoopy: yawn!, bark!, yawn!
+ 6.50 Snoopy: wow wow wow wow wow wow wow wow
+ 6.98 Snoopy: wow wow wow wow wow wow wow wow wow
+ 7.37 Snoopy: smack smack smack
+ 7.38 Snoopy: snore ... snore ... snore
+"run! finished with 10 clock events, 20 sample steps, simulation time: 10.0"
+```
+
+!!! warning
+    you **must not** use or invoke operations like [`delay!`](@ref), [`wait!`](@ref), `take!` or `put!` outside of tasks and inside the Main process, because they will suspend it.
 
 #### IO-operations
 
-For IO-operations like printing, reading or writing from or to files tasks give control back to the Julia scheduler. Then, before the operation gets completed, the clock may proceed further. In order to avoid that, processes should enclose  critical operations in a [`now!`](@ref) call. This will cause the clock to execute them and to not proceed further before they are finished.
+If they invoke IO-operations like printing, reading or writing from or to files, tasks give control back to the Julia scheduler. In this case the clock may proceed further before the operation has been completed and the task has got out of sync with simulation time. Processes therefore should enclose IO-operations in a [`now!`](@ref) call. This will transfer them for execution to the clock, which must finish them before proceeding any further.
 
 ```jldoctest intro
 julia> function bad()                           ### bad: IO-operation DIY
