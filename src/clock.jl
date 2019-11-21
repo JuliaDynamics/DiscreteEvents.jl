@@ -370,7 +370,11 @@ end
 event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main) =
             event!(𝐶, ex, T, t; scope=scope)
 
-"calculate the scale form a given number"
+"""
+    scale(n::Number)
+
+calculate the scale from a given number
+"""
 function scale(n::Number)
     if n > 0
         i = 1.0
@@ -537,6 +541,9 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
             ex = sim.cevents[cond]
             sim.cevents = sim.cevents[.!cond]
             [simExec(c.ex) for c in ex]
+            if isempty(sim.cevents) && isempty(sim.sexpr) # delete sample rate
+                sim.Δt = 0
+            end
         end
         sim.scount +=1
     end
