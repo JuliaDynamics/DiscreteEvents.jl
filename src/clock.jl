@@ -594,7 +594,7 @@ The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function step!(sim::Clock, ::Idle, σ::Run)
-    length(sim.processes) > 0 ? sleep(0.01) : nothing  # let processes startup
+    length(sim.processes) > 0 ? sleep(0.1) : nothing  # let processes startup
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
     sim.scount = 0
