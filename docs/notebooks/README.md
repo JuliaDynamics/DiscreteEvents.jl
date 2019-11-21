@@ -5,7 +5,7 @@ The notebooks are intended to show the application of `Simulate.jl` to modeling 
 ## Introduction
 
 - [`greeting.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/greeting.ipynb): first illustration
-- [`introduction.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/greeting.ipynb): introduction to `Simulate.jl`
+- [`introduction.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/introduction.ipynb): introduction to `Simulate.jl`
 - [`modeling_approach.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/modeling_approach.ipynb): approaches to modeling and simulation.
 
 ## Examples
