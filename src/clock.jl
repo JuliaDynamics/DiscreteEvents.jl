@@ -423,8 +423,8 @@ julia> import Unitful: s, minute, hr
 """
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
                 cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
-    if all(simExec(sconvert(cond)))   # all conditions met
-        simExec(sconvert(ex))         # execute immediately
+    if sim.state == Busy() && all(simExec(sconvert(cond)))   # all conditions met
+        simExec(sconvert(ex))                                # execute immediately
     else
         sim.Δt == 0 ? sim.Δt = scale(sim.end_time - sim.time)/100 : nothing
         push!(sim.cevents, SimCond(sconvert(cond), sconvert(ex), scope))
@@ -537,13 +537,19 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
             simExec(s.ex, s.scope)
         end
         cond = [all(simExec(c.cond)) for c in sim.cevents]
-        if any(cond)
-            ex = sim.cevents[cond]
-            sim.cevents = sim.cevents[.!cond]
-            [simExec(c.ex) for c in ex]
-            if isempty(sim.cevents) && isempty(sim.sexpr) # delete sample rate
-                sim.Δt = 0
+        while any(cond)
+            vc = Array(1:length(cond))
+            ix = vc[cond][1]      # get the first index of a satisfied condition
+            ex = sim.cevents[ix].ex
+            subs = trues(length(cond))
+            subs[ix] = false
+            sim.cevents = sim.cevents[subs]
+            simExec(ex)           # execute it
+            if isempty(sim.cevents)
+                isempty(sim.sexpr) ? sim.Δt = 0 : nothing # delete sample rate
+                break
             end
+            cond = [all(simExec(c.cond)) for c in sim.cevents]
         end
         sim.scount +=1
     end
