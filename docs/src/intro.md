@@ -145,7 +145,11 @@ Julia *functions* or *expressions* are scheduled as events on the clock's time l
 - expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
 - functions must be enclosed inside a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction)
 
-Quoted expressions and SimFunctions can be given to events mixed in a tuple or array. The following example uses *timed events* [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)):
+Quoted expressions and SimFunctions can be given to events mixed in a tuple or array.
+
+### Timed events
+
+Timed events with [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)) schedule events to execute at a given time:
 
 ```julia
 ev1 = :(println(tau(), ": I'm a quoted expression"))
@@ -174,7 +178,9 @@ julia> run!(𝐶, 5)                              ### run
 "run! finished with 2 clock events, 0 sample steps, simulation time: 15.0"
 ```
 
-*Conditional events* ([`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple}))) execute under given conditions. Conditions can be formulated by using the [`@tau`](@ref tau(::Any, ::Symbol, ::Union{Number, QuoteNode})) macro questioning the simulation time, the [`@val`](@ref) macro questioning a variable or any other logical expression or function or combinations of them.
+### Conditional events
+
+*Conditional events*  with ([`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple}))) execute under given conditions. Conditions can be formulated by using the [`@tau`](@ref tau(::Any, ::Symbol, ::Union{Number, QuoteNode})) macro questioning the simulation time, the [`@val`](@ref) macro questioning a variable or any other logical expression or function or combinations of them.
 
 ```julia
 reset!(𝐶)                                       ### reset the clock
@@ -216,9 +222,9 @@ Functions can be started as asynchronous [tasks or coroutines](https://docs.juli
 From a modeling or simulation standpoint we call such tasks *processes*, because they can represent some ongoing activity in nature. Tasks seen as processes are a powerful modeling device, but you need to take care that
 
 1. they *give back control* to the clock and other such processes by calling delays or conditional waits or requesting resources (and thus implicitly waiting for them to become available) and
-2. they *get not out of sync* with simulation time by transfering critical operations to the clock.
+2. they *get not out of sync* with simulation time by transferring critical operations to the clock.
 
-#### Create and start a process
+### Create and start a process
 
 [`SimProcess`](@ref), alias [`SP`](@ref SimProcess) prepares a function for running as a process and assignes it an id.  Then `process!` registers it to the clock and starts it as a process in a loop. You can define how many loops the function should persist, but the default is `Inf`. You can create as many instances of a function as processes as you like.
 
@@ -242,18 +248,18 @@ julia> run!(𝐶, 5)                               ### run for 5 time units
  2.72: finished 2
  3.85: finished 3
  4.77: finished 4
-"run! finished with 4 clock events, 0 sample steps, simulation time: 5.0"
+"run! finished with 8 clock events, 0 sample steps, simulation time: 5.0"
 
 julia> run!(𝐶, 2)                               ### it is not yet finished, run 2 more
  6.36: finished 5
-"run! finished with 1 clock events, 0 sample steps, simulation time: 7.0"
+"run! finished with 2 clock events, 0 sample steps, simulation time: 7.0"
 
 
 julia> run!(𝐶, 3)                               ### doit(5) is done with 5, nothing happens anymore
 "run! finished with 0 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-#### Delay, wait, take and put
+### Delay, wait, take and put
 
 In order to synchronize with the clock, a process can
 - get the simulation time [`tau()`](@ref tau),
@@ -283,7 +289,7 @@ end
 hunger = 0
 scuff = false
 reset!(𝐶)
-Random.seed!(111)
+Random.seed!(1122)
 
 sample!(SF(()-> global hunger += rand()), 0.5)   ### a sampling function: increasing hunger
 event!(SF(()-> global scuff = true ), 7+rand())  ### an event: scuff after 7 am
@@ -302,7 +308,7 @@ julia> run!(𝐶, 10)
 !!! warning
     you **must not** use or invoke operations like [`delay!`](@ref), [`wait!`](@ref), `take!` or `put!` outside of tasks and inside the Main process, because they will suspend it.
 
-#### IO-operations
+### IO-operations
 
 If they invoke IO-operations like printing, reading or writing from or to files, tasks give control back to the Julia scheduler. In this case the clock may proceed further before the operation has been completed and the task has got out of sync with simulation time. Processes therefore should enclose IO-operations in a [`now!`](@ref) call. This will transfer them for execution to the clock, which must finish them before proceeding any further.
 
