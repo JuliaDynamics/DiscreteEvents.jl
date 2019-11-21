@@ -1,8 +1,8 @@
 # Approaches to modeling and simulation
 
-`Simulate.jl` supports different approaches to modeling and simulation of **discrete event systems (DES)**. It provides three major schemes: 1) an [event-scheduling scheme](@ref event_scheme), 2) a [process-oriented scheme](@ref process_scheme) and 3) [continuous sampling](@ref continuous_sampling). With them different modeling strategies can be applied.
+`Simulate.jl` supports different approaches to modeling and simulation of *discrete event systems (DES)*. It provides three major schemes: 1) an [event-scheduling scheme](@ref event_scheme), 2) a [process-oriented scheme](@ref process_scheme) and 3) [continuous sampling](@ref continuous_sampling). With them different modeling strategies can be applied.
 
-A problem can be expressed differently through various modeling approaches. We illustrate this with a simple problem:
+A problem can be expressed differently through various modeling approaches. A simple problem can illustrate this :
 
 > A server *takes* something from an input, *processes* it for some time and
 > *puts* it out to an output. There are 8 servers in the system, 4 foos and 4 bars
@@ -15,7 +15,7 @@ In this view *events* occur in time and trigger further events. Here the three s
 
 ![event graph](images/event.png)
 
-We define a data structure for the server, provide functions for the three actions, create channels and servers and start:
+You define a data structure for the server, provide functions for the three actions, create channels and servers and start:
 
 ```julia
 using Simulate, Printf, Random
@@ -64,8 +64,6 @@ put!(ch1, 1) # put first token into channel 1
 run!(𝐶, 10)
 ```
 
-When running, this gives as output:
-
 ```julia
 julia> include("docs/examples/channels1.jl")
  0.01: foo 4 took token 1
@@ -91,7 +89,7 @@ Here the server has three states: *Idle*, *Busy* and *End* (where *End* does not
 
 ![timed automaton](images/state.png)
 
-Again we need a data structure for the server (state …). We define states and events and implement a `δ` transition function with two methods. Thereby we dispatch on states and events. Since we don't implement all combinations of states and events, we may implement a fallback transition.
+Again you need a data structure for the server (state …). You define states and events and implement a `δ` transition function with two methods. Thereby you dispatch on states and events. Since you don't need to implement all combinations of states and events, you may implement a fallback transition.
 
 ```julia
 using Simulate, Printf, Random
@@ -150,8 +148,6 @@ put!(ch1, 1) # put first token into channel 1
 run!(𝐶, 10)
 ```
 
-When running, this gives us as output:
-
 ```julia
 julia> include("docs/examples/channels2.jl")
  0.01: foo 4 took token 1
@@ -173,13 +169,13 @@ julia> include("docs/examples/channels2.jl")
 
 ## Activity based modeling
 
-Our server's *activity* is the processing of the token. A timed Petri net would look like:
+The server's *activity* is the processing of the token. A timed Petri net would look like:
 
 ![timed petri net](images/activity.png)
 
 The *arrive* "transition" puts a "token" in the *Queue*. If both "places" *Idle* and *Queue* have tokens, the server *takes* them, shifts one to *Busy* and *puts* out two after a timed transition with delay ``v_{put}``. Then it is *Idle* again and the cycle restarts.
 
-The server's activity is described by the blue box. Following the Petri net, we should implement a state variable with states Idle and Busy, but we don't need to if we separate the activities in time. We need a data structure for the server and define a function for the activity:
+The server's activity is described by the blue box. Following the Petri net, you should implement a state variable with states Idle and Busy, but you don't need to if you separate the activities in time. You need a data structure for the server and define a function for the activity:
 
 ```julia
 using Simulate, Printf, Random
@@ -220,8 +216,6 @@ put!(ch1, 1) # put first token into channel 1
 run!(𝐶, 10)
 ```
 
-When running, this gives us as output:
-
 ```julia
 julia> include("docs/examples/channels3.jl")
  0.01: foo 4 took token 1
@@ -243,7 +237,7 @@ julia> include("docs/examples/channels3.jl")
 
 ## Process based modeling
 
-Here we combine it all in a simple function of *take!*-*delay!*-*put!* like in the activity based example, but running in the loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server data type since a process keeps its own data. Processes must look careful to their timing and therefore  must enclose the IO-operation in a [`now!`](@ref) call:
+Here you combine it all in a simple function of *take!*-*delay!*-*put!* like in the activity based example, but running in the loop of a process. Processes can wait or delay and are suspended and reactivated by Julia's scheduler according to background events. There is no need to handle events explicitly and no need for a server data type since a process keeps its own data. Processes must look careful to their timing and therefore you must enclose the IO-operation in a [`now!`](@ref) call:
 
 ```julia
 function simple(input::Channel, output::Channel, name, id, op)
@@ -262,13 +256,9 @@ for i in 1:2:8    # create and register 8 SimProcesses
 end
 
 reset!(𝐶)
-
 put!(ch1, 1) # put first token into channel 1
-
 run!(𝐶, 10)
 ```
-
-and runs like:
 
 ```julia
 julia> include("docs/examples/channels4.jl")
@@ -292,13 +282,13 @@ julia> include("docs/examples/channels4.jl")
 
 ## Comparison
 
-The output of the last example is different from the first three approaches because we did not shuffle (the shuffling of the processes is done by the scheduler). So if the output depends very much on the sequence of events and you need to have reproducible results, explicitly controlling for the events like in the first three examples is preferable. If you are more interested in statistical evaluation - which is often the case -, the 4th approach is also appropriate.
+The output of the last example is different from the first three approaches because we did not shuffle (the shuffling of the processes is done by the scheduler). So if the output depends very much on the sequence of events and you need to have reproducible results, explicitly controlling for the events like in the first three examples is preferable. If you are more interested in statistical evaluation - which is often the case -, the 4th approach is appropriate.
 
 All four approaches can be expressed in `Simulate.jl`. Process based modeling seems to be the simplest and the most intuitive approach, while the first three are more complicated. But they are also more structured and controllable , which comes in handy for more complicated examples. After all, parallel processes are often tricky to control and to debug. But you can combine the approaches and take the best from all worlds.
 
 ## Combined approach
 
-Physical systems can be modeled as **continuous systems** (nature does not jump), **discrete systems** (nature jumps here!) or **hybrid systems** (nature jumps sometimes).
+Physical systems can be modeled as *continuous systems* (nature does not jump), *discrete systems* (nature jumps here!) or *hybrid systems* (nature jumps sometimes).
 
 While continuous systems are the domain of differential equations, discrete and hybrid systems may be modeled easier with `Simulate.jl` by combining the *event-scheduling*, the *process-based* and the *continuous-sampling* schemes.
 
