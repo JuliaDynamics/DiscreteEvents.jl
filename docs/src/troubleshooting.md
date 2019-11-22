@@ -1,8 +1,10 @@
 # Troubleshooting
 
-## A SimProcess fails
+## Problems
 
-You can check, if that is the case: if `𝐶` is your clock, you get the list of all running processes with `𝐶.processes`. Than you can look at the failed process with `𝐶.processes[id].task`. This gives you the stack trace of the failed process, e.g.
+### A SimProcess fails
+
+If `𝐶` is your clock, you get the list of all running processes with `𝐶.processes`. You  look at the failed process with `𝐶.processes[id].task`. This gives you the stack trace of the failed process, e.g.
 
 ```julia
 julia> 𝐶.processes
@@ -22,3 +24,7 @@ people(::Channel{Any}, ::Channel{Any}, ::Float64) at ./In[17]:8
 loop(::SimProcess) at /Users/paul/.julia/packages/Simulate/BOeZP/src/process.jl:37
 (::getfield(Simulate, Symbol("##19#20")){SimProcess})() at ./task.jl:268
 ```
+
+## Report
+
+Otherwise please report your problem and open an issue at https://github.com/pbayer/Simulate.jl.  

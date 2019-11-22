@@ -57,9 +57,9 @@ julia> run!(𝐶, 10)   # run for 10 time units
 `Simulate.jl` provides 4 major building blocks for modeling and simulation of discrete event systems:
 
 1. the [**clock**](@ref the_clock) gives a virtual simulation time,
-2. [**events**](@ref event_scheme) are expressions or functions scheduled for execution at given times or conditions,
-3. [**processes**](@ref process_scheme) run asynchronously and can delay for a time or wait for conditions,
-4. [**continuous sampling**](@ref continuous_sampling) allows continuous operations on the time line.
+2. [**events**](@ref event_scheme) are Julia expressions or functions executing at given times or under given conditions,
+3. [**processes**](@ref process_scheme) are functions running as [tasks](https://docs.julialang.org/en/v1/manual/control-flow/#man-tasks-1) and synchronizing with the clock by delaying for a time or waiting for conditions,
+4. [**continuous sampling**](@ref continuous_sampling) is done by invoking given expressions or functions at a given rate on the time line.
 
 ## [The clock](@id the_clock)
 
