@@ -13,4 +13,4 @@ The notebooks are intended to show the application of `Simulate.jl` to modeling 
 - [`tabletennis.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/tabletennis.ipynb): simple table tennis simulation.
 - [`singleserver.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/singleserver.ipynb): single server modeling, simulation and analysis.
 - [`postoffice.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/postoffice.ipynb): simulation of a post office
-- [`dicegame.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/dicegame.ipynb): a simulation inspired by Goldratt's dice game!
+- [`dicegame.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/dicegame.ipynb): a simulation of assembly lines inspired by Goldratt's dice game!

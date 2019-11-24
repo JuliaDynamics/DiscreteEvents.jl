@@ -11,11 +11,11 @@ Pages = ["greeting.md", "singleserver.md", "tabletennis.md"]
 - [`greeting.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/greeting.ipynb): a first illustration
 - [`tabletennis.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/tabletennis.ipynb): a simple table tennis simulation.
 - [`singleserver.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/singleserver.ipynb): single server modeling, simulation and analysis.
-- [`postoffice.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/postoffice.ipynb): process based simulation of a post office,
-- [`dicegame.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/dicegame.ipynb): process based simulation of Goldratt's dice game - must yet be adopted to Simulate!
+- [`postoffice.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/postoffice.ipynb): simulation of a post office,
+- [`dicegame.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Sim.jl/blob/master/docs/notebooks/dicegame.ipynb): a simulation of assembly lines inspired by Goldratt's dice game.
 
 
-`Jupyter`-notebooks are [here](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks) in the repo
+The `Jupyter`-notebooks are [here](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks) in the repo
 
 ## Programs
 
