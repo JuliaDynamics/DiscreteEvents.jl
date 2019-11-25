@@ -2,8 +2,6 @@
 
 In table tennis we have some physical constraints, standard moves and rules, but uncertainty in execution due to lack of accuray and attentiveness of the players and so on.
 
-We can model the players as state machines and do a simulation on it.
-
 First we need to call the needed modules:
 
 ```julia
@@ -47,11 +45,7 @@ const vr   = 20 # return velocity [m/s]
 rd(s::Float64) = randn()*s + 1
 ```
 
-Some functions describe the setup of players, serve and return. Here we use the following features of `Sim.jl`:
-
-- italic `𝐶` (`\itC`+Tab) or `Clk` is the central clock,
-- `tau()` or `τ()` gives the central time,
-- `event!` schedules an expression (or a function) for execution `after` some time on `𝐶`s timeline.
+Some functions describe the setup of players, serve and return.
 
 ```julia
 function init!(p::Player, opp::Player)
@@ -66,11 +60,11 @@ end
 function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
     if (rand() ≤ p.accuracy) && (p.state == Wait())
-        event!(𝐶, :(step!($(p.opp), Serve())), after, ts)
-        @printf("%.2f: %s serves %s\n", τ()+ts, p.name, p.opp.name)
+        event!(𝐶, SF(step!, p.opp, Serve()), after, ts)
+        @printf("%5.2f: %s serves %s\n", tau()+ts, p.name, p.opp.name)
     else
-        event!(𝐶, :(step!($(p.opp), Miss())), after, ts)
-        @printf("%.2f: %s serves and misses %s\n", tau()+ts, p.name, p.opp.name)
+        event!(𝐶, SF(step!, p.opp, Miss()), after, ts)
+        @printf("%5.2f: %s serves and misses %s\n", tau()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
         p.state = Unalert()
@@ -80,11 +74,11 @@ end
 function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(𝐶, :(step!($(p.opp), Return())), after, tr)
-        @printf("%.2f: %s returns %s\n", tau()+tr, p.name, p.opp.name)
+        event!(𝐶, SF(step!, p.opp, Return()), after, tr)
+        @printf("%5.2f: %s returns %s\n", tau()+tr, p.name, p.opp.name)
     else
-        event!(𝐶, :(step!($(p.opp), Miss())), after, tr)
-        @printf("%.2f: %s returns and misses %s\n", tau()+tr, p.name, p.opp.name)
+        event!(𝐶, SF(step!, p.opp, Miss()), after, tr)
+        @printf("%5.2f: %s returns and misses %s\n", tau()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
         p.state = Unalert()
@@ -92,9 +86,7 @@ function ret(p::Player)
 end
 ```
 
-**Note:** In this case of scheduling an expression we need to interpolate `p.opp` with `$(p.opp)` to ensure that our `step!`-function gets the right player. Instead of scheduling expressions we normally would have scheduled our functions with `SimFunction(step!, p.opp, Serve())`, which eliminates the need for interpolation.
-
-The behavior of a player is described by the following `step!`-δ transition functions with δ(p, qᵦ, σ) → qᵧ leading to some actions and a new state.
+We can model the players as state machines. Their behaviour is described by the following `step!`-transition functions, leading to some actions and a new state.
 
 ```julia
 "default transition for players"
@@ -109,7 +101,7 @@ step!(p::Player, ::Wait, ::Union{Serve, Return}) = ret(p)
 
 "player p is unalert and gets served or returned"
 function step!(p::Player, ::Unalert, ::Union{Serve, Return})
-    @printf("%.2f: %s looses ball\n", tau(), p.name)
+    @printf("%5.2f: %s looses ball\n", τ(), p.name)
     p.opp.score += 1
     p.state = Wait()
     serve(p)
@@ -126,7 +118,7 @@ end
 step!(p::Player, σ::PEvent) = step!(p, p.state, σ)
 ```
 
-Next we define and setup the players and give Ping the `Start()` command.
+We define and setup the players and give Ping the `Start()` command.
 
 ```julia
 ping = Player("Ping", 0.90, 0.90)
@@ -139,7 +131,9 @@ step!(ping, Start())
 Finally we setup a simulation and analysis of the results:
 
 ```julia
-run!(𝐶, 30)
+Random.seed!(123)
+
+println(run!(𝐶, 30))
 println("Ping scored $(ping.score)")
 println("Pong scored $(pong.score)")
 ```
@@ -176,14 +170,16 @@ julia> include("docs/examples/tabletennis.jl")
 26.19: Ping returns and misses Pong
 29.50: Pong serves and misses Ping
 32.75: Ping serves Pong
-Finished: 22 events, simulation time: 30.0
+run! finished with 47 clock events, 0 sample steps, simulation time: 30.0
 Ping scored 3
 Pong scored 5
 ```
 
-Finally we should reset the clock for following simulations:
+Finally we reset the clock for further simulations:
 
 ```julia
 julia> reset!(𝐶)
 clock reset to t₀=0, sampling rate Δt=0.
 ```
+
+**See also:** [`event!`](@ref), [`SF`](@ref SimFunction), [`tau`](@ref), [`𝐶`](@ref),  [`run!`](@ref), [`reset!`](@ref)

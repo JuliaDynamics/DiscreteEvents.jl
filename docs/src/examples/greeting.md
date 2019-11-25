@@ -27,25 +27,19 @@ end
 comm = ("Nice to meet you!", "How are you?", "Have a nice day!", "bye bye")
 ```
 
-We implement the behavior of the "guys" as `step!`-δ-functions of a state machine. For that we use some features of `Sim.jl`:
-
-- `𝐶` or `Clk` is the central clock,
-- `SimFunction` prepares a Julia function for later execution,
-- `event!` schedules it for execution `after` some time,
-- `tau()` gives the central time (`Clk.time`).
-
+We implement the behavior of the "guys" as `step!`-functions of a state machine.
 
 ```julia
 say(name, n) =  @printf("%5.2f s, %s: %s\n", tau(), name, comm[n])
 
 function step!(me::Guy, σ::Meet)
-    event!(𝐶, SimFunction(step!, σ.someone, Greet(1, me)), after, 2*rand())
+    event!(𝐶, SF(step!, σ.someone, Greet(1, me)), after, 2*rand())
     say(me.name, 1)
 end
 
 function step!(me::Guy, σ::Greet)
     if σ.num < 3
-        event!(𝐶, SimFunction(step!, σ.from, Response(σ.num, me)), after, 2*rand())
+        event!(𝐶, SF(step!, σ.from, Response(σ.num, me)), after, 2*rand())
         say(me.name, σ.num)
     else
         say(me.name, 4)
@@ -53,7 +47,7 @@ function step!(me::Guy, σ::Greet)
 end
 
 function step!(me::Guy, σ::Response)
-    event!(𝐶, SimFunction(step!, σ.from, Greet(σ.num+1, me)), after, 2*rand())
+    event!(𝐶, SF(step!, σ.from, Greet(σ.num+1, me)), after, 2*rand())
     say(me.name, σ.num+1)
 end
 ```
@@ -64,7 +58,7 @@ Then we define some "guys" and a starting event and tell the clock `𝐶` to `ru
 foo = Guy("Foo")
 bar = Guy("Bar")
 
-event!(𝐶, SimFunction(step!, foo, Meet(bar)), at, 10*rand())
+event!(𝐶, SF(step!, foo, Meet(bar)), at, 10*rand())
 run!(𝐶, 20)
 ```
 
@@ -87,3 +81,5 @@ Then we `reset` the clock `𝐶` for further simulations.
 julia> reset!(𝐶)
 clock reset to t₀=0, sampling rate Δt=0.
 ```
+
+**See also:** [`tau`](@ref), [`𝐶`](@ref), [`SF`](@ref SimFunction), [`event!`](@ref), [`run!`](@ref), [`reset!`](@ref)
