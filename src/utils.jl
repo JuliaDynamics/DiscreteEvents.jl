@@ -12,7 +12,8 @@ Compare the current simulation time against a number or a variable.
 # Arguments
 - `sim::Clock`: clock variable, if not given, it is 𝐶.
 - `check::Symbol`: a comparison operator as a symbol like `:>`,
-- `x::Union{Number,Symbol}`: a number or a symbolic variable like `:a`,
+- `x::Union{Number,Symbol}`: a number or a symbolic variable like `:a`, a
+    symbolic variable can be evaluated later at event time,
 - `m::Module=Main`: the evaluation scope, if a symbolic variable is given.
 
 # Examples
@@ -38,6 +39,13 @@ tau(check::Symbol, x::Union{Number,Symbol}, m::Module=Main) = tau(𝐶, check, x
 val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol}, m::Module=Main)
 ```
 Compare two variables or numbers.
+
+# Arguments
+
+- `a`, `xUnion{Number, Symbol}`: a number or a symbolic variable like `:a`, a
+    symbolic variable can be evaluated later at event time,
+- `check::Symbol`: a comparison operator as a symbol like `:>`,
+- `m::Module=Main`: the evaluation scope, if a symbolic variable is given.
 
 # Examples
 ```jldoctest
@@ -86,7 +94,7 @@ julia> a = 1
 1
 julia> incra() = global a += 1             # create a simple increment function
 incra (generic function with 1 method)
-julia> event!((@SF :incra), after, 3)      # schedule an increment after 3 time units
+julia> event!((@SF incra), after, 3)      # schedule an increment after 3 time units
 3.0
 julia> a
 1
@@ -94,13 +102,13 @@ julia> run!(𝐶, 5)
 "run! finished with 1 clock events, 0 sample steps, simulation time: 5.0"
 julia> a
 2
-julia> event!((@SF :incra), (@tau :>= 8))  # schedule a conditional increment
+julia> event!((@SF incra), (@tau :>= 8))  # schedule a conditional increment
 5.0
 julia> run!(𝐶, 5)
 "run! finished with 0 clock events, 500 sample steps, simulation time: 10.0"
 julia> a
 3
-julia> event!(((@SF :incra), (@SF :incra)), ((@tau :>= 12), (@val :a :<= 3)))
+julia> event!(((@SF incra), (@SF incra)), ((@tau :>= 12), (@val :a :<= 3)))
 10.0
 julia> run!(𝐶, 5)
 "run! finished with 0 clock events, 500 sample steps, simulation time: 15.0"
@@ -108,22 +116,22 @@ julia> a
 5
 ```
 """
-macro SF(f::QuoteNode, arg...)
-    return :( SimFunction( Core.eval(@__MODULE__, $f), $(arg...) ) )
+macro SF(f, arg...)
+    return :( SimFunction( $(Core.eval(__module__, f)), $(arg...) ) )
 end
 
 """
 ```
-@SP(id, f::Symbol, input::Channel, output::Channel, arg...)
-@SP id f input output arg...
+@SP(id, f::Symbol, arg...)
+@SP id f arg...
 ```
 create a `SimProcess` from arguments f, arg...
 
 !!! note
     keyword arguments don't work with this macro, use SP instead.
 """
-macro SP(id, f::Symbol, input::Channel, output::Channel, arg...)
-    return :( SimProcess($id, $f, $input, $output, $(arg...) ) )
+macro SP(id, f::QuoteNode, arg...)
+    return :( SimProcess($id, $(Core.eval(__module__, f)), $(arg...) ) )
 end
 
 """
@@ -138,8 +146,8 @@ return the current simulation time.
 # Arguments
 - `sim::Clock`: if no clock argument is given, it returns 𝐶's time.
 """
-macro tau(sim)
-    return :( tau($sim) )
+macro tau(arg)
+    return :( tau($(Core.eval(__module__, arg)) ))
 end
 macro tau()
     return :( tau(𝐶) )
@@ -192,11 +200,11 @@ julia> a
 2
 ```
 """
-macro tau(sim, check::Symbol, val::Union{Number, QuoteNode})
-    return :( SimFunction(tau, $sim, $check, $val, @__MODULE__) )
+macro tau(sim, check::QuoteNode, val::Union{Number, QuoteNode})
+    return :( SimFunction(tau, $(Core.eval(__module__, sim)), $check, $val, $__module__) )
 end
 macro tau(check::QuoteNode, val::Union{Number, QuoteNode})
-    return :( SimFunction(tau, $check, $val, @__MODULE__) )
+    return :( SimFunction(tau, $check, $val, $__module__) )
 end
 
 """
@@ -210,7 +218,7 @@ Create a Simfunction comparing two values a and b or two symbolic variables
 # Arguments
 - `a, b::: a number, expression or symbol
 - `check::QuoteNode`: a comparison operator as a symbol like `:≤`
-- `, m::Module=Main`: a module scope for evaluation of given symbolic variables
+- `m::Module=Main`: a module scope for evaluation of given symbolic variables
 
 !!! note
     If you give @val as argument(s) to a function, you must enclose it/them
@@ -239,5 +247,5 @@ julia> a
 ```
 """
 macro val(a, check::QuoteNode, x)
-    return :( SimFunction(val, $a, $check, $x, @__MODULE__) )
+    return :( SimFunction(val, $a, $check, $x, $__module__) )
 end
