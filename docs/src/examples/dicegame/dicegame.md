@@ -584,6 +584,6 @@ The four effects combined can account for 34% performance losses from best to wo
 
 Starting from a simple game and with only a quite small simulation model we could come to conclusions which have a wide applicability for assembly lines. The performance differences in assembly lines are realistic – I have seen them over and over in industry. And we didn't yet account for failures or supply shortfalls. The unawareness of those simple factors costs manufacturing industry billions.
 
-The most interesting thing to note here is, that from seemingly quite unpredictable behaviour – look at the inventory chart of the beginning – emerge some quite predictable characteristics if we do discrete event simulations with parameter variation and then put the results through some not too sophisticated statistics.
+The most interesting thing to note here is, that from seemingly quite unpredictable behaviour – look at the inventory chart of the beginning – emerge some quite simple regularities if we do discrete event simulations with parameter variation and then put the results through some not too sophisticated statistics.
 
-We could not have done those experiments and analyses with real lines as it is possible with simulations on a modern computer with `Julia` and `Simulate.jl`.
+We could not have done those experiments and analyses with real lines as it is possible with simulations on a modern computer.
