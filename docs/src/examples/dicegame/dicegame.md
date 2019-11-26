@@ -326,10 +326,10 @@ Our response variable y seems to be under statistical control and its fluctuatio
 ```julia
 using StatsModels, ExperimentalDesign
 
-n=cat(5:10,12:2:20, dims=1)
-b=1:10
-a=cat(2,3,5:5:20, dims=1)
-σ=LinRange(0,0.1,5)
+n = vcat(5:10,12:2:20)
+b = 1:10
+a = vcat(2,3,5:5:20)
+σ = LinRange(0,0.1,5)
 
 D = FullFactorial((n=n, b=b, a=a, σ=σ), @formula(y ~ n + b + a + σ), explicit = true)
 size(D.matrix)
@@ -361,7 +361,7 @@ end
 
     Time elapsed: 73.14 minutes, 33573275 events
 
-It took over 70 minutes on a single process of my 2013 MacBook Pro and over $33\times 10^6$ events.
+It took over 70 minutes on a single process on a 2013 MacBook Pro and over ``33\times 10^6`` events.
 
 ## Data analysis
 
@@ -584,6 +584,6 @@ The four effects combined can account for 34% performance losses from best to wo
 
 Starting from a simple game and with only a quite small simulation model we could come to conclusions which have a wide applicability for assembly lines. The performance differences in assembly lines are realistic – I have seen them over and over in industry. And we didn't yet account for failures or supply shortfalls. The unawareness of those simple factors costs manufacturing industry billions.
 
-The most interesting thing to note here, is that from seemingly quite unpredictable behaviour – look at the inventory chart of the beginning – emerge some quite predictable characteristics if we do discrete event simulations with parameter variation and then put the results through some not too sophisticated statistics.
+The most interesting thing to note here is, that from seemingly quite unpredictable behaviour – look at the inventory chart of the beginning – emerge some quite predictable characteristics if we do discrete event simulations with parameter variation and then put the results through some not too sophisticated statistics.
 
 We could not have done those experiments and analyses with real lines as it is possible with simulations on a modern computer with `Julia` and `Simulate.jl`.

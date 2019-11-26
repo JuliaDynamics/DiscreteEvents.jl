@@ -349,7 +349,7 @@ julia> run!(𝐶, 10)                               ### it runs all 5 cycles
 
 ## [Continuous sampling](@id continuous_sampling)
 
-Continuous sampling allows to bring continuous processes into a simulation or can be used for visualization or logging and collecting statistics.
+Continuous sampling allows to bring continuous processes or real world data into a simulation or can be used for visualization or logging and collecting statistics.
 
 If you provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
 

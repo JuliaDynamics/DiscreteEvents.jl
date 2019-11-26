@@ -9,7 +9,7 @@ A new⭐ Julia package for **discrete event simulation**.
 [![codecov](https://codecov.io/gh/pbayer/Simulate.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/Simulate.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/Simulate.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/pbayer/Simulate.jl?branch=master)
 
-`Simulate.jl` extends the [Julia language](https://julialang.org) with *three major schemes* for modeling and simulation of discrete event systems (DES): 1) event scheduling, 2) processes and 3) continuous sampling. With them different modeling strategies can be realized.
+`Simulate.jl` provides *three schemes* for modeling and simulating discrete event systems (DES): 1) event scheduling, 2) interacting processes and 3) continuous sampling. By building directly on [Julia](https://julialang.org) it aims for simplicity and flexibility in building models and for high performance in simulation.
 
 ## A first example
 
