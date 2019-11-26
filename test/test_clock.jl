@@ -80,11 +80,12 @@ end
 @test sim.Δt == 0
 @test event!(sim, :(a +=1), (:(τ(sim)>110), :(a>20))) == 100
 @test event!(sim, :(b +=1), (:(a==0), :(b==0))) == 100  # execute immediately
+event!(sim, SF(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
 @test length(sim.cevents) == 2
 @test Simulate.simExec(sim.cevents[1].cond) == (false, false)
 @test sim.Δt == 0.01
 
-@test length(sim.events) == 11
+@test length(sim.events) == 12
 @test Simulate.nextevent(sim).t == 100
 
 incr!(sim)
@@ -96,6 +97,7 @@ incr!(sim)
 run!(sim, 5)
 @test τ(sim) == 105
 @test a == 11
+@test b == 11
 @test length(sim.events) == 6
 stop = event!(sim, :(stop!(sim)), 108)
 run!(sim, 6)
