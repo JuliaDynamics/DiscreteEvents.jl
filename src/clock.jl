@@ -554,6 +554,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         sim.scount +=1
     end
 
+    sim.state == Idle() ? sim.state = Busy() : nothing
     if (sim.tev ≤ sim.time) && (length(sim.events) ≥ 1)
         sim.tev = nextevtime(sim)
     end
@@ -583,6 +584,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         println(stderr, "step!: nothing to evaluate")
     end
     length(sim.processes) == 0 || yield() # let processes run
+    sim.state == Busy() ? sim.state = Idle() : nothing
 end
 
 """
@@ -594,11 +596,11 @@ The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function step!(sim::Clock, ::Idle, σ::Run)
-    length(sim.processes) > 0 ? sleep(0.1) : nothing  # let processes startup
+    length(sim.processes) > 0 ? sleep(0.05) : nothing  # let processes startup
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
     sim.scount = 0
-    sim.state = Busy()
+#    sim.state = Busy()
     setTimes(sim)
     while any(i->(sim.time < i ≤ sim.end_time), (sim.tsa, sim.tev))
         step!(sim, sim.state, Step())
@@ -615,8 +617,8 @@ function step!(sim::Clock, ::Idle, σ::Run)
     end
 
     sim.time = sim.end_time
-    sim.state = Idle()
-    sleep(0.1)
+#    sim.state = Idle()
+    sleep(0.01)
     "run! finished with $(sim.evcount) clock events, $(sim.scount) sample steps, simulation time: $(sim.time)"
 end
 

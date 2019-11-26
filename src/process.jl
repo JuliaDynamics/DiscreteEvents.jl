@@ -75,14 +75,6 @@ function process!(sim::Clock, p::SimProcess, cycles::Number=Inf)
 end
 process!(p::SimProcess, cycles=Inf) = process!(𝐶, p, cycles)
 
-
-"stop a SimProcess"
-function step!(p::SimProcess, ::Idle, ::Stop)
-    schedule(p.task, SimException(Stop()))
-    yield()
-    p.state = Halted()
-end
-
 """
 ```
 delay!(sim::Clock, t::Number)
@@ -114,7 +106,7 @@ Used for delaying a process *until* a given time t.
 # Arguments
 - `sim::Clock`: if no clock is given, the delay goes to 𝐶,
 - `T::Timing`: only `until` is accepted,
-- `t::Number`: delay until time t if t > sim.time.
+- `t::Number`: delay until time t if t > sim.time, else give a warning.
 """
 function delay!(sim::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
@@ -122,6 +114,8 @@ function delay!(sim::Clock, T::Timing, t::Number)
         c = Channel(0)
         event!(sim, (SF(put!, c, t), SF(yield)), t)
         take!(c)
+    else
+        now!(sim, SF(println, stderr, "warning: delay until $t ≤ τ=$(tau(sim))"))
     end
 end
 delay!(T::Timing, t::Number) = delay!(𝐶, T, t)

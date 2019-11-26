@@ -45,6 +45,9 @@ ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
+@test Simulate.scale(0) == 1
+@test Simulate.scale(pi*1e7) == 1e7
+
 sim = Clock()  # set up clock without sampling
 @test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
 init!(sim)
@@ -55,6 +58,7 @@ sim = Clock(t0=100)
 @test_warn "nothing to evaluate" incr!(sim)
 
 a = 0
+b = 0
 
 for i ∈ 1:4
     t = i + τ(sim)
@@ -75,7 +79,8 @@ end
 # conditional events
 @test sim.Δt == 0
 @test event!(sim, :(a +=1), (:(τ(sim)>110), :(a>20))) == 100
-@test length(sim.cevents) == 1
+@test event!(sim, :(b +=1), (:(a==0), :(b==0))) == 100  # execute immediately
+@test length(sim.cevents) == 2
 @test Simulate.simExec(sim.cevents[1].cond) == (false, false)
 @test sim.Δt == 0.01
 
@@ -85,6 +90,7 @@ end
 incr!(sim)
 @test τ(sim) == 100
 @test a == 1
+@test b == 1
 @test Simulate.nextevent(sim).t == 101
 
 run!(sim, 5)
@@ -166,12 +172,23 @@ function f!(D, i)
     D[:b] = D[:a]^2
     D[:c] = D[:a]^3
 end
+a = 0
+b = 0
+event!(SF(() -> global a += 1), 1)
+event!(SF(() -> global b += 1), 9.5, cycle=1)
 event!(𝐶, SimFunction(f!, D, 1), every, 1)
 run!(𝐶, 20)
 @test τ() == 20
 @test D[:a] == 21
 @test D[:b] == 21^2
 @test D[:c] == 21^3
+@test a == 1
+@test b == 11
+
+reset!(𝐶)
+sample_time!(1)
+@test 𝐶.Δt == 1
+
 reset!(𝐶)
 @test tau() == 0
 

@@ -45,7 +45,7 @@ for p in values(𝐶.processes)
 end
 
 put!(ch1, 1)
-sleep(0.01)    
+sleep(0.01)
 run!(𝐶, 10)
 
 @test length(A) > 20
@@ -53,6 +53,11 @@ p = [i[3] for i in A]
 for i in 1:8
     @test i ∈ p  # all processes did something
 end
+
+schedule(𝐶.processes[8].task, ErrorException, error=true)
+sleep(0.1)
+@test 𝐶.processes[8].task.state == :failed
+delete!(𝐶.processes, 8)
 
 for p in values(𝐶.processes)
     @test istaskstarted(p.task)
@@ -94,3 +99,28 @@ r = [i[1] for i in res]
 @test r[3] ≈ 4
 @test res[3][4] == 201
 @test b == 801
+
+a = 1
+function testdelay()
+    delay!(at, 2)
+    global a += 10
+end
+
+function testdelay2()
+    delay!(until, 5)
+    global a += 1
+end
+
+reset!(𝐶)
+process!(SP(1, testdelay), 3)
+process!(SP(2, testdelay2), 3)
+run!(𝐶, 10)
+
+@test 𝐶.processes[1].task.state == :failed
+@test a == 4
+
+testnow() = (delay!(1); global a += 1; now!(SF(println, "$(tau()): a is $a")))
+reset!(𝐶)
+process!(SP(1, testnow), 3)
+run!(𝐶, 5)
+@test a == 7
