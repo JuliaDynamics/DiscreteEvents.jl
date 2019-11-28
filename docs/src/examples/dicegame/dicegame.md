@@ -1,5 +1,7 @@
 # Goldratt's Dice Game
 
+*Paul Bayer, 2019-11-22 v2.0*
+
 Goldratt's Dice Game from his business novel "The Goal" is a classical illustration that dependencies and statistical fluctuations diminish the throughput through a system.
 
 Alex Rogo, the hero of the novel plays a game with five boys:
@@ -34,11 +36,14 @@ using Simulate, Distributions, DataFrames, Random
 
 mutable struct Worker
     nr::Int64              # worker number
+    clk::Clock
     input::Channel  
     output::Channel
-    dist::Distribution     # distribution for processing time
-    perform::Float64       # worker performance factor
+    dist::Distribution     # distribution of processing time
+    retard::Float64        # worker retard factor, 1: no retardation, >1: retardation
     done::Int64            # number of finished items
+
+    Worker(nr, clk, input, output, dist, perform) = new(nr, clk, input, output, dist, 1/perform, 0)
 end
 ```
 
@@ -46,14 +51,14 @@ end
 
 
 ```julia
-stats(nr, len) = push!(df, (tau(), nr, len))  ## write buffersize to dataframe
+stats(t::Float64, nr::Int64, len::Int64) = push!(df, (t, nr, len))  ## write buffersize to dataframe
 
-function work(w::Worker)
+function work(w::Worker, stat::Bool)
     job = take!(w.input)
-    stats(w.nr, length(w.input.data))
-    delay!(rand(w.dist)/w.perform)
+    stat ? stats(tau(w.clk), w.nr, length(w.input.data)) : nothing
+    delay!(w.clk, rand(w.dist) * w.retard)
     put!(w.output, job)
-    stats(w.nr+1, length(w.output.data))
+    stat ? stats(tau(w.clk), w.nr+1, length(w.output.data)) : nothing
     w.done += 1
 end
 
@@ -61,7 +66,7 @@ reset!(𝐶)
 Random.seed!(1234)                 # seed random number generator
 df = DataFrame(time=Float64[], channel=Int[], length=Int[])
 
-C = [Channel(Inf) for i in 1:6]    # create 6 channels
+C = [Channel{Int64}(Inf) for i in 1:6]    # create 6 channels
 j = reverse(Array(1:8))
 for i in 5:-1:2                    # seed channels 2:5 each with 2 inventory items
     put!(C[i], j[(i-1)*2])
@@ -71,16 +76,14 @@ for i in 9:1000                    # put other 992 jobs into channel 1
     put!(C[1], i)
 end
 
-W = [Worker(i, C[i], C[i+1], Uniform(0.5, 6.5), 1.0, 0) for i in 1:5]
+W = [Worker(i, 𝐶, C[i], C[i+1], Uniform(0.5, 6.5), 1.0) for i in 1:5]
 for i in 1:5
-    process!(SP(i, work, W[i]))
+    process!(SP(i, work, W[i], true))
 end
-run!(𝐶, 1000)
+@time run!(𝐶, 1000)
 ```
 
-
-
-
+      0.613634 seconds (998.53 k allocations: 48.363 MiB, 4.13% gc time)
     "run! finished with 1390 clock events, 0 sample steps, simulation time: 1000.0"
 
 
@@ -93,7 +96,7 @@ length(C[6].data)                    # how much got produced?
 
 
 
-    272
+  272
 
 
 
@@ -105,7 +108,7 @@ length(C[6].data)                    # how much got produced?
 
 
 
-    3.676470588235294
+  3.676470588235294
 
 
 
@@ -114,7 +117,6 @@ After running for 1000 time units, we got 272 finished items in channel 6, meani
 
 ```julia
 using Plots
-pyplot()
 
 function inventory_plot(n::Int64, title)
     for i ∈ 2:n
@@ -132,7 +134,7 @@ inventory_plot(5, "In-Process-Inventory of Dice-Line")
 
 
 
-![png](output_7_0.png)
+![svg](output_7_0.svg)
 
 
 
@@ -142,11 +144,7 @@ We see that statistical fluctuations in processing times (the dice!) lead to wil
 ```julia
 1000-length(C[1].data)-length(C[6].data)
 ```
-
-
-
-
-    26
+26
 
 
 
@@ -164,16 +162,18 @@ As parameters we take:
 - `vw`: variation between worker performance,
 - `d`: the duration of the simulation run
 
+We give each simulation its own clock and channels variables so that it can be run in parallel on different threads.
 
 ```julia
-function dice_line(n, mw, vp, vw; d=1000, seed=1234, jobs=1000)
-    reset!(𝐶)
+function dice_line( n::Int64, mw::Int64,
+                    vp::Distribution, vw::Distribution;
+                    d=1000, seed=1234, jobs=1000, stat::Bool=true )
+    clk = Clock()
     Random.seed!(seed)                  # seed random number generator
-    global df = DataFrame(time=Float64[], channel=Int[], length=Int[])
-
-    global C = [Channel(mw) for i in 1:n+1] # create n+1 channels with given buffer sizes
-    C[1] = Channel(Inf)                 # unlimited sizes for channels 1 and n+1
-    C[n+1] = Channel(Inf)
+    stat ? ( global df = DataFrame(time=Float64[], channel=Int[], length=Int[]) ) : nothing
+    C = [Channel{Int64}(mw) for i in 1:n+1] # create n+1 channels with given buffer sizes
+    C[1] = Channel{Int64}(Inf)                 # unlimited sizes for channels 1 and n+1
+    C[n+1] = Channel{Int64}(Inf)
     j = reverse(Array(1:(n-1)*2))
     for i in n:-1:2                     # seed channels 2:(n-1) each with 2 inventory items
         C[i].sz_max > 0 ? put!(C[i], j[(i-1)*2]) : nothing
@@ -183,19 +183,16 @@ function dice_line(n, mw, vp, vw; d=1000, seed=1234, jobs=1000)
         put!(C[1], i)
     end
 
-    wp = rand(vw, n)                    # worker performance
-    W = [Worker(i, C[i], C[i+1], vp, wp[i], 0) for i in 1:n]
+    wp = rand(vw, n)                    # calculate worker performance
+    W = [Worker(i, clk, C[i], C[i+1], vp, wp[i]) for i in 1:n]
     for i in 1:n
-        process!(SP(i, work, W[i]))
+        process!(clk, SP(i, work, W[i], stat))
     end
-    run!(𝐶, d)
+    info = run!(clk, d)
+    return (info, clk.evcount, length(C[end].data))
 end
 ```
-
-
-
-
-    dice_line (generic function with 1 method)
+dice_line (generic function with 1 method)
 
 
 
@@ -206,14 +203,14 @@ Against too much inventory we have Kanban. So let's introduce maximum buffer siz
 
 ```julia
 using Printf
-println(dice_line(5, 5, Uniform(0.5, 6.5), Normal(1,0)))
-println(length(C[6].data), " items produced!")
-@printf("%5.2f%s capacity utilization", 3.5*length(C[6].data)/10, "%")
+info, ev, res = dice_line(5, 5, Uniform(0.5, 6.5), Normal(1,0))
+println(info)
+println(res, " items produced!")
+@printf("%5.2f%s capacity utilization", 3.5*res/10, "%")
 ```
-
-    run! finished with 1341 clock events, 0 sample steps, simulation time: 1000.0
-    266 items produced!
-    93.10% capacity utilization
+run! finished with 1341 clock events, 0 sample steps, simulation time: 1000.0\
+266 items produced!\
+93.10% capacity utilization
 
 Uups! We throttled our system further, to an output of 266.
 
@@ -225,7 +222,7 @@ inventory_plot(5, "In-Process-Inventory of kanbanized Dice-Line")
 
 
 
-![png](output_16_0.png)
+![svg](output_16_0.svg)
 
 
 
@@ -250,28 +247,28 @@ for i in [2,3,5,10,15,20]
     doplot = i == 2 ? plot : plot!
     doplot(Gamma(i, 1/i), label=latexstring("a=$i, \\theta=$(round(1/i, digits=2))"))
 end
-xlabel!("processing time")
-ylabel!("probability density")
-title!(L"Gamma distribution, $\mu=1$")
+xlabel!(L"\mathsf{processing\, time}")
+ylabel!(L"\mathsf{probability\, density}")
+title!(latexstring("\\mathsf{Gamma\\, distribution,\\,} \\mu=1"))
 ```
 
 
 
 
-![png](output_19_0.png)
+![svg](output_19_0.svg)
 
 
 
 
 ```julia
-println(dice_line(5, 5, Gamma(10,1/10), Normal(1,0)))
-println(length(C[6].data), " items produced!")
-@printf("y = %5.3f [1/t]", length(C[6].data)/1000)
+info, ev, res = dice_line(5, 5, Gamma(10,1/10), Normal(1,0))
+println(info)
+println(res, " items produced!")
+@printf("y = %5.3f [1/t]", res/1000)
 ```
-
-    run! finished with 4847 clock events, 0 sample steps, simulation time: 1000.0
-    966 items produced!
-    y = 0.966 [1/t]
+run! finished with 4847 clock events, 0 sample steps, simulation time: 1000.0\
+966 items produced!\
+y = 0.966 [1/t]
 
 
 ```julia
@@ -281,7 +278,7 @@ inventory_plot(5, "In-Process-Inventory of kanbanized Dice-Line")
 
 
 
-![png](output_21_0.png)
+![svg](output_21_0.svg)
 
 
 
@@ -292,24 +289,23 @@ Before we go deeper into parameters, we have to check how much path dependence a
 Random.seed!(1234)
 s = abs.(rand(Int, 30))
 tc = ones(30)
-for i = 1:30
-    dice_line(5, 5, Gamma(10,1/10), Normal(1,0), seed=s[i], jobs=1200)
-    tc[i] = length(C[6].data)/1000
+Threads.@threads for i = 1:30
+    info, ev, res = dice_line(5, 5, Gamma(10,1/10), Normal(1,0), seed=s[i], jobs=1200, stat=false)
+    tc[i] = res*0.001
 end
 ys = (μ=mean(tc), σ=std(tc))
 @printf("μ: %5.3f, σ: %5.3f, LCL: %5.3f, UCL: %5.3f\n", ys.μ, ys.σ, ys.μ-3ys.σ, ys.μ+3ys.σ)
 plot(1:30, tc, title="throughput rate of various runs of dice line", xlabel="runs",
-    ylabel="y [1/t]", legend=:none)
+    ylabel="y [1/t]", legend=:none, lw=2)
 hline!([ys.μ, ys.μ-3ys.σ, ys.μ+3ys.σ], lc=:red)
 ```
-
-    μ: 0.966, σ: 0.006, LCL: 0.950, UCL: 0.983
-
+μ: 0.967, σ: 0.006, LCL: 0.950, UCL: 0.984
 
 
 
 
-![png](output_23_1.png)
+
+![svg](output_23_1.svg)
 
 
 
@@ -326,19 +322,15 @@ Our response variable y seems to be under statistical control and its fluctuatio
 ```julia
 using StatsModels, ExperimentalDesign
 
-n = vcat(5:10,12:2:20)
-b = 1:10
-a = vcat(2,3,5:5:20)
-σ = LinRange(0,0.1,5)
+n=cat(5:10,12:2:20, dims=1)
+b=1:10
+a=cat(2,3,5:5:20, dims=1)
+σ=LinRange(0,0.1,5)
 
 D = FullFactorial((n=n, b=b, a=a, σ=σ), @formula(y ~ n + b + a + σ), explicit = true)
 size(D.matrix)
 ```
-
-
-
-
-    (3300, 4)
+(3300, 4)
 
 
 
@@ -346,22 +338,21 @@ We got a design matrix with 3300 rows for 3300 simulations! Let's do something e
 
 
 ```julia
-y = Float64[]
+y = zeros(3300)
 events = 0
 t = @elapsed begin
-    for i = 1:3300
+    Threads.@threads for i = 1:3300
         p = Tuple(D.matrix[i, :])
-        dice_line(p[1], p[2], Gamma(p[3], 1/p[3]), Normal(1, p[4]), jobs=1200 )
-        push!(y, length(C[end].data)/1000)
-        global events += 𝐶.evcount
+        info, ev, res = dice_line(p[1], p[2], Gamma(p[3], 1/p[3]), Normal(1, p[4]), jobs=1200, stat=false )
+        y[i] = res*0.001
+        global events += ev
     end
 end
-@printf("Time elapsed: %5.2f minutes, %d events", t/60, events)
+@printf("Time elapsed: %5.2f minutes, %d events on %d threads", t/60, events, Threads.nthreads())
 ```
+Time elapsed: 17.73 minutes, 33555812 events on 4 threads
 
-    Time elapsed: 73.14 minutes, 33573275 events
-
-It took over 70 minutes on a single process on a 2013 MacBook Pro and over ``33\times 10^6`` events.
+It took over 17 minutes on 4 threads of a 2013 MacBook Pro and over ```33\times 10^6`` events.
 
 ## Data analysis
 
@@ -377,28 +368,32 @@ describe(y)
     Summary Stats:
     Length:         3300
     Missing Count:  0
-    Mean:           0.892540
-    Minimum:        0.637000
+    Mean:           0.892569
+    Minimum:        0.633000
     1st Quartile:   0.863750
     Median:         0.904000
-    3rd Quartile:   0.938000
+    3rd Quartile:   0.937000
     Maximum:        0.986000
     Type:           Float64
 
 
-The performance of our simulated assembly lines varies between 0.637 and 0.986, which is a huge difference: The worst result is 35.4% below the best one!
+The performance of our simulated assembly lines varies between 0.633 and 0.986, which is a huge difference: The worst result is 35.8% below the best one!
 
 
 ```julia
 vcat(res[y .== maximum(y), :], res[y .== minimum(y), :])
 ```
+
 | no | n | b | a | σ | y |
 |---|---:|----:|----:|----|----|
 | 1 |  6 |  7 |  20 |  0.0 |  0.986 |
 | 2 |  5 |  10 |  20 |  0.0 |  0.986 |
-| 3 |  18 |  1 |  2 |  0.05 |  0.637 |
+| 3 |  18 |  1 |  2 |  0.05 |  0.633 |
+
+
 
 The best performance is with the shortest lines, big buffer sizes, small variation in processing times and no variation in performance between workers. But this is just common sense. The worst performance is with a long line, minimum buffers and maximum variation in processing times and in performance between workers. But how big are the effects?
+
 
 ```julia
 @df res dotplot(:n, :y, title="line performance vs line length", xlabel="n", ylabel="y [1/t]",
@@ -409,7 +404,7 @@ The best performance is with the shortest lines, big buffer sizes, small variati
 
 
 
-![png](output_33_0.png)
+![svg](output_33_0.svg)
 
 
 
@@ -423,7 +418,7 @@ The best performance is with the shortest lines, big buffer sizes, small variati
 
 
 
-![png](output_34_0.png)
+![svg](output_34_0.svg)
 
 
 
@@ -437,14 +432,14 @@ The best performance is with the shortest lines, big buffer sizes, small variati
 
 
 
-![png](output_35_0.png)
+![svg](output_35_0.svg)
 
 
 
 
 ```julia
 x = Int.(round.(res.σ*40))
-@df res dotplot(x, :y, title="line performance vs worker performance variation", xlabel=L"\sigma", ylabel="y",
+@df res dotplot(x, :y, title="line performance vs worker performance variation", xlabel=L"\sigma", ylabel="y [1/t]",
     marker=(:circle, 2, 0.3, :none, 1, 0.3, :blue, :solid), legend=:none)
 @df res boxplot!(x, :y, marker=(:none, 0.3, 0.3, :blue, 2, 0.3, :blue, :solid), fill=(0, 0.2, :blue))
 xticks!(collect(0:4), string.(round.(σ, digits=3)))
@@ -453,7 +448,7 @@ xticks!(collect(0:4), string.(round.(σ, digits=3)))
 
 
 
-![png](output_36_0.png)
+![svg](output_36_0.svg)
 
 
 
@@ -481,11 +476,11 @@ ols = lm(@formula(y ~ 1 + n + log(1+b) + log(a) + σ), res)
     ───────────────────────────────────────────────────────────────────────────────────
                     Estimate   Std. Error   t value  Pr(>|t|)    Lower 95%    Upper 95%
     ───────────────────────────────────────────────────────────────────────────────────
-    (Intercept)   0.737767    0.00236236   312.301     <1e-99   0.733135     0.742399  
-    n            -0.00154808  9.85802e-5   -15.7037    <1e-52  -0.00174136  -0.00135479
-    log(1 + b)    0.0576485   0.000901501   63.9473    <1e-99   0.055881     0.0594161
-    log(a)        0.0510564   0.000566878   90.0659    <1e-99   0.0499449    0.0521679
-    σ            -0.512109    0.0134128    -38.1805    <1e-99  -0.538407    -0.485811  
+    (Intercept)   0.738014    0.00235126   313.881     <1e-99   0.733404     0.742624  
+    n            -0.00154928  9.81169e-5   -15.7902    <1e-53  -0.00174166  -0.00135691
+    log(1 + b)    0.0576481   0.000897264   64.2488    <1e-99   0.0558889    0.0594074
+    log(a)        0.050857    0.000564214   90.1378    <1e-99   0.0497508    0.0519633
+    σ            -0.508588    0.0133498    -38.097     <1e-99  -0.534763    -0.482413  
     ───────────────────────────────────────────────────────────────────────────────────
 
 
@@ -508,12 +503,12 @@ ols2 = lm(@formula(y ~ 1 + n + log(1+b)*log(a) + σ), res)
     ───────────────────────────────────────────────────────────────────────────────────────────
                             Estimate   Std. Error   t value  Pr(>|t|)    Lower 95%    Upper 95%
     ───────────────────────────────────────────────────────────────────────────────────────────
-    (Intercept)           0.597895    0.00315108   189.743     <1e-99   0.591717     0.604074  
-    n                    -0.00154808  7.23374e-5   -21.4008    <1e-94  -0.00168991  -0.00140624
-    log(1 + b)            0.137565    0.00164257    83.7499    <1e-99   0.134344     0.140785  
-    log(a)                0.124624    0.0014452     86.2334    <1e-99   0.121791     0.127458  
-    σ                    -0.512109    0.00984225   -52.0317    <1e-99  -0.531407    -0.492812  
-    log(1 + b) & log(a)  -0.0420333   0.000790776  -53.1545    <1e-99  -0.0435837   -0.0404828
+    (Intercept)           0.5992      0.00314399   190.586     <1e-99   0.593035     0.605364  
+    n                    -0.00154928  7.21745e-5   -21.4658    <1e-95  -0.00169079  -0.00140777
+    log(1 + b)            0.13696     0.00163887    83.5699    <1e-99   0.133747     0.140173  
+    log(a)                0.123869    0.00144194    85.9039    <1e-99   0.121041     0.126696  
+    σ                    -0.508588    0.00982009   -51.7906    <1e-99  -0.527842    -0.489334  
+    log(1 + b) & log(a)  -0.0417155   0.000788995  -52.8716    <1e-99  -0.0432624   -0.0401685
     ───────────────────────────────────────────────────────────────────────────────────────────
 
 
@@ -523,24 +518,24 @@ Then we can analyze the effects of the four parameters on line performance:
 
 ```julia
 x = LinRange(1,10,50)
-for i in a
+for i in reverse(a)
     _n = fill(mean(n), length(x))
     _a = fill(i, length(x))
     _σ = fill(mean(σ), length(x))
     tmp = DataFrame(n=_n, b=x, a=_a, σ=_σ)
     _y = predict(ols2, tmp)
-    doplot = i == 2 ? plot : plot!
+    doplot = i == 20 ? plot : plot!
     doplot(x, _y, label="a=$i")
 end
-title!("Effects of buffer size and processing time variation")
+title!("Effects of buffer size and processing time variation", legend=:bottomright)
 xlabel!("b (buffer size)")
-ylabel!("y")
+ylabel!("y [1/t]")
 ```
 
 
 
 
-![png](output_42_0.png)
+![svg](output_42_0.svg)
 
 
 
@@ -549,41 +544,45 @@ Buffer size and processing time variation have nonlinear effects and may account
 
 ```julia
 x = LinRange(5, 20, 50)
-tmp = DataFrame(n=x, b=fill(mean(b), length(x)), a=fill(mean(a), length(x)), σ=fill(mean(σ), length(x)))
-plot(x, predict(ols2, tmp), title="Effect of line length", xlabel="n (line length)", ylabel="y")
+tmp = DataFrame(n=x, b=fill(mean(b), length(x)), a=fill(mean(a), length(x)),
+    σ=fill(mean(σ), length(x)))
+plot(x, predict(ols2, tmp), title="Effect of line length", xlabel="n (line length)",
+    ylabel="y [1/t]", legend=:none)
 ```
 
 
 
 
-![png](output_44_0.png)
+![svg](output_44_0.svg)
 
 
 
-This does may account for 3% performance losses.
+This may account for 3% performance losses.
 
 
 ```julia
 x = LinRange(0,0.1,50)
-tmp = DataFrame(n=fill(mean(n), length(x)), b=fill(mean(b), length(x)), a=fill(mean(a), length(x)), σ=x)
-plot(x, predict(ols2, tmp), title="Effect of performance variation between workers", xlabel=L"\sigma", ylabel="y")
+tmp = DataFrame(n=fill(mean(n), length(x)), b=fill(mean(b), length(x)),
+    a=fill(mean(a), length(x)), σ=x)
+plot(x, predict(ols2, tmp), title="Effect of performance variation between workers",
+    xlabel=L"\sigma", ylabel="y [1/t]", legend=:none)
 ```
 
 
 
 
-![png](output_46_0.png)
+![svg](output_46_0.svg)
 
 
 
 Variation in performance between workers may diminish line throughput by other 5%.
 
-The four effects combined can account for 34% performance losses from best to worst. This is most of the 35.4% we found above. The rest is statistical fluctuations.
+The four effects combined can account for 34% performance losses from best to worst. This is most of the 35.8% we found above. The rest is mostly statistical fluctuations.
 
 ## Final remark
 
-Starting from a simple game and with only a quite small simulation model we could come to conclusions which have a wide applicability for assembly lines. The performance differences in assembly lines are realistic – I have seen them over and over in industry. And we didn't yet account for failures or supply shortfalls. The unawareness of those simple factors costs manufacturing industry billions.
+Starting from a simple game and with only a quite small simulation model we could come to conclusions with a wide applicability for assembly lines. The performance differences in assembly lines are realistic – I have seen them over and over in industry. And we didn't yet account for failures or supply shortfalls. The unawareness of those simple factors costs manufacturing industry billions.
 
-The most interesting thing to note here is, that from seemingly quite unpredictable behaviour – look at the inventory chart of the beginning – emerge some quite simple regularities if we do discrete event simulations with parameter variation and then put the results through some not too sophisticated statistics.
+The most interesting thing to note here is, that from seemingly quite unpredictable behaviour – look at the inventory chart of the beginning – emerge some quite predictable characteristics out of multiple discrete event simulations with parameter variation combined with some not too sophisticated statistics.
 
-We could not have done those experiments and analyses with real lines as it is possible with simulations on a modern computer.
+We could not have done those experiments and analyses with real lines as it is possible with simulations on a modern computer with `Julia` and `Simulate.jl`.

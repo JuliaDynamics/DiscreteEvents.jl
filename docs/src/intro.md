@@ -134,6 +134,9 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
 
     At the moment I find it not practical to work with units if e.g. I trace simulation times in a table or do plots. It seems easier not to use them as long you don't need automatic time conversion in your simulation projects.
 
+!!! note
+    You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](examples/dicegame/dicegame.md) example for that.
+
 #### Types and functions
 
 [`Clock`](@ref), [`𝐶`](@ref), [`tau`](@ref), [`sample_time!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`incr!`](@ref), [`sync!`](@ref), [`stop!`](@ref stop!(::Clock)), [`resume!`](@ref),  
