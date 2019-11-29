@@ -40,8 +40,7 @@ W = [Worker(i, 𝐶, C[i], C[i+1], Uniform(0.5, 6.5), 1.0) for i in 1:5]
 for i in 1:5
     process!(SP(i, work, W[i], true))
 end
-@time run!(𝐶, 1000)</code></pre><pre><code class="language-none">  0.613634 seconds (998.53 k allocations: 48.363 MiB, 4.13% gc time)
-&quot;run! finished with 1390 clock events, 0 sample steps, simulation time: 1000.0&quot;</code></pre><pre><code class="language-julia">length(C[6].data)                    # how much got produced?</code></pre><p>272</p><pre><code class="language-julia">1000/272</code></pre><p>3.676470588235294</p><p>After running for 1000 time units, we got 272 finished items in channel 6, meaning an average cycle time of 3.68, not 3.5 as expected. The expected throughput would have been 286 units, so the line produced only 95% of that, even under &quot;perfect&quot; conditions like unlimited supply, an in-process inventory to start with, infinite buffer sizes, a perfectly balanced line and equally performing workers without breaks … What happened?</p><pre><code class="language-julia">using Plots
+@time run!(𝐶, 1000)</code></pre><p>0.613634 seconds (998.53 k allocations: 48.363 MiB, 4.13% gc time)<br/>&quot;run! finished with 1390 clock events, 0 sample steps, simulation time: 1000.0&quot;</p><pre><code class="language-julia">length(C[6].data)                    # how much got produced?</code></pre><p>272</p><pre><code class="language-julia">1000/272</code></pre><p>3.676470588235294</p><p>After running for 1000 time units, we got 272 finished items in channel 6, meaning an average cycle time of 3.68, not 3.5 as expected. The expected throughput would have been 286 units, so the line produced only 95% of that, even under &quot;perfect&quot; conditions like unlimited supply, an in-process inventory to start with, infinite buffer sizes, a perfectly balanced line and equally performing workers without breaks … What happened?</p><pre><code class="language-julia">using Plots
 
 function inventory_plot(n::Int64, title)
     for i ∈ 2:n
@@ -122,7 +121,7 @@ t = @elapsed begin
         global events += ev
     end
 end
-@printf(&quot;Time elapsed: %5.2f minutes, %d events on %d threads&quot;, t/60, events, Threads.nthreads())</code></pre><p>Time elapsed: 17.73 minutes, 33555812 events on 4 threads</p><p>It took over 17 minutes on 4 threads of a 2013 MacBook Pro and over `<span>$33\times 10^6$</span> events.</p><h2><a class="nav-anchor" id="Data-analysis-1" href="#Data-analysis-1">Data analysis</a></h2><p>We put together a results table and then do some exploratory data analysis:</p><pre><code class="language-julia">res = D.matrix
+@printf(&quot;Time elapsed: %5.2f minutes, %d events on %d threads&quot;, t/60, events, Threads.nthreads())</code></pre><p>Time elapsed: 17.73 minutes, 33555812 events on 4 threads</p><p>It took over 17 minutes on 4 threads of a 2013 MacBook Pro and over <span>$33\times 10^6$</span> events.</p><h2><a class="nav-anchor" id="Data-analysis-1" href="#Data-analysis-1">Data analysis</a></h2><p>We put together a results table and then do some exploratory data analysis:</p><pre><code class="language-julia">res = D.matrix
 res.y = y
 describe(y)</code></pre><pre><code class="language-none">Summary Stats:
 Length:         3300
