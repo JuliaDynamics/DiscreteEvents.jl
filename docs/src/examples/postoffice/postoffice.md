@@ -31,11 +31,7 @@ full(q::Channel) = length(q.data) >= q.sz_max
 logevent(nr, queue::Channel, info::AbstractString, wt::Number) =
     push!(df, (round(τ(), digits=2), nr, length(queue.data), info, wt))
 ```
-
-
-
-
-    logevent (generic function with 1 method)
+logevent (generic function with 1 method)
 
 
 
@@ -66,11 +62,7 @@ function clerk(input::Channel)
     logevent(cust.id, input, "leaves", τ() - cust.arrival)
 end
 ```
-
-
-
-
-    clerk (generic function with 1 method)
+clerk (generic function with 1 method)
 
 
 
@@ -87,11 +79,7 @@ df = DataFrame(time=Float64[], cust=Int[], qlen=Int64[], status=String[], wtime=
 process!(𝐶, SimProcess(1, people, queue, 3.333)) # register the functions as processes
 process!(𝐶, SimProcess(2, clerk, queue))
 ```
-
-
-
-
-    2
+2
 
 
 
@@ -102,9 +90,8 @@ Then we can simply run the simulation. We assume our time unit being minutes, so
 println(run!(𝐶, 600))
 println("``(length(queue.data)) customers yet in queue")
 ```
-
-    run! finished with 338 clock events, 0 sample steps, simulation time: 600.0
-    0 customers yet in queue
+run! finished with 338 clock events, 0 sample steps, simulation time: 600.0\
+0 customers yet in queue
 
 Our table has registered it all:
 

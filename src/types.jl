@@ -28,44 +28,34 @@ Prepare a function for being called as an event in a simulation.
 - `kw...`: keyword arguments
 
 !!! note
-    Be aware that, if the variables stored in a SimFunction are composite types,
-    they can change until they are evaluated later by `func`. But that's the nature
-    of simulation.
+    If the variables stored in a SimFunction are composite types,
+    they can change until they are evaluated later by `func`.
 
 # Example
 ```jldoctest
 julia> using Simulate
 
-julia> f(a,b,c; d=4, e=5) = a+b+c+d+e  # define a function
+julia> f(a,b,c; d=4, e=5) = a+b+c+d+e       # if you define a function and ...
 f (generic function with 1 method)
 
-julia> sf = SimFunction(f, 10, 20, 30, d=14, e=15)  # store it as SimFunction
-SimFunction(f, (10, 20, 30), Base.Iterators.Pairs(:d => 14,:e => 15))
+julia> sf = SF(f, 10, 20, 30, d=14, e=15);  # store it as SimFunction
 
-julia> sf.func(sf.arg...; sf.kw...)  # and it can be executed later
+julia> sf.func(sf.arg...; sf.kw...)         # it can be executed later
 89
 
-julia> d = Dict(:a => 1, :b => 2) # now we set up a dictionary
-Dict{Symbol,Int64} with 2 entries:
-  :a => 1
-  :b => 2
+julia> d = Dict(:a => 1, :b => 2);          # we set up a dictionary
 
-julia> f(t) = t[:a] + t[:b] # and a function adding :a and :b
-f (generic function with 2 methods)
+julia> g(t) = t[:a] + t[:b]                 # and a function adding :a and :b
+g (generic function with 1 method)
 
-julia> f(d)  # our add function gives 3
+julia> g(d)                                 # our add function gives 3
 3
 
-julia> ff = SimFunction(f, d)   # we set up a SimFunction
-SimFunction(f, (Dict(:a => 1,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
+julia> ff = SimFunction(g, d);              # we set up a SimFunction
 
-julia> d[:a] = 10  # later somehow we need to change d
-10
+julia> d[:a] = 10;                          # later somehow we change d
 
-julia> ff  # our SimFunction ff has changed too
-SimFunction(f, (Dict(:a => 10,:b => 2),), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
-
-julia> ff.func(ff.arg...; ff.kw...)  # and calling it gives a different result
+julia> ff.func(ff.arg...; ff.kw...)         # calling ff then gives a different result
 12
 ```
 """
@@ -81,7 +71,7 @@ const SF = SimFunction
 """
     SimExpr = Union{Expr, SimFunction}
 
-A type which is either a `SimFunction` or any Julia expression `Expr`.
+A type which is either a `SimFunction` or Julia expression, `Expr`-type.
 """
 SimExpr = Union{Expr, SimFunction}
 
@@ -114,13 +104,9 @@ executed at event time.
 - `Δt::Float64`: repeat rate with which the event gets repeated.
 """
 struct SimEvent
-    "expression or SimFunction to be evaluated at event time"
     ex::Array{SimExpr, 1}
-    "evaluation scope"
     scope::Module
-    "event time"
     t::Float64
-    "repeat time"
     Δt::Float64
 
     SimEvent(ex::Array{SimExpr, 1}, scope::Module, t::Number, Δt::Number) =
@@ -139,11 +125,8 @@ to be executed if conditions are met.
 - `scope::Module`: evaluation scope
 """
 struct SimCond
-    "Expr or SFs to be evaluated as conditions"
     cond::Array{SimExpr, 1}
-    "Expr or SFs to be evaluated if all conditions are True"
     ex::Array{SimExpr, 1}
-    "evaluation scope"
     scope::Module
 end
 
@@ -157,9 +140,7 @@ Create a sampling expression.
 - `scope::Module`: evaluation scope
 """
 struct Sample
-    "expression or function to be called at sample time"
     ex::SimExpr
-    "evaluation scope"
     scope::Module
 end
 
@@ -204,9 +185,9 @@ julia> using Simulate
 ```
 """
 mutable struct SimProcess
-    id
-    task
-    sim
+    id::Any
+    task::Union{Task,Nothing}
+    sim::Union{Clock,Nothing}
     state::SState
     func::Function
     arg::Tuple
@@ -246,25 +227,28 @@ Create a new simulation clock.
 - `sexpr::Array{Sample,1}`: sampling expressions to evaluate at each tick
 - `tsa::Float64`: next sample time
 
-If necessary the fields can be accesses with `c.time` … if `c` is your clock variable.
-
 # Examples
 ```jldoctest
 julia> using Simulate, Unitful
 
 julia> import Unitful: s, minute, hr
 
-julia> c = Clock()
+julia> c = Clock()                 # create a unitless clock (standard)
 Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
-julia> init!(c)
+
+julia> init!(c)                    # initialize it explicitly (normally done implicitly)
 Simulate.Idle()
-julia> c = Clock(1s, unit=minute)
+
+julia> c = Clock(1s, unit=minute)  # create a clock with units, does conversions automatically
 Clock: state=Simulate.Undefined(), time=0.0, unit=minute, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.016666666666666666
-julia> c = Clock(1s)
+
+julia> c = Clock(1s)               # create a clock with implicit unit setting
 Clock: state=Simulate.Undefined(), time=0.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
-julia> c = Clock(t0=60s)
+
+julia> c = Clock(t0=60s)           # another example of implicit unit setting
 Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
-julia> c = Clock(1s, t0=1hr)
+
+julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt takes precedence
 Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 ```
 """

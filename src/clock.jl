@@ -113,7 +113,7 @@ julia> τ() # alias, gives the central time
 0.0
 ```
 """
-tau(sim::Clock=𝐶) = sim.time*sim.unit
+tau(sim::Clock=𝐶) = sim.unit == NoUnits ? sim.time : sim.time*sim.unit
 const τ = tau
 
 """
@@ -254,7 +254,7 @@ end
 """
     checktime(sim::Clock, t::Number)::Float64
 
-check `t` given according to clock settings and return value
+check `t` given according to clock settings and return a Float64 value
 """
 function checktime(sim::Clock, t::Number)::Float64
     if isa(t, Real)
@@ -371,11 +371,11 @@ event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Ma
             event!(𝐶, ex, T, t; scope=scope)
 
 """
-    scale(n::Number)
+    scale(n::Number)::Float64
 
 calculate the scale from a given number
 """
-function scale(n::Number)
+function scale(n::Number)::Float64
     if n > 0
         i = 1.0
         while !(10^i ≤ n < 10^(i+1))
@@ -518,7 +518,7 @@ At a tick evaluate (1) all sampling expressions, (2) all conditional events, the
 The internal clock times `sim.tev` and `sim.tsa` must always be set to be
 at least `sim.time`.
 """
-function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
+function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
 
     function exec_next_event()
         sim.time = sim.tev
@@ -546,7 +546,7 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
             sim.cevents = sim.cevents[subs]
             simExec(ex)           # execute it
             if isempty(sim.cevents)
-                isempty(sim.sexpr) ? sim.Δt = 0 : nothing # delete sample rate
+                isempty(sim.sexpr) ? sim.Δt = 0.0 : nothing # delete sample rate
                 break
             end
             cond = [all(simExec(c.cond)) for c in sim.cevents]
@@ -554,14 +554,14 @@ function step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
         sim.scount +=1
     end
 
-    sim.state == Idle() ? sim.state = Busy() : nothing
+    sim.state = Busy()
     if (sim.tev ≤ sim.time) && (length(sim.events) ≥ 1)
         sim.tev = nextevtime(sim)
     end
 
-    if (length(sim.events) ≥ 1) | (sim.Δt > 0)
+    if (length(sim.events) ≥ 1) | (sim.Δt > 0.0)
         if length(sim.events) ≥ 1
-            if (sim.Δt > 0)
+            if (sim.Δt > 0.0)
                 if sim.tsa <= sim.tev
                     exec_next_tick()
                     if sim.tsa == sim.tev
@@ -600,7 +600,6 @@ function step!(sim::Clock, ::Idle, σ::Run)
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
     sim.scount = 0
-#    sim.state = Busy()
     setTimes(sim)
     while any(i->(sim.time < i ≤ sim.end_time), (sim.tsa, sim.tev))
         step!(sim, sim.state, Step())
@@ -617,8 +616,7 @@ function step!(sim::Clock, ::Idle, σ::Run)
     end
 
     sim.time = sim.end_time
-#    sim.state = Idle()
-    sleep(0.01)
+    sleep(0.01) # let processes finish
     "run! finished with $(sim.evcount) clock events, $(sim.scount) sample steps, simulation time: $(sim.time)"
 end
 

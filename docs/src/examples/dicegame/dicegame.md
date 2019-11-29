@@ -83,8 +83,8 @@ end
 @time run!(𝐶, 1000)
 ```
 
-      0.613634 seconds (998.53 k allocations: 48.363 MiB, 4.13% gc time)
-    "run! finished with 1390 clock events, 0 sample steps, simulation time: 1000.0"
+0.613634 seconds (998.53 k allocations: 48.363 MiB, 4.13% gc time)\
+"run! finished with 1390 clock events, 0 sample steps, simulation time: 1000.0"
 
 
 
@@ -92,11 +92,7 @@ end
 ```julia
 length(C[6].data)                    # how much got produced?
 ```
-
-
-
-
-  272
+272
 
 
 
@@ -104,11 +100,7 @@ length(C[6].data)                    # how much got produced?
 ```julia
 1000/272
 ```
-
-
-
-
-  3.676470588235294
+3.676470588235294
 
 
 
@@ -352,7 +344,7 @@ end
 ```
 Time elapsed: 17.73 minutes, 33555812 events on 4 threads
 
-It took over 17 minutes on 4 threads of a 2013 MacBook Pro and over ```33\times 10^6`` events.
+It took over 17 minutes on 4 threads of a 2013 MacBook Pro and over ``33\times 10^6`` events.
 
 ## Data analysis
 

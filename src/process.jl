@@ -88,9 +88,8 @@ process until being reactivated by the clock at the appropriate time.
 - `t::Number`: the time interval for the delay.
 """
 function delay!(sim::Clock, t::Number)
-    c = Channel(0)
+    c = Channel{Int64}(0)
     event!(sim, (SF(put!, c, t), SF(yield)), after, t)
-#    event!(sim, (SF(put!, c, t), SF(yield, current_task())), after, t)
     take!(c)
 end
 delay!(t::Number) = delay!(𝐶, t)
@@ -111,7 +110,7 @@ Used for delaying a process *until* a given time t.
 function delay!(sim::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > sim.time
-        c = Channel(0)
+        c = Channel{Int64}(0)
         event!(sim, (SF(put!, c, t), SF(yield)), t)
         take!(c)
     else
@@ -138,7 +137,7 @@ function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Mai
     if all(simExec(sconvert(cond)))   # all conditions met
         return         # return immediately
     else
-        c = Channel(0)
+        c = Channel{Int64}(0)
         event!(sim, (SF(put!, c, 1), SF(yield)), cond, scope=scope)
         take!(c)
     end
@@ -163,8 +162,8 @@ stop!(p::SimProcess, value=nothing) = interrupt!(p, Stop(), value)
 now!(sim::Clock, op::Union{SimExpr, Array, Tuple})
 now!(op::Union{SimExpr, Array, Tuple})
 ```
-Let the given operation be executed now! by the clock. Thus it cannot proceed
-before it is finished.
+Let the given operation be executed now! by the clock. Thus the clock cannot proceed
+before the op is finished.
 
 # Arguments
 - `sim::Clock`:

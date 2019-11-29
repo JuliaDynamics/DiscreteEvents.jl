@@ -63,7 +63,7 @@ julia> run!(𝐶, 10)   # run for 10 time units
 
 ## [The clock](@id the_clock)
 
-The clock is central to any model and simulation, since it establishes the timeline. It does not only provide the time, but contains also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt.
+The clock is central to any model and simulation, since it establishes the timeline. It does not only provide the time, but contains also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt. Each simulation can have its own clock.
 
 ```julia
 julia> c = Clock()                           ### create a new clock
@@ -90,7 +90,10 @@ julia> run!(c, 10)                           ### run the clock for 10 time units
 "run! finished with 11 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-You normally use the *central clock* [`𝐶`](@ref) (\it𝐶+tab), alias [`Clk`](@ref 𝐶):
+If you work with only one simulation at a time, you normally use the *central clock* [`𝐶`](@ref) (\it𝐶+tab), alias [`Clk`](@ref 𝐶):
+
+!!! note
+    You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](examples/dicegame/dicegame.md) example for that.
 
 ```julia
 julia> tick() = println(tau(), ": tick!")         ### the tick function now uses central time tau()
@@ -132,10 +135,7 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
     - [`setUnit!(sim::Clock, unit::FreeUnits)`](@ref setUnit!): set a clock unit.
     - `tau(sim::Clock).val`: return a unitless number for current time.
 
-    At the moment I find it not practical to work with units if e.g. I trace simulation times in a table or do plots. It seems easier not to use them as long you don't need automatic time conversion in your simulation projects.
-
-!!! note
-    You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](examples/dicegame/dicegame.md) example for that.
+    At the moment I don't find it practical to work with units if for example I collect simulation events or variables with their time in a table or do plots. It seems easier not to use them as long you don't need automatic time conversion in your simulation projects.
 
 #### Types and functions
 
@@ -152,7 +152,7 @@ Quoted expressions and SimFunctions can be given to events mixed in a tuple or a
 
 ### Timed events
 
-Timed events with [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)) schedule events to execute at a given time:
+Timed events with [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)) schedule functions and expressions to execute at a given time:
 
 ```julia
 ev1 = :(println(tau(), ": I'm a quoted expression"))
