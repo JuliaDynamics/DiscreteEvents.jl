@@ -89,7 +89,7 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(sim::Clock, t::Number)
     c = Channel{Int64}(0)
-    event!(sim, (SF(put!, c, t), SF(yield)), after, t)
+    event!(sim, (SF(put!, c, 1), SF(yield)), after, t)
     take!(c)
 end
 delay!(t::Number) = delay!(𝐶, t)
@@ -111,7 +111,7 @@ function delay!(sim::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > sim.time
         c = Channel{Int64}(0)
-        event!(sim, (SF(put!, c, t), SF(yield)), t)
+        event!(sim, (SF(put!, c, 1), SF(yield)), t)
         take!(c)
     else
         now!(sim, SF(println, stderr, "warning: delay until $t ≤ τ=$(tau(sim))"))

@@ -159,7 +159,6 @@ struct SimException <: Exception
   SimException(ev::SEvent, value=nothing) = new(ev, value)
 end
 
-
 """
 ```
 SimProcess( id, func::Function, arg...; kw...)
@@ -187,7 +186,7 @@ julia> using Simulate
 mutable struct SimProcess
     id::Any
     task::Union{Task,Nothing}
-    sim::Union{Clock,Nothing}
+    sim::Union{SEngine,Nothing}
     state::SState
     func::Function
     arg::Tuple
