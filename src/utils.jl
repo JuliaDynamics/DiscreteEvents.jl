@@ -22,11 +22,14 @@ julia> using Simulate
 
 julia> tau(:>=, 1)
 false
+
 julia> tau(:<, 1)
 true
+
 julia> a = 1
 1
-julia> tau(:<=, :a)
+
+julia> tau(:<=, :a, @__MODULE__)
 true
 ```
 """
@@ -51,13 +54,13 @@ Compare two variables or numbers.
 ```jldoctest
 julia> using Simulate
 
-julia> m = @__MODULE__;  # necessary for doctest
-
 julia> val(1, :<=, 2)
 true
+
 julia> a = 1
 1
-julia> val(:a, :<=, 2, m)
+
+julia> val(:a, :<=, 2, @__MODULE__)
 true
 ```
 """
@@ -88,31 +91,37 @@ create a `SimFunction` from arguments f, arg...
 ```@jldoctest
 julia> using Simulate
 
-julia> @SF :sin pi
-SimFunction(sin, (π,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
 julia> a = 1
 1
 julia> incra() = global a += 1             # create a simple increment function
 incra (generic function with 1 method)
-julia> event!((@SF incra), after, 3)      # schedule an increment after 3 time units
-3.0
-julia> a
+
+julia> event!((@SF incra), after, 3);      # schedule an increment after 3 time units
+
+julia> a                                   # nothing happened to a
 1
-julia> run!(𝐶, 5)
+
+julia> run!(𝐶, 5)                          # run the simulation
 "run! finished with 1 clock events, 0 sample steps, simulation time: 5.0"
-julia> a
+
+julia> a                                   # now it should have been incremented
 2
-julia> event!((@SF incra), (@tau :>= 8))  # schedule a conditional increment
-5.0
+
+julia> event!((@SF incra), (@tau :>= 8));  # schedule a conditional event
+
 julia> run!(𝐶, 5)
-"run! finished with 0 clock events, 500 sample steps, simulation time: 10.0"
-julia> a
+"run! finished with 0 clock events, 301 sample steps, simulation time: 10.0"
+
+julia> a                                   # the conditional event was triggered
 3
-julia> event!(((@SF incra), (@SF incra)), ((@tau :>= 12), (@val :a :<= 3)))
-10.0
+
+julia> event!(((@SF incra), (@SF incra)),  # two increments
+        ((@tau :>= 12), (@val :a :<= 3))); # on two conditions
+
 julia> run!(𝐶, 5)
-"run! finished with 0 clock events, 500 sample steps, simulation time: 15.0"
-julia> a
+"run! finished with 0 clock events, 201 sample steps, simulation time: 15.0"
+
+julia> a                                   # two increments happened
 5
 ```
 """
@@ -178,24 +187,32 @@ julia> using Simulate
 
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
-julia> s = @tau :≥ 100
-SimFunction(Simulate.tau, (:≥, 100, Main), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
-julia> Simulate.simExec(s)
+julia> sf = @tau :≥ 100;
+
+julia> Simulate.simExec(sf)
 false
+
 julia> Simulate.simExec(@tau < 100)                ### wrong !!
 ERROR: syntax: "<" is not a unary operator
+
 julia> Simulate.simExec(@tau :< 100)               ### correct
 true
+
 julia> a = 1
 1
+
 julia> Simulate.simExec(@tau :< :a)
 true
+
 julia> event!(SF(()->global a+=1), (@tau :>= 3))   ### create a conditional event
 0.0
+
 julia> a
 1
+
 julia> run!(𝐶, 5)                                  ### run
-"run! finished with 0 clock events, 500 sample steps, simulation time: 5.0"
+"run! finished with 0 clock events, 301 sample steps, simulation time: 5.0"
+
 julia> a
 2
 ```
@@ -230,18 +247,21 @@ julia> using Simulate
 
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
-julia> @val 1 :≤ 2
-SimFunction(Simulate.val, (1, :≤, 2, Main), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}())
+
 julia> Simulate.simExec(@val 1 :≤ 2)
 true
+
 julia> a = 1
 1
+
 julia> Simulate.simExec(@val :a :≤ 2)
 true
-julia> event!(SF(()->global a+=1), ((@tau :>= 3), (@val :a :<= 3))) ### a conditional event
-0.0
+
+julia> event!(SF(()->global a+=1), ((@tau :>= 3), (@val :a :<= 3))); # a conditional event
+
 julia> run!(𝐶, 5)
-"run! finished with 0 clock events, 500 sample steps, simulation time: 5.0"
+"run! finished with 0 clock events, 301 sample steps, simulation time: 5.0"
+
 julia> a
 2
 ```

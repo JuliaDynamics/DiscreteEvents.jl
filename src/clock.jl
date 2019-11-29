@@ -20,29 +20,40 @@ julia> using Simulate, Unitful
 
 julia> import Unitful: Time, s, minute, hr
 
-julia> c = Clock(t0=60) # setup a new clock with t0=60
+julia> c = Clock(t0=60)     # setup a new clock with t0=60
 Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+
 julia> tau(c) # current time is 60.0 NoUnits
 60.0
-julia> setUnit!(c, s)  # set clock unit to Unitful.s
+
+julia> setUnit!(c, s)       # set clock unit to Unitful.s
 60.0 s
+
 julia> tau(c) # current time is now 60.0 s
 60.0 s
+
 julia> setUnit!(c, minute)  # set clock unit to Unitful.minute
 1.0 minute
-julia> tau(c) # current time is now 1.0 minute
+
+julia> tau(c)               # current time is now 1.0 minute
 1.0 minute
-julia> typeof(tau(c))  # tau(c) now returns a time Quantity ...
+
+julia> typeof(tau(c))       # tau(c) now returns a time Quantity ...
 Quantity{Float64,𝐓,Unitful.FreeUnits{(minute,),𝐓,nothing}}
+
 julia> isa(tau(c), Time)
 true
-julia> uconvert(s, tau(c)) # ... which can be converted to other time units
+
+julia> uconvert(s, tau(c))  # ... which can be converted to other time units
 60.0 s
-julia> tau(c).val  # it has a value of 1.0
+
+julia> tau(c).val           # it has a value of 1.0
 1.0
-julia> c.time  # internal clock time is set to 1.0 (is a Float64)
+
+julia> c.time               # internal clock time is set to 1.0 (a Float64)
 1.0
-julia> c.unit  # internal clock unit is set to Unitful.minute
+
+julia> c.unit               # internal clock unit is set to Unitful.minute
 minute
 ```
 """
@@ -73,8 +84,8 @@ end
 𝐶
 Clk
 ```
-`𝐶` (𝐶 = \\itC+tab) or `Clk` is the central simulation clock. Since most
-simulations work with **one** time, they should use 𝐶 for time keeping.
+`𝐶` (𝐶 = \\itC+tab) or `Clk` is the central simulation clock. If you do one
+simulation at a time, you can use 𝐶 or Clk for time keeping.
 
 # Examples
 
@@ -83,12 +94,13 @@ julia> using Simulate
 
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
+
 julia> 𝐶  # central clock
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
-julia> Clk  # alias
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
-julia> 𝐶.time
-0.0
+
+julia> 𝐶 === Clk
+true
+
 ```
 """
 const 𝐶 = Clk = Clock()
@@ -173,8 +185,10 @@ julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
 Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+
 julia> reset!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
+
 julia> c
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 ```
@@ -279,9 +293,9 @@ Schedule an event for a given simulation time.
 # Arguments
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
-- `t::Float64` or `t::Time`: simulation time, if t < sim.time set t = sim.time,
-- `scope::Module=Main`: scope for the expressions to be evaluated
-- `cycle::Float64=0.0`: repeat cycle time for an event
+- `t::Real` or `t::Time`: simulation time, if t < sim.time set t = sim.time,
+- `scope::Module=Main`: scope for expressions to be evaluated in,
+- `cycle::Float64=0.0`: repeat cycle time for an event.
 
 # returns
 Scheduled internal simulation time (unitless) for that event.
@@ -296,15 +310,19 @@ julia> import Unitful: s, minute, hr
 
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
-julia> event!(𝐶, SimFunction(myfunc, 1, 2), 1) # a 1st event
+
+julia> event!(𝐶, SimFunction(myfunc, 1, 2), 1) # a 1st event to 1
 1.0
 julia> event!(𝐶, SimFunction(myfunc, 2, 3), 1) #  a 2nd event to the same time
 1.0000000000000002
+
 julia> event!(𝐶, SimFunction(myfunc, 3, 4), 1s)
 Warning: clock has no time unit, ignoring units
 1.0000000000000004
+
 julia> setUnit!(𝐶, s)
 0.0 s
+
 julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 60.0
 ```
@@ -349,8 +367,10 @@ julia> import Unitful: s, minute, hr
 
 julia> setUnit!(𝐶, s)
 0.0 s
+
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
+
 julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
 3600.0
 ```
@@ -396,8 +416,8 @@ event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; sco
 Schedule a conditional event.
 
 It is executed immediately if the conditions are met, else the condition is
-checked at each clock tick Δt. After a conditional event is triggered, it is
-removed from the clock. If no sampling rate Δt is setup, a default
+checked at each clock tick Δt. A conditional event is triggered only once. After
+that it is removed from the clock. If no sampling rate Δt is setup, a default
 sampling rate is setup depending on the scale of the remaining simulation time
 ``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
 
@@ -405,21 +425,33 @@ sampling rate is setup depending on the scale of the remaining simulation time
 - `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
 - `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
-    or an array or tuple of them. It is true if all expressions or SimFunctions
-    therein return true.
+    or an array or tuple of them. It is true only if all expressions or SimFunctions
+    therein return true,
 - `scope::Module=Main`: scope for the expressions to be evaluated
-- `cycle::Float64=0.0`: repeat cycle time for an event
 
 # returns
 current simulation time `tau(sim)`.
 
 # Examples
 ```jldoctest
-julia> using Simulate, Unitful
+julia> using Simulate
 
-julia> import Unitful: s, minute, hr
+julia> c = Clock()   # create a new clock
+Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 
+julia> event!(c, SF((x)->println(tau(x), ": now I'm triggered"), c), (@tau c :>= 5))
+0.0
+
+julia> c             # a conditional event turns sampling on
+Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 1, processes: 0, sampling: 0, sample rate Δt=0.01
+
+julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fire the event
+5.009999999999938: now I'm triggered
+"run! finished with 0 clock events, 501 sample steps, simulation time: 10.0"
 ```
+
+After the event is triggered, sampling is again switched off.
+
 """
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
                 cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
@@ -512,11 +544,10 @@ end
 
 step forward to next tick or scheduled event.
 
-At a tick evaluate (1) all sampling expressions, (2) all conditional events, then
-(3) if an event is encountered, evaluate the event expression.
+At a tick evaluate 1) all sampling functions or expressions, 2) all conditional
+events, then 3) if an event is encountered, trigger the event.
 
-The internal clock times `sim.tev` and `sim.tsa` must always be set to be
-at least `sim.time`.
+The internal clock times `sim.tev` and `sim.tsa` is always at least `sim.time`.
 """
 function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
 

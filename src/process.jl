@@ -9,8 +9,8 @@ Put a `SimProcess` in a loop, which can be broken by a `SimException`.
 
 # Arguments
 - `p::SimProcess`:
-- `start::Channel`:
-- `cycles=Inf`:
+- `start::Channel`: a channel to ensure that a process starts,
+- `cycles=Inf`: determine, how often the loop should be run.
 """
 function loop(p::SimProcess, start::Channel, cycles::Number)
     take!(start)
@@ -29,12 +29,12 @@ function loop(p::SimProcess, start::Channel, cycles::Number)
 end
 
 """
-    startup!(p::SimProcess)
+    startup!(p::SimProcess, cycles::Number)
 
 Start a `SimProcess` as a task in a loop.
 """
 function startup!(p::SimProcess, cycles::Number)
-    start = Channel(0)
+    start = Channel{Int64}(0)
     p.task = @async loop(p, start, cycles)
     p.state = Idle()
     put!(start, 1) # let the process start
@@ -51,7 +51,7 @@ return the `id` it was registered with. It can then be found under `sim.processe
 # Arguments
 - `sim::Clock`: clock, if no clock is given, it runs under 𝐶,
 - `p::SimProcess`
-- `cycles::Number=Inf`: number of cycles, the process should run.
+- `cycles::Number=Inf`: number of cycles the process should run.
 """
 function process!(sim::Clock, p::SimProcess, cycles::Number=Inf)
     id = p.id
@@ -118,6 +118,7 @@ function delay!(sim::Clock, T::Timing, t::Number)
     end
 end
 delay!(T::Timing, t::Number) = delay!(𝐶, T, t)
+
 """
 ```
 wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
@@ -129,7 +130,7 @@ until the given condition is true.
 # Arguments
 - `sim::Clock`: clock, if no clock is given, the delay goes to `𝐶`.
 - `cond::Union{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
-    or an array or tuple of them. It is true if all expressions or SimFunctions
+    or an array or tuple of them. It is true only if all expressions or SimFunctions
     therein return true.
 - `scope::Module=Main`: evaluation scope for given expressions
 """
