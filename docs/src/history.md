@@ -8,7 +8,7 @@
 - most functions can be called without the first clock argument, default to [`𝐶`](@ref),
 - [`event!`](@ref) takes an expression or a [`SimFunction`](@ref) or a tuple or an array of them,
 - introduced aliases: [`SF`](@ref SimFunction) for [`SimFunction`](@ref) and [`SP`](@ref SimProcess) for [`SimProcess`](@ref)
-- introduced process-based simulation: [`SimProcess`](@ref) and [`process!`](@ref) and [delay!](@ref),
+- introduced process-based simulation: [`SimProcess`](@ref) and [`process!`](@ref) and [`delay!`](@ref),
 - extensive documentation,
 - more examples.
 

@@ -6,7 +6,7 @@
 CurrentModule = Simulate
 ```
 
-`Simulate.jl` runs on Julia versions ≥ v"1.0". The current stable, registered version is installed with
+`Simulate.jl` runs on Julia versions ≥ v"1.0" [^1]. The current stable, registered version is installed with
 
 ```julia
 pkg> add Simulate
@@ -96,8 +96,8 @@ more convenient to use the macros since the generate the necessary SimFunctions
 directly:
 
 ```@docs
-tau(::Clock, ::Symbol, ::Union{Number,Symbol})
-@tau(::Any, ::Symbol, ::Union{Number, QuoteNode})
+tau(::Clock, ::Function, ::Union{Number,Symbol})
+@tau(::Any, ::QuoteNode, ::Union{Number, QuoteNode})
 val
 @val
 ```
@@ -200,3 +200,6 @@ switch!
 record!
 clear!
 ```
+
+[^1]: currently [builds fail on x86 machines with Julia 1.0](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/master), Appveyor is set to allow this.
+    There is an [issue in the repo](https://github.com/pbayer/Simulate.jl/issues/8), maybe someone can look into it or fix it.

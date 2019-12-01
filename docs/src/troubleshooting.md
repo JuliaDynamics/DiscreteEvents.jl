@@ -2,9 +2,13 @@
 
 ## Problems
 
+### Process startup
+
+Under some environments (e.g. Jupyter) between starting processes with `process!` and running a simulation a little sleep, e.g. `sleep!(0.1)` is needed before running a simulation with `run!` to ensure that all started processes have enqueued for clock events.
+
 ### A SimProcess fails
 
-If `𝐶` is your clock, you get the list of all running processes with `𝐶.processes`. You  look at the failed process with `𝐶.processes[id].task`. This gives you the stack trace of the failed process, e.g.
+If `c` is your clock, you get the list of all running processes with `c.processes`. You  then look at the failed process with `c.processes[id].task`. This gives you the stack trace of the failed process, e.g.
 
 ```julia
 julia> 𝐶.processes
