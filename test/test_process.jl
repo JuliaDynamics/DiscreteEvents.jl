@@ -1,7 +1,7 @@
 println("... basic tests: processes ...")
 simex = Simulate.SimException(Simulate.Stop())
 @test simex.ev == Simulate.Stop()
-@test isnothing(simex.value)
+@test simex.value === nothing
 
 # ===== test process registration
 ch1 = Channel(32)
