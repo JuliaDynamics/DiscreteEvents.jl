@@ -15,7 +15,7 @@ A Julia package for discrete event simulation.
 
 ## Development
 
-`Simulate.jl` is a new package and still in early development. Please use and test it and help it evolve. Its GitHub repository is at https://github.com/pbayer/Simulate.jl.
+`Simulate.jl` is a new package and still in early development. Please use and test it and help it evolve. Its GitHub repository is at [https://github.com/pbayer/Simulate.jl](https://github.com/pbayer/Simulate.jl).
 
 ### New in v0.2.0
 

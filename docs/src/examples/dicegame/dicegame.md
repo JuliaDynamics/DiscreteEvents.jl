@@ -1,8 +1,6 @@
 # Goldratt's Dice Game
 
-*Paul Bayer, 2019-11-22 v2.0*
-
-Goldratt's Dice Game from his business novel "The Goal" is a classical illustration that dependencies and statistical fluctuations diminish the throughput through a system.
+Goldratt's Dice Game from his business novel "The Goal" is a classical illustration that dependencies and statistical fluctuations diminish the throughput through a queuing system.
 
 Alex Rogo, the hero of the novel plays a game with five boys:
 

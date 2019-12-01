@@ -6,7 +6,7 @@
 CurrentModule = Simulate
 ```
 
-The current stable, registered version of `Simulate.jl` is installed with
+`Simulate.jl` runs on Julia versions ≥ v"1.0". The current stable, registered version is installed with
 
 ```julia
 pkg> add Simulate

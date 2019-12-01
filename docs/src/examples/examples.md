@@ -1,12 +1,14 @@
 # Overview
 
-The examples are intended to show how `Simulate.jl` can be used and how the different approaches to modeling and simulation can be effectively combined.
+The examples are intended to show how `Simulate.jl` can be used and how different approaches to modeling and simulation can be employed and combined with it.
 
-```@contents
-Pages = [ "greeting.md", "singleserver.md", "tabletennis.md",
-          "postoffice/postoffice.md", "dicegame/dicegame.md"]
-Depth = 1
-```
+- [**Two guys meet**](greeting.md): an introductory example,
+- [**Table tennis**](singleserver.md): a state-based simulation,
+- [**Single server**](tabletennis.md): an activity-based simulation of a single server,
+- [**Post office**](postoffice/postoffice.md): a process-based simulation of a post-office,
+- [**Goldratt's dice game**](dicegame/dicegame.md): a simulation of assembly lines,
+  illustrating what can be done with multiple simulations and parameter variation on
+  parallel threads.
 
 ### Working with the examples
 
