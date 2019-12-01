@@ -1,16 +1,18 @@
 println("... basic tests: utils ...")
 a = 1
 reset!(𝐶)
-@test !tau(:>=, 1)
-@test tau(:<, 1)
-@test tau(:<=, :a)
+@test !tau(>=, 1)
+@test tau(<, 1)
+@test_throws AssertionError tau(<<, 1)
+@test tau(<=, :a)
 
 b = 2
-@test val(1, :<=, 2)
-@test val(1, :<, :b)
-@test val(:a, :<=, 2)
-@test val(:a, :<, :b)
-@test !val(:a, :>, :b)
+@test val(1, <=, 2)
+@test_throws AssertionError val(1, <<, 1)
+@test val(1, <, :b)
+@test val(:a, <=, 2)
+@test val(:a, <, :b)
+@test !val(:a, >, :b)
 
 @test (@SF :sin pi) == SF(sin, pi)
 incra() = global a += 1

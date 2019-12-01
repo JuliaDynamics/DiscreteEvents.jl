@@ -4,14 +4,14 @@
 
 """
 ```
-tau(sim::Clock, check::Symbol, x::Union{Number,Symbol}; m::Module=Main)
-tau(check::Symbol, x::Union{Number,Symbol}; m::Module=Main)
+tau(sim::Clock, check::Function, x::Union{Number,Symbol}; m::Module=Main)
+tau(check::Function, x::Union{Number,Symbol}; m::Module=Main)
 ```
 Compare the current simulation time against a number or a variable.
 
 # Arguments
 - `sim::Clock`: clock variable, if not given, it is 𝐶.
-- `check::Symbol`: a comparison operator as a symbol like `:>`,
+- `check::Function`: a comparison operator like ≥, >, ==, <, ≤,
 - `x::Union{Number,Symbol}`: a number or a symbolic variable like `:a`, a
     symbolic variable can be evaluated later at event time,
 - `m::Module=Main`: the evaluation scope, if a symbolic variable is given.
@@ -20,26 +20,28 @@ Compare the current simulation time against a number or a variable.
 ```jldoctest
 julia> using Simulate
 
-julia> tau(:>=, 1)
+julia> tau(>=, 1)
 false
 
-julia> tau(:<, 1)
+julia> tau(<, 1)
 true
 
 julia> a = 1
 1
 
-julia> tau(:<=, :a, @__MODULE__)
+julia> tau(<=, :a, @__MODULE__)
 true
 ```
 """
-tau(sim::Clock, check::Symbol, x::Union{Number,Symbol}, m::Module=Main) =
-        x isa Number ? eval(check)(tau(sim), x) : eval(check)(tau(sim), Core.eval(m, x))
-tau(check::Symbol, x::Union{Number,Symbol}, m::Module=Main) = tau(𝐶, check, x, m)
+function tau(sim::Clock, check::Function, x::Union{Number,Symbol}, m::Module=Main)
+    @assert typeof(check) in typeof.([>=, >, ==, <, <=]) "$check is not a comparison operator"
+    x isa Number ? check(tau(sim), x) : check(tau(sim), Core.eval(m, x))
+end
+tau(check::Function, x::Union{Number,Symbol}, m::Module=Main) = tau(𝐶, check, x, m)
 
 """
 ```
-val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol}, m::Module=Main)
+val(a::Union{Number, Symbol}, check::Function, x::Union{Number, Symbol}, m::Module=Main)
 ```
 Compare two variables or numbers.
 
@@ -47,28 +49,29 @@ Compare two variables or numbers.
 
 - `a`, `xUnion{Number, Symbol}`: a number or a symbolic variable like `:a`, a
     symbolic variable can be evaluated later at event time,
-- `check::Symbol`: a comparison operator as a symbol like `:>`,
+- `check::Function`: a comparison operator like ≥, >, ==, <, ≤,
 - `m::Module=Main`: the evaluation scope, if a symbolic variable is given.
 
 # Examples
 ```jldoctest
 julia> using Simulate
 
-julia> val(1, :<=, 2)
+julia> val(1, <=, 2)
 true
 
 julia> a = 1
 1
 
-julia> val(:a, :<=, 2, @__MODULE__)
+julia> val(:a, <=, 2, @__MODULE__)
 true
 ```
 """
-function val(a::Union{Number, Symbol}, check::Symbol, x::Union{Number, Symbol},
+function val(a::Union{Number, Symbol}, check::Function, x::Union{Number, Symbol},
              m::Module=Main)
+    @assert typeof(check) in typeof.([>=, >, ==, <, <=]) "$check is not a comparison operator"
     a = a isa Number ? a : Core.eval(m, a)
     x = x isa Number ? x : Core.eval(m, x)
-    eval(check)(a, x)
+    check(a, x)
 end
 
 """
@@ -218,10 +221,10 @@ julia> a
 ```
 """
 macro tau(sim, check::QuoteNode, val::Union{Number, QuoteNode})
-    return :( SimFunction(tau, $(Core.eval(__module__, sim)), $check, $val, $__module__) )
+    return :( SimFunction(tau, $(Core.eval(__module__, sim)), $(eval(check)), $val, $__module__) )
 end
 macro tau(check::QuoteNode, val::Union{Number, QuoteNode})
-    return :( SimFunction(tau, $check, $val, $__module__) )
+    return :( SimFunction(tau, $(eval(check)), $val, $__module__) )
 end
 
 """
@@ -234,7 +237,7 @@ Create a Simfunction comparing two values a and b or two symbolic variables
 
 # Arguments
 - `a, b::: a number, expression or symbol
-- `check::QuoteNode`: a comparison operator as a symbol like `:≤`
+- `check::QuoteNode`: a comparison operator as a symbol like `:>` or `:≤`
 - `m::Module=Main`: a module scope for evaluation of given symbolic variables
 
 !!! note
@@ -267,5 +270,5 @@ julia> a
 ```
 """
 macro val(a, check::QuoteNode, x)
-    return :( SimFunction(val, $a, $check, $x, $__module__) )
+    return :( SimFunction(val, $a, $(eval(check)), $x, $__module__) )
 end
