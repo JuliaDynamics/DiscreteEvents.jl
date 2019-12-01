@@ -35,13 +35,13 @@ ev = Simulate.SimEvent(conv([SF(f, 1), SF(g, 1)]), Main, 10, 0)
 
 # expressions and SimFunctions mixed in an array
 ev = Simulate.SimEvent(conv([:(1+1), SF(g,2), :(1+2), SF(f, 1)]), Main, 10, 0)
-@test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
+@test sum([Simulate.simExec(ex) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
 # expressions and SimFunctions mixed in a tuple
 ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
-@test sum([ex.func(ex.arg...; ex.kw...) for ex in ev.ex if isa(ex, SimFunction)]) == 10
+@test sum([Simulate.simExec(ex) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
