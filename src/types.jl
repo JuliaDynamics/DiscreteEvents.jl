@@ -61,10 +61,14 @@ julia> ff.func(ff.arg...; ff.kw...)         # calling ff then gives a different 
 """
 struct SimFunction
     func::Function
-    arg::Tuple
-    kw::Base.Iterators.Pairs
+    arg::Union{Nothing, Tuple}
+    kw::Union{Nothing, Base.Iterators.Pairs}
 
-    SimFunction(func, arg...; kw...) = new(func, arg, kw)
+    function SimFunction(func::Function, arg...; kw...)
+        !isempty(arg) || ( arg = nothing )
+        !isempty(kw)  || ( kw  = nothing )
+        new(func, arg, kw)
+    end
 end
 const SF = SimFunction
 

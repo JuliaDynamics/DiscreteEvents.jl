@@ -255,11 +255,14 @@ function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
 
     function sexec(x::SimExpr)
         if x isa SimFunction
-            ret = x.func(x.arg...; x.kw...)
+            if x.kw === nothing
+                return x.arg === nothing ? x.func() : x.func(x.arg...)
+            else
+                return x.arg === nothing ? x.func(; x.kw...) : s.func(x.arg...; x.kw...)
+            end
         else
             return Core.eval(m, x)
         end
-        return ret
     end
 
     return ex isa SimExpr ? sexec(ex) : Tuple([sexec(x) for x in ex])
