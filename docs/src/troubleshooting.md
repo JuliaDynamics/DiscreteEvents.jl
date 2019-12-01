@@ -4,7 +4,7 @@
 
 ### Process startup
 
-Under some environments (e.g. Jupyter) between starting processes with `process!` and running a simulation a little sleep, e.g. `sleep!(0.1)` is needed before running a simulation with `run!` to ensure that all started processes have enqueued for clock events.
+Under some environments (e.g. Jupyter) it may happen, that the processes have not started completely before the clock runs. In such cases it may help to put a little sleep, e.g. `sleep!(0.1)` between `process!(…)` and `run!(…)` to ensure that all started processes have enqueued for clock events.
 
 ### A SimProcess fails
 

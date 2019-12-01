@@ -1,6 +1,6 @@
 # Goldratt's Dice Game
 
-Goldratt's Dice Game from his business novel "The Goal" is a classical illustration that dependencies and statistical fluctuations diminish the throughput through a queuing system.
+Goldratt's Dice Game from his business novel "The Goal" is a classical illustration that dependencies and statistical fluctuations diminish the throughput through a system.
 
 Alex Rogo, the hero of the novel plays a game with five boys:
 
@@ -24,9 +24,11 @@ Then Rogo explains to the boys that with the die on average they should pass `3.
 
 ## An assembly line
 
-As Goldratt described it, the game is done in a fixed cycle – no asynchronism here and no need for a discrete-event-simulation. But more realistically it could be seen as an assembly line with buffers between the five workers. The workers take on average 3.5 time units for processing an item and they are admonished to work as fast as possible.
+As Goldratt described it, the game is done in a fixed cycle – no asynchronism here and no need for a discrete-event-simulation. But more realistically it could be seen as an assembly line with buffers between the five workers:
 
-We need some data structure for workers …
+![assembly line](assembly_line.png)
+
+The workers take on average 3.5 time units for processing an item and they are admonished to work as fast as possible. To implement it, we need some data structure for workers …
 
 
 ```julia
@@ -45,7 +47,7 @@ mutable struct Worker
 end
 ```
 
-… and a function representing their operation. The buffers are represented by channels. Then we build a system by creating workers and connecting them by channels. We start the work processes with their respective data and run the simulation.
+… and a function representing their operation. The buffers are represented by channels. Then we build the system by creating workers and connecting them by channels. We start the work processes with their respective data and run the simulation.
 
 
 ```julia
@@ -81,19 +83,13 @@ end
 @time run!(𝐶, 1000)
 ```
 
-0.613634 seconds (998.53 k allocations: 48.363 MiB, 4.13% gc time)\
+0.261483 seconds (115.06 k allocations: 4.404 MiB)\
 "run! finished with 1390 clock events, 0 sample steps, simulation time: 1000.0"
-
-
-
 
 ```julia
 length(C[6].data)                    # how much got produced?
 ```
 272
-
-
-
 
 ```julia
 1000/272
@@ -154,6 +150,7 @@ As parameters we take:
 
 We give each simulation its own clock and channels variables so that it can be run in parallel on different threads.
 
+
 ```julia
 function dice_line( n::Int64, mw::Int64,
                     vp::Distribution, vw::Distribution;
@@ -182,6 +179,7 @@ function dice_line( n::Int64, mw::Int64,
     return (info, clk.evcount, length(C[end].data))
 end
 ```
+
 dice_line (generic function with 1 method)
 
 
@@ -198,6 +196,7 @@ println(info)
 println(res, " items produced!")
 @printf("%5.2f%s capacity utilization", 3.5*res/10, "%")
 ```
+
 run! finished with 1341 clock events, 0 sample steps, simulation time: 1000.0\
 266 items produced!\
 93.10% capacity utilization
@@ -251,11 +250,13 @@ title!(latexstring("\\mathsf{Gamma\\, distribution,\\,} \\mu=1"))
 
 
 ```julia
-info, ev, res = dice_line(5, 5, Gamma(10,1/10), Normal(1,0))
+@time info, ev, res = dice_line(5, 5, Gamma(10,1/10), Normal(1,0))
 println(info)
 println(res, " items produced!")
 @printf("y = %5.3f [1/t]", res/1000)
 ```
+
+1.060803 seconds (1.03 M allocations: 46.115 MiB, 1.03% gc time)\
 run! finished with 4847 clock events, 0 sample steps, simulation time: 1000.0\
 966 items produced!\
 y = 0.966 [1/t]
@@ -312,14 +313,15 @@ Our response variable y seems to be under statistical control and its fluctuatio
 ```julia
 using StatsModels, ExperimentalDesign
 
-n=cat(5:10,12:2:20, dims=1)
-b=1:10
-a=cat(2,3,5:5:20, dims=1)
-σ=LinRange(0,0.1,5)
+n = vcat(5:10,12:2:20)
+b = 1:10
+a = vcat(2,3,5:5:20)
+σ = LinRange(0,0.1,5)
 
 D = FullFactorial((n=n, b=b, a=a, σ=σ), @formula(y ~ n + b + a + σ), explicit = true)
 size(D.matrix)
 ```
+
 (3300, 4)
 
 
@@ -340,13 +342,14 @@ t = @elapsed begin
 end
 @printf("Time elapsed: %5.2f minutes, %d events on %d threads", t/60, events, Threads.nthreads())
 ```
-Time elapsed: 17.73 minutes, 33555812 events on 4 threads
 
-It took over 17 minutes on 4 threads of a 2013 MacBook Pro and over ``33\times 10^6`` events.
+Time elapsed: 17.47 minutes, 33558658 events on 4 threads
+
+It takes over 17 minutes on 4 threads of a 2013 MacBook Pro and over $33\times 10^6$ events.
 
 ## Data analysis
 
-We put together a results table and then do some exploratory data analysis:
+We put together a results table and do some exploratory data analysis:
 
 
 ```julia
@@ -367,7 +370,7 @@ describe(y)
     Type:           Float64
 
 
-The performance of our simulated assembly lines varies between 0.633 and 0.986, which is a huge difference: The worst result is 35.8% below the best one!
+The performance of our simulated assembly lines varies between 0.637 and 0.986, which is a huge difference: The worst result is 35.8% below the best one!
 
 
 ```julia
@@ -379,7 +382,6 @@ vcat(res[y .== maximum(y), :], res[y .== minimum(y), :])
 | 1 |  6 |  7 |  20 |  0.0 |  0.986 |
 | 2 |  5 |  10 |  20 |  0.0 |  0.986 |
 | 3 |  18 |  1 |  2 |  0.05 |  0.633 |
-
 
 
 The best performance is with the shortest lines, big buffer sizes, small variation in processing times and no variation in performance between workers. But this is just common sense. The worst performance is with a long line, minimum buffers and maximum variation in processing times and in performance between workers. But how big are the effects?
