@@ -55,7 +55,7 @@ julia> ff = SimFunction(g, d);              # we set up a SimFunction
 
 julia> d[:a] = 10;                          # later somehow we change d
 
-julia> ff.func(ff.arg...; ff.kw...)         # calling ff then gives a different result
+julia> ff.func(ff.arg...)                   # calling ff then gives a different result
 12
 ```
 """
