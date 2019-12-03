@@ -229,16 +229,15 @@ end
 
 """
 ```
-@val(a, check::QuoteNode, x)
+@val(a, check::QuoteNode, b)
 @val a check b
 ```
 Create a Simfunction comparing two values a and b or two symbolic variables
 :a and :b. The comparison operator must be given symbolically, e.g. `:≤`.
 
 # Arguments
-- `a, b::: a number, expression or symbol
+- `a, b`:: a number, expression or symbol
 - `check::QuoteNode`: a comparison operator as a symbol like `:>` or `:≤`
-- `m::Module=Main`: a module scope for evaluation of given symbolic variables
 
 !!! note
     If you give @val as argument(s) to a function, you must enclose it/them
@@ -269,6 +268,6 @@ julia> a
 2
 ```
 """
-macro val(a, check::QuoteNode, x)
-    return :( SimFunction(val, $(esc(a)), $(eval(check)), $(esc(x)), $__module__) )
+macro val(a, check::QuoteNode, b)
+    return :( SimFunction(val, $(esc(a)), $(eval(check)), $(esc(b)), $__module__) )
 end
