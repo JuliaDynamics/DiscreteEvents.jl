@@ -4,8 +4,16 @@ reset!(𝐶)
 
 ex1 = :(1+1)
 ex2 = :(1+2)
+e() = 123
 f(a) = a+3
 g(a) = a+4
+h(a, b; c = 1, d = 2) = a + b + c + d
+i(; a = 1, b = 2) = a + b
+
+@test Simulate.simExec(SF(e)) == 123
+@test Simulate.simExec(SF(f, 1)) == 4
+@test Simulate.simExec(SF(h, 1, 2, c=3, d=4)) == 10
+@test Simulate.simExec((SF(i, a=10, b=20))) == 30
 
 conv = Simulate.sconvert
 @test isa(conv(ex1), Array{SimExpr,1})
