@@ -2,7 +2,7 @@
 
 A Julia package for discrete event simulation.
 
-`Simulate.jl` provides *three schemes* for modeling and simulating discrete event systems (DES): 1) [event scheduling](@ref event_scheme), 2) [interacting processes](@ref process_scheme) and 3) [continuous sampling](@ref continuous_sampling). By building directly on [Julia](https://julialang.org) it aims for [simplicity](intro.md) and [flexibility](approach.md) in building models and for high performance in simulation.
+`Simulate.jl` provides *three schemes* for modeling and simulating discrete event systems (DES): 1) [event scheduling](@ref event_scheme), 2) [interacting processes](@ref process_scheme) and 3) [continuous sampling](@ref continuous_sampling). It introduces a clock and allows to schedule arbitrary Julia functions or expressions as events, processes or sampling operations on the clock's timeline. Thus it provides [simplicity](intro.md) and [flexibility](approach.md) in building models and performance in simulation.
 
 ## Overview
 
@@ -15,7 +15,7 @@ A Julia package for discrete event simulation.
 
 ## Development
 
-`Simulate.jl` is a new package and still in early development. Please use and test it and help it evolve. Its GitHub repository is at [https://github.com/pbayer/Simulate.jl](https://github.com/pbayer/Simulate.jl).
+`Simulate.jl` is a new package and still in early development. Please use, test and help  evolve it. Its GitHub repository is at [https://github.com/pbayer/Simulate.jl](https://github.com/pbayer/Simulate.jl).
 
 ### New in v0.2.0
 
