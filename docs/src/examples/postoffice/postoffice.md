@@ -1,19 +1,19 @@
-# A Post Office
+# Post Office
 
-Let us begin with an everyday story: there is a small post office with one clerk serving the arriving customers. Customers have differing wishes leading to different serving times, from `1 - 5 minutes`. We have to add a little variation to serving times counting for variation in customer habits and clerk performance. The arrival rate of customers is about 18 per hour, every `3.33 minutes` or `3 minutes, 20 seconds` on average. Our post office is small and customer patience is limited, so queue length is limited to 5 customers.
+There is a small post office with one clerk serving the arriving customers. Customers have differing wishes leading to different serving times, from 1 - 5 minutes. We have a little variation in serving times due to variation in customer habits and clerk performance. The arrival rate of customers is about 18 per hour, every 3.33 minutes or 3 minutes, 20 seconds on average. Our post office is small and customer patience is limited, so queue length is limited to 5 customers.
 
 We have provided 10% extra capacity, so our expectation is that there should not be too many customers discouraged for long waiting times or for full queues.
 
 ![post office](PostOffice.png)
 
-Let's do a process-based simulation using [`Simulate`](https://github.com/pbayer/Simulate.jl). We need
+Let's do a process-based simulation using `Simulate`. We need
 
 1. a source: all the **people**, providing an unlimited supply for customers,
 2. **customers** with their demands and their limited patience,
 3. a **queue** and
 4. our good old **clerk**.
 
-First we must load the needed modules, describe a customer and define some needed helper functions.
+First we must load the needed modules, describe a customer and define some helper functions:
 
 
 ```julia
@@ -66,7 +66,7 @@ clerk (generic function with 1 method)
 
 
 
-Then we have to create out data, register and startup the processes:
+Then we have to create a logging table, register and startup the processes:
 
 
 ```julia
@@ -212,8 +212,8 @@ So many customers will remain angry. If this is the situation all days, our post
 
 ## Conclusion
 
-Even if our process runs within predetermined bounds (queue length, customer wishes …), it seems to fluctuate wildly and to produce unpredicted effects. We see here the **effects of variation** in arrivals, in demands and in serving time on system performance. In this case 10% extra capacity is not enough to provide enough buffer for variation and for customer service – even if our post clerk is the most willing person.
+Even if our process runs within predetermined bounds (queue length, customer wishes …), it seems to fluctuate wildly and to produce unpredicted effects. This is due to variation in arrivals, in demands and in serving time on system performance. In this case 10% extra capacity is not enough to provide enough buffer for variation and for customer service – even if our post clerk is the most willing person.
 
 Even for such a simple everyday system, we cannot say beforehand – without reality check – which throughput, waiting times, mean queue length, capacity utilization or customer satisfaction will emerge. Even more so for more complicated systems in production, service, projects and supply chains with multiple dependencies.
 
-If we had known the situation beforehand, we could have provided standby for our clerk or install an automatic stamp dispenser for cutting the short tasks … We should have done a simulation …
+If we had known the situation beforehand, we could have provided standby for our clerk or install an automatic stamp dispenser for cutting shorter tasks … We should have done a simulation before …

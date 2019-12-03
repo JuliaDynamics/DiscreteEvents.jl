@@ -18,17 +18,9 @@ Dict{Any,SimProcess} with 2 entries:
 julia> 𝐶.processes[1].task
 Task (failed) @0x000000010e467cd0
 MethodError: no method matching round(::Float64, ::Int64)
-Closest candidates are:
-  round(::Float64, ::RoundingMode{:Nearest}) at float.jl:370
-  round(::Float64, ::RoundingMode{:Up}) at float.jl:368
-  round(::Float64, ::RoundingMode{:Down}) at float.jl:366
-  ...
-logevent(::Int64, ::Channel{Any}, ::String, ::Int64) at ./In[6]:12
-people(::Channel{Any}, ::Channel{Any}, ::Float64) at ./In[17]:8
-loop(::SimProcess) at /Users/paul/.julia/packages/Simulate/BOeZP/src/process.jl:37
-(::getfield(Simulate, Symbol("##19#20")){SimProcess})() at ./task.jl:268
+[....]
 ```
 
 ## Report
 
-Otherwise please report your problem and open an issue at https://github.com/pbayer/Simulate.jl.  
+Otherwise please report your problem and open an issue or commit your solution to [the repo](https://github.com/pbayer/Simulate.jl).  
