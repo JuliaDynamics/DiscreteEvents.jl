@@ -17,8 +17,8 @@ In a hybrid system we have continuous processes and discrete events interacting 
 ```
 
 We assume that
-- the thermostat is set to switch heating on if ``T_r`` falls under 20°C and to switch heating on if ``T_r`` rises above 23°C,
-- that time units are hours,
+- the thermostat is set to switch heating on if ``T_r`` falls under 20°C and to switch heating off if ``T_r`` rises above 23°C,
+- time units are hours,
 - the temperature ``T_h`` of the heating fluid is 40°C,
 - the temperature ``T_e`` of the environment follows a stochastic process based on a sine function between 8 and 20°C with ``T_{e,min}`` at 4am and ``T_{e,max}`` at 4pm,
 - the constants have values ``R = 1\times10^{-6}\ \left[\frac{K h}{J}\right],\; \alpha = 2\times 10^6\ \left[\frac{J}{K h}\right],\; \beta = 3\times 10^{-7}\; \left[\frac{K}{J}\right]``,

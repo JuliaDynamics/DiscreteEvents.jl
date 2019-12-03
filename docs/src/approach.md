@@ -296,7 +296,7 @@ While continuous systems are the domain of differential equations, discrete and 
 
 In a hybrid system we have continuous processes and discrete events interacting in one system. A thermostat or a house heating system is a basic example of this:
 
-- Heating changes between two states: On and Off.
+- Heating changes between two states: On and Off. The thermostat switches heating on if romm temperature `Tr` is greater or equal 23°C, it switches off if temperature falls below 20°C.
 - A room cools at a rate proportional to the difference between room temperature `Tr` and environment temperature `Te`.
 - It heats at a rate proportional to the temperature difference between temperature of the heating fluid `Th` and room temperature `Tr`.
 - The room temperature `Tr` changes proportional to the difference between heating and cooling.
@@ -400,8 +400,8 @@ df = DataFrame(t=Float64[], tr=Float64[], te=Float64[], heating=Int64[])
 for i in 1:2                                 # put 2 people in the house
     process!(SP(i, people), 1)               # run process only once
 end
-Simulate.sample!(SF(setTemperatures), Δt)
-switch()
+Simulate.sample!(SF(setTemperatures), Δt)    # setup sampling
+switch()                                     # start the thermostat
 
 @time run!(𝐶, 24)
 ```
