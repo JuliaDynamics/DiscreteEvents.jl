@@ -19,7 +19,7 @@ function loop(p::SimProcess, start::Channel, cycles::Number)
             p.func(p.arg...; p.kw...)
         catch exc
             if isa(exc, SimException)
-                exc.ev == Stop() ? break : nothing
+                exc.ev == Stop() && break
             end
             rethrow(exc)
         end

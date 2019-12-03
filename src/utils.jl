@@ -221,10 +221,10 @@ julia> a
 ```
 """
 macro tau(sim, check::QuoteNode, val::Union{Number, QuoteNode})
-    return :( SimFunction(tau, $(Core.eval(__module__, sim)), $(eval(check)), $val, $__module__) )
+    return :( SimFunction(tau, $(Core.eval(__module__, sim)), $(eval(check)), $(esc(val)), $__module__) )
 end
 macro tau(check::QuoteNode, val::Union{Number, QuoteNode})
-    return :( SimFunction(tau, $(eval(check)), $val, $__module__) )
+    return :( SimFunction(tau, $(eval(check)), $(esc(val)), $__module__) )
 end
 
 """
@@ -270,5 +270,5 @@ julia> a
 ```
 """
 macro val(a, check::QuoteNode, x)
-    return :( SimFunction(val, $a, $(eval(check)), $x, $__module__) )
+    return :( SimFunction(val, $(esc(a)), $(eval(check)), $(esc(x)), $__module__) )
 end

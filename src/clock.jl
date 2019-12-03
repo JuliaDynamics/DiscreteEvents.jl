@@ -333,7 +333,7 @@ julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
                 scope::Module=Main, cycle::Number=0.0)::Float64
     t = checktime(sim, t)
-    t < sim.time ? t = sim.time : nothing
+    (t < sim.time) && (t = sim.time)
     cycle = checktime(sim, cycle)
     while any(i->i==t, values(sim.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
@@ -461,7 +461,7 @@ function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
     if sim.state == Busy() && all(simExec(sconvert(cond)))   # all conditions met
         simExec(sconvert(ex))                                # execute immediately
     else
-        sim.Δt == 0 ? sim.Δt = scale(sim.end_time - sim.time)/100 : nothing
+        (sim.Δt == 0) && (sim.Δt = scale(sim.end_time - sim.time)/100)
         push!(sim.cevents, SimCond(sconvert(cond), sconvert(ex), scope))
     end
     return tau(sim)
@@ -488,8 +488,8 @@ sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
-sample!(sim::Clock, ex::Union{Expr, SimFunction}; scope::Module=Main)
-sample!(ex::Union{Expr, SimFunction}; scope::Module=Main)
+sample!(sim::Clock, ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
+sample!(ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
 ```
 enqueue an expression for sampling.
 # Arguments
@@ -580,7 +580,7 @@ function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
             sim.cevents = sim.cevents[subs]
             simExec(ex)           # execute it
             if isempty(sim.cevents)
-                isempty(sim.sexpr) ? sim.Δt = 0.0 : nothing # delete sample rate
+                isempty(sim.sexpr) && (sim.Δt = 0.0)  # delete sample rate
                 break
             end
             cond = [all(simExec(c.cond)) for c in sim.cevents]
@@ -618,7 +618,7 @@ function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
         println(stderr, "step!: nothing to evaluate")
     end
     length(sim.processes) == 0 || yield() # let processes run
-    sim.state == Busy() ? sim.state = Idle() : nothing
+    (sim.state == Busy()) && (sim.state = Idle())
 end
 
 """
@@ -630,7 +630,7 @@ The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function step!(sim::Clock, ::Idle, σ::Run)
-    length(sim.processes) > 0 ? sleep(0.05) : nothing  # let processes startup
+    length(sim.processes) > 0 && sleep(0.05)  # let processes startup
     sim.end_time = sim.time + σ.duration
     sim.evcount = 0
     sim.scount = 0
