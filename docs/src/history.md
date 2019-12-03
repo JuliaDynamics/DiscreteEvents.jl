@@ -1,6 +1,9 @@
 # Version history
 
 ## v0.2.0
+
+This is the first version fully supporting three modeling schemes: events, processes and sampling.
+
 - [`now!`](@ref) for IO-operations of processes,
 - functions and macros for defining conditions,
 - conditional [`wait!(cond)`](@ref wait!),

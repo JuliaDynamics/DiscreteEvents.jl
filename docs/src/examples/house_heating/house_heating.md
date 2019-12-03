@@ -39,12 +39,12 @@ const β = 3e-7    # represents mass of the air and heat capacity
 η = 1.0           # efficiency factor reducing R if doors or windows are open
 heating = false
 
-Δte(t, t1, t2) = cos((t-10)*π/12) * (t2-t1)/2  # change rate of a sinusoidal Te
+Δte(t, t1, t2) = cos((t-10)*π/12) * (t2-t1)/2  # change of a sinusoidal Te
 
-function Δtr(Tr, Te, heating)
-    Δqc = (Tr - Te)/(R * η)
-    Δqh = heating ? α * (Th - Tr) : 0
-    return β * (Δqh - Δqc)
+function Δtr(Tr, Te, heating)                  
+    Δqc = (Tr - Te)/(R * η)                    # cooling rate
+    Δqh = heating ? α * (Th - Tr) : 0          # heating rate
+    return β * (Δqh - Δqc)                     # change in room temperature
 end
 ```
 Δtr (generic function with 1 method)
@@ -55,31 +55,31 @@ We now setup a simulation for 24 hours from 0am to 12am. We update the simulatio
 
 
 ```julia
-reset!(𝐶)
-rng = MersenneTwister(122)
-Δt = 1//60
-Te = 11
-Tr = 20
+reset!(𝐶)                                      # reset the clock
+rng = MersenneTwister(122)                     # seed the random number generator
+Δt = 1//60                                     # update every minute
+Te = 11                                        # start value for environment temperature
+Tr = 20                                        # start value for room temperature
 df = DataFrame(t=Float64[], tr=Float64[], te=Float64[], heating=Int64[])
 
-function setTemperatures(t1=8, t2=20)
+function setTemperatures(t1=8, t2=20)               # change the temperatures
     global Te += Δte(tau(), t1, t2) * 2π/1440 + rand(rng, Normal(0, 0.1))
     global Tr += Δtr(Tr, Te, heating) * Δt
-    push!(df, (tau(), Tr, Te, Int(heating)) )
+    push!(df, (tau(), Tr, Te, Int(heating)) )       # append stats to the table
 end
 
-function switch(t1=20, t2=23)
+function switch(t1=20, t2=23)                       # simulate the thermostat
     if Tr ≥ t2
         global heating = false
-        event!(SF(switch, t1, t2), @val :Tr :≤ t1)
+        event!(SF(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
     elseif Tr ≤ t1
         global heating = true
-        event!(SF(switch, t1, t2), @val :Tr :≥ t2)
+        event!(SF(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
     end
 end
 
-Simulate.sample!(SF(setTemperatures), Δt)
-switch()
+Simulate.sample!(SF(setTemperatures), Δt)           # setup sampling
+switch()                                            # start the thermostat
 
 @time run!(𝐶, 24)
 ```
@@ -110,8 +110,8 @@ In a living room the thermal resistance is repeatedly diminished if people enter
 
 ```julia
 function people()
-    delay!(6 + rand(Normal(0, 0.5)))
-    sleeptime = 22 + rand(Normal(0, 0.5))
+    delay!(6 + rand(Normal(0, 0.5)))         # sleep until around 6am
+    sleeptime = 22 + rand(Normal(0, 0.5))    # calculate bed time
     while tau() < sleeptime
         global η = rand()                    # open door or window
         delay!(0.1 * rand(Normal(1, 0.3)))   # for some time
@@ -120,7 +120,7 @@ function people()
     end
 end
 
-reset!(𝐶)
+reset!(𝐶)                                    # reset the clock
 rng = MersenneTwister(122)
 Random.seed!(1234)
 Te = 11
@@ -130,8 +130,8 @@ df = DataFrame(t=Float64[], tr=Float64[], te=Float64[], heating=Int64[])
 for i in 1:2                                 # put 2 people in the house
     process!(SP(i, people), 1)               # run process only once
 end
-Simulate.sample!(SF(setTemperatures), Δt)
-switch()
+Simulate.sample!(SF(setTemperatures), Δt)    # set sampling function
+switch()                                     # start the thermostat
 
 @time run!(𝐶, 24)
 ```
