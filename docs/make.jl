@@ -15,7 +15,8 @@ makedocs(
                        "examples/tabletennis.md",
                        "examples/singleserver.md",
                        "examples/postoffice/postoffice.md",
-                       "examples/dicegame/dicegame.md"],
+                       "examples/dicegame/dicegame.md",
+                       "examples/house_heating/house_heating.md"],
         "Internals" => "internals.md",
         "Troubleshooting" => "troubleshooting.md",
         "Release notes" => "history.md"

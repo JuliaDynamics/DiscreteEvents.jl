@@ -9,6 +9,8 @@ The examples are intended to show how `Simulate.jl` can be used and how differen
 - [**Goldratt's dice game**](dicegame/dicegame.md): a simulation of assembly lines,
   illustrating what can be done with multiple simulations and parameter variation on
   parallel threads.
+- [**House heating**](house_heating/house_heating.md): a simulation of a hybrid system,
+  combining all three schemes: events, continuous sampling and processes.
 
 ### Working with the examples
 
