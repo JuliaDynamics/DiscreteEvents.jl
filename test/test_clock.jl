@@ -16,10 +16,15 @@ j(x) = x == :unknown
 @test Simulate.simExec(SF(h, 1, 2, c=3, d=4)) == 10
 
 a = 11; b = 12; c = 13; d = 14;
+m = @__MODULE__
 sf1 = SF(h, a, b, c=c, d=d)
 sf2 = SF(h, :a, :b, c=:c, d=:d)
+sf3 = SF(m, h, a, b, c=c, d=d)
+sf4 = SF(m, h, :a, :b, c=:c, d=:d)
 @test Simulate.simExec(sf1) == 50
 @test Simulate.simExec(sf2) == 50
+@test Simulate.simExec(sf3) == 50
+@test Simulate.simExec(sf4) == 50
 a = 21; b = 22; c = 23; d = 24;
 @test Simulate.simExec(sf1) == 50
 @test Simulate.simExec(sf2) == 90
