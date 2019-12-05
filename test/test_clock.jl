@@ -9,10 +9,24 @@ f(a) = a+3
 g(a) = a+4
 h(a, b; c = 1, d = 2) = a + b + c + d
 i(; a = 1, b = 2) = a + b
+j(x) = x == :unknown
 
 @test Simulate.simExec(SF(e)) == 123
 @test Simulate.simExec(SF(f, 1)) == 4
 @test Simulate.simExec(SF(h, 1, 2, c=3, d=4)) == 10
+
+a = 11; b = 12; c = 13; d = 14;
+sf1 = SF(h, a, b, c=c, d=d)
+sf2 = SF(h, :a, :b, c=:c, d=:d)
+@test Simulate.simExec(sf1) == 50
+@test Simulate.simExec(sf2) == 50
+a = 21; b = 22; c = 23; d = 24;
+@test Simulate.simExec(sf1) == 50
+@test Simulate.simExec(sf2) == 90
+@test Simulate.simExec(SF(h, :a, 2, c=:c, d=4)) == 50
+@test Simulate.simExec(SF(j, :unknown))
+@test Simulate.simExec(SF(<=, SF(tau), 1))
+
 @test Simulate.simExec((SF(i, a=10, b=20))) == 30
 
 conv = Simulate.sconvert

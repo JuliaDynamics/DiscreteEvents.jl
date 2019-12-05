@@ -17,20 +17,12 @@ A Julia package for discrete event simulation.
 
 `Simulate.jl` is a new package and still in early development. Please use, test and help  evolve it. Its GitHub repository is at [https://github.com/pbayer/Simulate.jl](https://github.com/pbayer/Simulate.jl).
 
-### New in v0.2.0
+### New in v0.3.0, development
 
-v0.2.0 is the first version supporting fully the three schemes.
+- Arguments to [`SimFunction`](@ref) can now be also given as symbols, expressions or as
+  other SimFunctions. They will then be evaluated at event time before they are passed to
+  the event function.
 
-- [`now!`](@ref) for IO-operations of processes,
-- functions and macros for defining conditions,
-- conditional [`wait!(cond)`](@ref wait!),
-- conditional events with [`event!(sim, ex, cond)`](@ref event!),
-- most functions can be called without the first clock argument, default to [`𝐶`](@ref),
-- [`event!`](@ref) takes an expression or a [`SimFunction`](@ref) or a tuple or an array of them,
-- introduced aliases: [`SF`](@ref SimFunction) for [`SimFunction`](@ref) and [`SP`](@ref SimProcess) for [`SimProcess`](@ref)
-- introduced process-based simulation: [`SimProcess`](@ref) and [`process!`](@ref) and [`delay!`](@ref),
-- extensive documentation,
-- more examples.
 
 ### Earlier releases
 

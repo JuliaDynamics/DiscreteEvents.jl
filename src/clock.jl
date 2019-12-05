@@ -245,20 +245,43 @@ nextevtime(sim::Clock) = peek(sim.events)[2]
 """
     simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
 
-evaluate the event expressions or SimFunctions.
+Evaluate the event expressions or SimFunctions. If symbols, expressions or
+other Simfunctions are stored as arguments inside a SF, evaluate those first
+before passing them to `SF.efun`.
 
 # Return
 
-the evaluated value or a tuple of evaluated values
+the evaluated value or a tuple of evaluated values.
 """
 function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
 
     function sexec(x::SimExpr)
-        if x isa SimFunction
-            if x.kw === nothing
-                return x.arg === nothing ? x.func() : x.func(x.arg...)
+
+        function evaluate(y, m::Module)
+            if y isa Union{Symbol,Expr}
+                try
+                    return Core.eval(m, y)
+                catch
+                    return y
+                end
+            elseif y isa SimFunction
+                return sexec(y)
             else
-                return x.arg === nothing ? x.func(; x.kw...) : x.func(x.arg...; x.kw...)
+                return y
+            end
+        end
+
+        if x isa SimFunction
+            if x.efun == event!  # should arguments be maintained?
+                arg = x.arg; kw = x.kw
+            else                 # otherwise evaluate them
+                x.arg === nothing || (arg = Tuple([evaluate(i, x.emod) for i in x.arg]))
+                x.kw === nothing  || (kw = (; zip(keys(x.kw), [evaluate(i, x.emod) for i in values(x.kw)] )...))
+            end
+            if x.kw === nothing
+                return x.arg === nothing ? x.efun() : x.efun(arg...)
+            else
+                return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
             end
         else
             return Core.eval(m, x)

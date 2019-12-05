@@ -17,21 +17,27 @@ Enumeration type for scheduling events and timed conditions:
 
 """
 ```
-SimFunction(func::Function, arg...; kw...)
-SF(func::Function, arg...; kw...)
+SimFunction([emod::Module], efun::Function, arg...; kw...)
+alias    SF([emod::Module], efun::Function, arg...; kw...)
 ```
-Prepare a function for being called as an event in a simulation.
+Store a function and its arguments for being called later as an event.
 
 # Arguments, fields
-- `func::Function`: function to be executed at a later simulation time
-- `arg...`: arguments to the function
-- `kw...`: keyword arguments
+- `emod::Module`: evaluation scope for symbols or expressions given as arguments.
+    If `emod` is not supplied, the evaluation scope is `Main`.
+- `efun::Function`:  event function to be executed at event time,
+- `arg...`: arguments to the event function,
+- `kw...`: keyword arguments to the event function.
+
+Arguments and keyword arguments can be 1) values or variables mixed with 2) symbols,
+expressions or even other SimFunctions. In the 2nd cases they are evaluated at
+event time before they are passed to the event function.
 
 !!! note
-    If the variables stored in a SimFunction are composite types,
-    they can change until they are evaluated later by `func`.
+    Composite types or variables given symbolically can change until they
+    are evaluated later at event time.
 
-# Example
+# Examples
 ```jldoctest
 julia> using Simulate
 
@@ -40,7 +46,7 @@ f (generic function with 1 method)
 
 julia> sf = SF(f, 10, 20, 30, d=14, e=15);  # store it as SimFunction
 
-julia> sf.func(sf.arg...; sf.kw...)         # it can be executed later
+julia> sf.efun(sf.arg...; sf.kw...)         # it can be executed later
 89
 
 julia> d = Dict(:a => 1, :b => 2);          # we set up a dictionary
@@ -55,19 +61,26 @@ julia> ff = SimFunction(g, d);              # we set up a SimFunction
 
 julia> d[:a] = 10;                          # later somehow we change d
 
-julia> ff.func(ff.arg...)                   # calling ff then gives a different result
+julia> ff.efun(ff.arg...)                   # calling ff then gives a different result
 12
 ```
 """
 struct SimFunction
-    func::Function
+    emod::Module
+    efun::Function
     arg::Union{Nothing, Tuple}
     kw::Union{Nothing, Base.Iterators.Pairs}
 
-    function SimFunction(func::Function, arg...; kw...)
+    function SimFunction(emod::Module, efun::Function, arg...; kw...)
         !isempty(arg) || ( arg = nothing )
         !isempty(kw)  || ( kw  = nothing )
-        new(func, arg, kw)
+        new(emod, efun, arg, kw)
+    end
+
+    function SimFunction(efun::Function, arg...; kw...)
+        !isempty(arg) || ( arg = nothing )
+        !isempty(kw)  || ( kw  = nothing )
+        new(Main, efun, arg, kw,)
     end
 end
 const SF = SimFunction
@@ -120,7 +133,7 @@ end
 """
     SimCond(cond::Array{SimExpr, 1}, ex::Array{SimExpr, 1}, scope::Module)
 
-create a condition to be evaluated repeatedly with expressions or functions
+Create a condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
 # Arguments, fields

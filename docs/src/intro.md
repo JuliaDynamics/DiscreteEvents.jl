@@ -146,7 +146,9 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
 Julia *functions* or *expressions* are scheduled as events on the clock's time line. In order to not be invoked immediately,
 
 - expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
-- functions must be enclosed inside a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction)
+- functions must be stored in a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction),
+- the event functions in a `SimFunction` can get 1) values, variables or 2) symbols,
+  expressions or even other `SimFunction`s as arguments. The 2nd case arguments are evaluated not till event time before they are passed to the event funtion.
 
 Quoted expressions and SimFunctions can be given to events mixed in a tuple or array.
 
@@ -157,21 +159,28 @@ Timed events with [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}
 ```julia
 ev1 = :(println(tau(), ": I'm a quoted expression"))
 ev2 = SF(() -> println(tau(), ": I'm a SimFunction"))
+ev3 = SF(println, SF(tau), ": now a is ", :a)  # various arguments to a SimFunction
 
-event!(ev1, at, 2)                             ### schedule an event at 2
-event!(ev1, after, 8)                          ### schedule an event after 8
-event!(ev2, every, 5)                          ### schedule an event every 5
+a = 1
+event!(ev1, at, 2)                             # schedule events at 2, 3, 4, 6, 8
+event!(ev3, at, 3)
+event!(:(a += 5), at, 4)
+event!(ev3, at, 6)
+event!(ev1, after, 8)                          # schedule an event after 8
+event!(ev2, every, 5)                          # schedule an event every 5
 ```
 ```julia
-julia> run!(𝐶, 10)                             ### run
+julia> run!(𝐶, 10)                             # run
 0.0: I'm a SimFunction
 2.0: I'm a quoted expression
+3.0: now a is 1
 5.0: I'm a SimFunction
+6.0: now a is 6
 8.0: I'm a quoted expression
 10.0: I'm a SimFunction
-"run! finished with 5 clock events, 0 sample steps, simulation time: 10.0"
+"run! finished with 8 clock events, 0 sample steps, simulation time: 10.0"
 
-julia> event!((ev1, ev2), after, 2)            ### schedule both ev1 and ev2 as event
+julia> event!((ev1, ev2), after, 2)            ### schedule both ev1 and ev2 as one event
 12.0
 
 julia> run!(𝐶, 5)                              ### run
