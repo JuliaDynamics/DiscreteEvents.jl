@@ -66,16 +66,16 @@ julia> run!(𝐶, 10)   # run for 10 time units
 The clock is central to any model and simulation, since it establishes the timeline. It does not only provide the time, but contains also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt. Each simulation can have its own clock.
 
 ```julia
-julia> c = Clock()                           ### create a new clock
+julia> c = Clock()                           # create a new clock
 Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 
-julia> tick() = println(tau(c), ": tick!")   ### define a function printing the clock's time
+julia> tick() = println(tau(c), ": tick!")   # define a function printing the clock's time
 tick (generic function with 1 method)
 
-julia> event!(c, SF(tick), every, 1)         ### schedule a repeat event on the clock
+julia> event!(c, SF(tick), every, 1)         # schedule a repeat event on the clock
 0.0
 
-julia> run!(c, 10)                           ### run the clock for 10 time units
+julia> run!(c, 10)                           # run the clock for 10 time units
 0.0: tick!
 1.0: tick!
 2.0: tick!
@@ -96,18 +96,18 @@ If you work with only one simulation at a time, you normally use the *central cl
     You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](examples/dicegame/dicegame.md) example for that.
 
 ```julia
-julia> tick() = println(tau(), ": tick!")         ### the tick function now uses central time tau()
+julia> tick() = println(tau(), ": tick!")         # the tick function now uses central time tau()
 tick (generic function with 1 method)
 
-julia> sample_time!(1)                            ### set the sampling rate on the central clock to 1
+julia> sample_time!(1)                            # set the sampling rate on the central clock to 1
 1.0
 
-julia> sample!( SF(tick) );                       ### set tick as a sampling function
+julia> sample!( SF(tick) );                       # set tick as a sampling function
 
-julia> 𝐶                                          ### 𝐶 now has one sampling entry and the sample rate set
+julia> 𝐶                                          # 𝐶 now has one sampling entry and the sample rate set
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 1, sample rate Δt=1.0
 
-julia> run!(𝐶, 5)                                 ### run 𝐶 for 5 time units
+julia> run!(𝐶, 5)                                 # run 𝐶 for 5 time units
 1.0: tick!
 2.0: tick!
 3.0: tick!
@@ -115,7 +115,7 @@ julia> run!(𝐶, 5)                                 ### run 𝐶 for 5 time uni
 5.0: tick!
 "run! finished with 0 clock events, 5 sample steps, simulation time: 5.0"
 
-julia> run!(𝐶, 5)                                 ### run it again
+julia> run!(𝐶, 5)                                 # run it again
 6.0: tick!
 7.0: tick!
 8.0: tick!
@@ -123,7 +123,7 @@ julia> run!(𝐶, 5)                                 ### run it again
 10.0: tick!
 "run! finished with 0 clock events, 5 sample steps, simulation time: 10.0"
 
-julia> reset!(𝐶)                                  ### reset the clock
+julia> reset!(𝐶)                                  # reset the clock
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 ```
 
@@ -145,12 +145,15 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
 
 Julia *functions* or *expressions* are scheduled as events on the clock's time line. In order to not be invoked immediately,
 
-- expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
-- functions must be stored in a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction),
-- the event functions in a `SimFunction` can get 1) values, variables or 2) symbols,
-  expressions or even other `SimFunction`s as arguments. The 2nd case arguments are evaluated not till event time before they are passed to the event funtion.
+- event expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
+- event functions must be stored in a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction),
 
-Quoted expressions and SimFunctions can be given to events mixed in a tuple or array.
+Event functions in a `SimFunction` can get 1) values, variables or 2) symbols,
+expressions or even other `SimFunction`s as arguments. The 2nd case arguments are
+evaluated not till event time before they are passed to the event funtion.
+
+Quoted expressions and SimFunctions can be scheduled as events combined in a
+tuple or an array.
 
 ### Timed events
 
@@ -180,10 +183,10 @@ julia> run!(𝐶, 10)                             # run
 10.0: I'm a SimFunction
 "run! finished with 8 clock events, 0 sample steps, simulation time: 10.0"
 
-julia> event!((ev1, ev2), after, 2)            ### schedule both ev1 and ev2 as one event
+julia> event!((ev1, ev2), after, 2)            # schedule both ev1 and ev2 as one event
 12.0
 
-julia> run!(𝐶, 5)                              ### run
+julia> run!(𝐶, 5)                              # run
 12.0: I'm a quoted expression
 12.0: I'm a SimFunction
 15.0: I'm a SimFunction
@@ -195,30 +198,30 @@ julia> run!(𝐶, 5)                              ### run
 *Conditional events*  with ([`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple}))) execute under given conditions. Conditions can be formulated by using the [`@tau`](@ref @tau(::Any, ::Symbol, ::Union{Number, QuoteNode})) macro questioning the simulation time, the [`@val`](@ref) macro questioning a variable or any other logical expression or function or combinations of them.
 
 ```julia
-reset!(𝐶)                                       ### reset the clock
-y = 0                                           ### create a variable y
-sample!( SF(() -> global y = tau()/2) );        ### a sampling function
-event!( SF(()->println(tau(),": now y ≥ π") ), (@val :y :≥ π) ) ### a conditional event
+reset!(𝐶)                                       # reset the clock
+y = 0                                           # create a variable y
+sample!( SF(() -> global y = tau()/2) );        # a sampling function
+event!( SF(()->println(tau(),": now y ≥ π") ), (@val :y :≥ π) ) # a conditional event
 ```
 ```julia
-julia> run!(𝐶, 10)                              ### run
+julia> run!(𝐶, 10)                              # run
 6.28999999999991: now y ≥ π
 "run! finished with 0 clock events, 1000 sample steps, simulation time: 10.0"
 
-julia> 2π                                       ### exact value
+julia> 2π                                       # exact value
 6.283185307179586
 ```
 ```julia
 reset!(𝐶)
-sample!( SF(()-> global y=sin(@tau)) );         ### sample a sine function on y
-event!(SF(()->println(tau(),": now y ≥ 1/2")), ((@val :y :≥ 1/2),(@tau :≥ 5))) ### two conditions
+sample!( SF(()-> global y=sin(@tau)) );         # sample a sine function on y
+event!(SF(()->println(tau(),": now y ≥ 1/2")), ((@val :y :≥ 1/2),(@tau :≥ 5))) # two conditions
 ```
 ```julia
 julia> run!(𝐶, 10)
 6.809999999999899: now y ≥ 1/2
 "run! finished with 0 clock events, 1000 sample steps, simulation time: 10.0"
 
-julia> asin(0.5) + 2π                           ### exact value
+julia> asin(0.5) + 2π                           # exact value
 6.806784082777885
 ```
 
@@ -241,33 +244,33 @@ From a modeling or simulation standpoint we call such tasks *processes*, because
 [`SimProcess`](@ref), alias [`SP`](@ref SimProcess) prepares a function for running as a process and assignes it an id.  Then `process!` registers it to the clock and starts it as a process in a loop. You can define how many loops the function should persist, but the default is `Inf`. You can create as many instances of a function as processes as you like.
 
 ```julia
-function doit(n)                                ### create a function doit
+function doit(n)                                # create a function doit
     i = 1
     while i ≤ n
-        delay!(rand()*2)                        ### delay for some time
-        now!(SF(println, @sprintf("%5.2f: finished %d", tau(), i)))  ### print
+        delay!(rand()*2)                        # delay for some time
+        now!(SF(println, @sprintf("%5.2f: finished %d", tau(), i)))  # print
         i += 1
     end
 end
 
 Random.seed!(1234);        
-reset!(𝐶)                                       ### reset the central clock
-process!(SP(1, doit, 5), 1)                     ### create, register and start doit(5) as a process, id=1, runs only once
+reset!(𝐶)                                       # reset the central clock
+process!(SP(1, doit, 5), 1)                     # create, register and start doit(5) as a process, id=1, runs only once
 ```
 ```julia
-julia> run!(𝐶, 5)                               ### run for 5 time units
+julia> run!(𝐶, 5)                               # run for 5 time units
  1.18: finished 1
  2.72: finished 2
  3.85: finished 3
  4.77: finished 4
 "run! finished with 8 clock events, 0 sample steps, simulation time: 5.0"
 
-julia> run!(𝐶, 2)                               ### it is not yet finished, run 2 more
+julia> run!(𝐶, 2)                               # it is not yet finished, run 2 more
  6.36: finished 5
 "run! finished with 2 clock events, 0 sample steps, simulation time: 7.0"
 
 
-julia> run!(𝐶, 3)                               ### doit(5) is done with 5, nothing happens anymore
+julia> run!(𝐶, 3)                               # doit(5) is done with 5, nothing happens anymore
 "run! finished with 0 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
@@ -282,19 +285,19 @@ Processes can also interact directly e.g. via [channels](https://docs.julialang.
 
 ```julia
 function watchdog(name)
-    delay!(until, 6 + rand())                    ### delay until
+    delay!(until, 6 + rand())                    # delay until
     now!(SF(println, @sprintf("%5.2f %s: yawn!, bark!, yawn!", tau(), name)))
-    wait!(((@val :hunger :≥ 7),(@tau :≥ 6.5)))   ### conditional wait
+    wait!(((@val :hunger :≥ 7),(@tau :≥ 6.5)))   # conditional wait
     while 5 ≤ hunger ≤ 10
         now!(SF(println, @sprintf("%5.2f %s: %s", tau(), name, repeat("wow ", Int(trunc(hunger))))))
-        delay!(rand()/2)                         ### simple delay
+        delay!(rand()/2)                         # simple delay
         if scuff
             now!(SF(println, @sprintf("%5.2f %s: smack smack smack", tau(), name)))
             global hunger = 2
             global scuff = false
         end
     end
-    delay!(rand())                               ### simple delay
+    delay!(rand())                               # simple delay
     now!(SF(println, @sprintf("%5.2f %s: snore ... snore ... snore", tau(), name)))
 end
 
@@ -303,9 +306,9 @@ scuff = false
 reset!(𝐶)
 Random.seed!(1122)
 
-sample!(SF(()-> global hunger += rand()), 0.5)   ### a sampling function: increasing hunger
-event!(SF(()-> global scuff = true ), 7+rand())  ### an event: scuff after 7 am
-process!(SP(1, watchdog, "Snoopy"), 1)            ### create, register and run Snoopy
+sample!(SF(()-> global hunger += rand()), 0.5)   # a sampling function: increasing hunger
+event!(SF(()-> global scuff = true ), 7+rand())  # an event: scuff after 7 am
+process!(SP(1, watchdog, "Snoopy"), 1)           # create, register and run Snoopy
 ```
 ```julia
 julia> run!(𝐶, 10)
@@ -325,30 +328,30 @@ julia> run!(𝐶, 10)
 If they invoke IO-operations like printing, reading or writing from or to files, tasks give control back to the Julia scheduler. In this case the clock may proceed further before the operation has been completed and the task has got out of sync with simulation time. Processes therefore should enclose IO-operations in a [`now!`](@ref) call. This will transfer them for execution to the clock, which must finish them before proceeding any further.
 
 ```julia
-function bad()                                   ### bad: IO-operation DIY
+function bad()                                   # bad: IO-operation DIY
     delay!(rand()*2)
     @printf("%5.2f: hi, here I am\n", tau())
 end
 Random.seed!(1234);
-reset!(𝐶)                                        ### reset the clock
-process!(SP(1, bad), 5)                          ### setup a process with 5 cycles
+reset!(𝐶)                                        # reset the clock
+process!(SP(1, bad), 5)                          # setup a process with 5 cycles
 ```
 ```julia
-julia> run!(𝐶, 10)                               ### it runs only once !!!
+julia> run!(𝐶, 10)                               # it runs only once !!!
  1.18: hi, here I am
 "run! finished with 1 clock events, 0 sample steps, simulation time: 10.0"
 ```
 ```julia
-function better()                                ### better: let the clock doit for you
+function better()                                # better: let the clock doit for you
     delay!(rand()*2)
     now!(SF(println, @sprintf("%5.2f: hi, I am fine", tau())))
 end
 Random.seed!(1234);
-reset!(𝐶)                                        ### reset the clock
-process!(SP(1, better), 5)                       ### setup a process with 5 cycles
+reset!(𝐶)                                        # reset the clock
+process!(SP(1, better), 5)                       # setup a process with 5 cycles
 ```
 ```julia
-julia> run!(𝐶, 10)                               ### it runs all 5 cycles
+julia> run!(𝐶, 10)                               # it runs all 5 cycles
  1.18: hi, I am fine
  2.72: hi, I am fine
  3.85: hi, I am fine
