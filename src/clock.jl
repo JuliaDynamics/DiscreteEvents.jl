@@ -84,7 +84,7 @@ end
 𝐶
 Clk
 ```
-`𝐶` (𝐶 = \\itC+tab) or `Clk` is the central simulation clock. If you do one
+`𝐶` (𝐶 = \\itC+[tab]) or `Clk` is the central simulation clock. If you do one
 simulation at a time, you can use 𝐶 or Clk for time keeping.
 
 # Examples
@@ -245,7 +245,7 @@ nextevtime(sim::Clock) = peek(sim.events)[2]
 """
     simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
 
-Evaluate the event expressions or SimFunctions. If symbols, expressions or
+Evaluate an event's expressions or SimFunctions. If symbols, expressions or
 other Simfunctions are stored as arguments inside a SF, evaluate those first
 before passing them to `SF.efun`.
 
@@ -311,13 +311,12 @@ end
 
 """
 ```
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
-event!(ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)
+event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
 ```
 Schedule an event for a given simulation time.
 
 # Arguments
-- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
+- `sim::Clock`: it not supplied, the event is scheduled to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
 - `t::Real` or `t::Time`: simulation time, if t < sim.time set t = sim.time,
 - `scope::Module=Main`: scope for expressions to be evaluated in,
@@ -370,13 +369,12 @@ event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::
 
 """
 ```
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
-event!(ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)
+event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
 ```
 Schedule a timed event, that is an event with a timing.
 
 # Arguments
-- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
+- `sim::Clock`: if not supplied, the event is scheduled to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
 - `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
 - `t::Float64` or `t::Time`: simulation time,
@@ -397,7 +395,7 @@ julia> setUnit!(𝐶, s)
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 
-julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
+julia> event!(SimFunction(myfunc, 5, 6), after, 1hr)
 3600.0
 ```
 """
@@ -436,8 +434,7 @@ end
 
 """
 ```
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
-event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
 ```
 Schedule a conditional event.
 
@@ -448,7 +445,7 @@ sampling rate is setup depending on the scale of the remaining simulation time
 ``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
 
 # Arguments
-- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
+- `sim::Clock`: if no clock is supplied, the event is scheduled to 𝐶,
 - `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
 - `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
     or an array or tuple of them. It is true only if all expressions or SimFunctions
@@ -494,13 +491,12 @@ event!( ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple};
 
 """
 ```
-sample_time!(sim::Clock, Δt::Number)
-sample_time!(Δt::Number)
+sample_time!([sim::Clock], Δt::Number)
 ```
 set the clock's sample rate starting from now (`tau(sim)`).
 
 # Arguments
-- `sim::Clock`: if no clock is given, set the sample rate on 𝐶,
+- `sim::Clock`: if not supplied, set the sample rate on 𝐶,
 - `Δt::Number`: sample rate, time interval for sampling
 """
 function sample_time!(sim::Clock, Δt::Number)
@@ -511,12 +507,11 @@ sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
-sample!(sim::Clock, ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
-sample!(ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
+sample!([sim::Clock], ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
 ```
 enqueue an expression for sampling.
 # Arguments
-- `sim::Clock`: if no clock is given, it samples on 𝐶,
+- `sim::Clock`: if not supplied, it samples on 𝐶,
 - `ex::Union{Expr, SimFunction}`: an expression or function,
 - `Δt::Number=sim.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,

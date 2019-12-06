@@ -42,15 +42,14 @@ end
 
 """
 ```
-process!(sim::Clock, p::SimProcess, cycles=Inf)
-process!(p::SimProcess, cycles=Inf)
+process!([sim::Clock], p::SimProcess, cycles=Inf)
 ```
-Register a `SimProcess` to a clock, start it as an asynchronous process and
+Register a [`SimProcess`](@ref) to a clock, start it as an asynchronous process and
 return the `id` it was registered with. It can then be found under `sim.processes[id]`.
 
 # Arguments
-- `sim::Clock`: clock, if no clock is given, it runs under 𝐶,
-- `p::SimProcess`
+- `sim::Clock`: if not provided, the process runs under 𝐶,
+- `p::SimProcess`: it contains a function and its arguments,
 - `cycles::Number=Inf`: number of cycles the process should run.
 """
 function process!(sim::Clock, p::SimProcess, cycles::Number=Inf)
@@ -77,14 +76,13 @@ process!(p::SimProcess, cycles=Inf) = process!(𝐶, p, cycles)
 
 """
 ```
-delay!(sim::Clock, t::Number)
-delay!(t::Number)
+delay!([sim::Clock], t::Number)
 ```
 Delay a process for a time interval `t` on the clock `sim`. Suspend the calling
 process until being reactivated by the clock at the appropriate time.
 
 # Arguments
-- `sim::Clock`: clock, if no clock is given, the delay goes to `𝐶`.
+- `sim::Clock`: if not provided, the delay goes to `𝐶`.
 - `t::Number`: the time interval for the delay.
 """
 function delay!(sim::Clock, t::Number)
@@ -96,8 +94,7 @@ delay!(t::Number) = delay!(𝐶, t)
 
 """
 ```
-delay!(sim::Clock, T::Timing, t::Number)
-delay!(T::Timing, t::Number)
+delay!([sim::Clock], T::Timing, t::Number)
 ```
 
 Used for delaying a process *until* a given time t.
@@ -121,18 +118,17 @@ delay!(T::Timing, t::Number) = delay!(𝐶, T, t)
 
 """
 ```
-wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
-wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+wait!([sim::Clock], cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
 ```
 Wait on a clock for a condition to become true. Suspend the calling process
 until the given condition is true.
 
 # Arguments
-- `sim::Clock`: clock, if no clock is given, the delay goes to `𝐶`.
+- `sim::Clock`: if no clock is supplied, the delay goes to `𝐶`,
 - `cond::Union{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
     or an array or tuple of them. It is true only if all expressions or SimFunctions
-    therein return true.
-- `scope::Module=Main`: evaluation scope for given expressions
+    therein return true,
+- `scope::Module=Main`: evaluation scope for given expressions.
 """
 function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
     if all(simExec(sconvert(cond)))   # all conditions met
@@ -160,15 +156,14 @@ stop!(p::SimProcess, value=nothing) = interrupt!(p, Stop(), value)
 
 """
 ```
-now!(sim::Clock, op::Union{SimExpr, Array, Tuple})
-now!(op::Union{SimExpr, Array, Tuple})
+now!([sim::Clock], op::Union{SimExpr, Array, Tuple})
 ```
-Let the given operation be executed now! by the clock. Thus the clock cannot proceed
+Let the given operation be executed now by the clock. Thus the clock cannot proceed
 before the op is finished.
 
 # Arguments
-- `sim::Clock`:
-- `op::Union{SimExpr, Array, Tuple}`:
+- `sim::Clock`: if not provided, the operation is executed by 𝐶 (must be running),
+- `op::Union{SimExpr, Array, Tuple}`: operation to execute.
 """
 now!(sim::Clock, ex::Union{SimExpr, Array, Tuple}) = event!(sim, ex, sim.time)
 now!(ex::Union{SimExpr, Array, Tuple}) = now!(𝐶, ex)

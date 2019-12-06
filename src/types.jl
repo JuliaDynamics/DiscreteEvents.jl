@@ -179,12 +179,12 @@ end
 """
 ```
 SimProcess( id, func::Function, arg...; kw...)
-SP(id, func::Function, arg...; kw...)
+alias   SP( id, func::Function, arg...; kw...)
 ```
 Prepare a function to run as a process in a simulation.
 
 # Arguments, fields
-- `id`: some unique identification, it should get registered with
+- `id`: some unique identification for registration,
 - `func::Function`: a function `f(arg...; kw...)`
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
