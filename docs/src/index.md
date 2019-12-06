@@ -19,10 +19,9 @@ A Julia package for discrete event simulation.
 
 ### New in v0.3.0, development
 
-- Arguments to [`SimFunction`](@ref) can now be also given as symbols, expressions or as
-  other SimFunctions. They will then be evaluated at event time before they are passed to
-  the event function.
-- [`Simulate.version`](@ref version) gives now the package version.
+- Arguments to an event function in a [`SimFunction`](@ref) can now be also symbols,
+  expressions or other SimFunctions. They will then be evaluated at event time before they are passed to the event function.
+- [`Simulate.version`](@ref) gives now the package version.
 
 
 ### Earlier releases
