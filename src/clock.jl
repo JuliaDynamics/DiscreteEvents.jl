@@ -311,7 +311,8 @@ end
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
+event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, t::Number;
+       scope::Module=Main, cycle::Number=0.0)::Float64
 ```
 Schedule an event for a given simulation time.
 
@@ -369,7 +370,8 @@ event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
+event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number;
+       scope::Module=Main)::Float64
 ```
 Schedule a timed event, that is an event with a timing.
 
@@ -434,7 +436,8 @@ end
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
+event!([sim::Clock], ex::Union{SimExpr, Array, Tuple},
+       cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
 ```
 Schedule a conditional event.
 
