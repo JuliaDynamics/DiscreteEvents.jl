@@ -2,7 +2,7 @@
 
 Get an overview and learn the basics.
 
-`Simulate.jl` provides a clock with a virtual simulation time and the ability to schedule Julia functions and expressions as events on the clock's timeline or run them as processes synchronizing with the clock. The clock can invoke registered functions or expressions continuously with a given sample rate.
+`Simulate.jl` provides 1) a *clock* with a virtual simulation time and 2) the ability to schedule Julia functions and expressions as *events* on the clock's timeline or 3) run them as *processes* synchronizing with the clock. The clock can 4) invoke *sampling* functions or expressions continuously at a given rate.
 
 ## A first example
 
@@ -56,8 +56,8 @@ julia> run!(𝐶, 10)   # run for 10 time units
 
 `Simulate.jl` provides 4 major building blocks for modeling and simulation of discrete event systems:
 
-1. the [**clock**](@ref the_clock) gives a virtual simulation time,
-2. [**events**](@ref event_scheme) are Julia expressions or functions executing at given times or under given conditions,
+1. the logical [**clock**](@ref the_clock) gives the simulation time,
+2. [**events**](@ref event_scheme) are Julia expressions or functions executing at given simulation times or under given conditions,
 3. [**processes**](@ref process_scheme) are functions running as [tasks](https://docs.julialang.org/en/v1/manual/control-flow/#man-tasks-1) and synchronizing with the clock by delaying for a time or waiting for conditions,
 4. [**continuous sampling**](@ref continuous_sampling) is done by invoking given expressions or functions at a given rate on the time line.
 

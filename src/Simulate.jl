@@ -1,10 +1,42 @@
+#
+# This file is part of the Simulate.jl Julia package, MIT license
+#
+# Paul Bayer, 2019
+#
+# This is a Julia package for discrete event simulation
+#
 
 """
-    Simulate
+```
+Simulate
+```
+A Julia package for discrete event simulation.
 
-A Julia package for discrete event simulation based on state machines.
+The current stable, registered version is installed with
+```julia
+pkg> add Simulate
+```
+
+The development version is installed with:
+```julia
+pkg> add("https://github.com/pbayer/Simulate.jl")
+```
 """
 module Simulate
+
+"""
+    version
+
+Gives the package version:
+
+```jldoctest
+julia> using Simulate
+
+julia> Simulate.version
+v"0.3.0"
+```
+"""
+const version = v"0.3.0"
 
 using Unitful, Random, DataStructures, DataFrames
 import Unitful: FreeUnits, Time

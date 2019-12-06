@@ -4,14 +4,9 @@
 CurrentModule = Simulate
 ```
 
-## Module
-```@docs
-Simulate
-```
-
-The module contains two main types: `Clock` and `Logger`. Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.
-
 ## State machines
+
+`Simulate.jl` contains two main types: `Clock` and `Logger`. Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.
 
 We have some definitions for them to work.
 

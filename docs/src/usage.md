@@ -6,22 +6,11 @@
 CurrentModule = Simulate
 ```
 
-`Simulate.jl` runs on Julia versions ≥ v"1.0" [^1]. The current stable, registered version is installed with
+`Simulate.jl` runs on Julia versions ≥ v"1.0" [^1].
 
-```julia
-pkg> add Simulate
-```
-
-The development version is installed with:
-
-```julia
-pkg> add("https://github.com/pbayer/Simulate.jl")
-```
-
-The package is then loaded with
-
-```@repl usage
-using Simulate
+```@docs
+Simulate
+version
 ```
 
 ## The clock
