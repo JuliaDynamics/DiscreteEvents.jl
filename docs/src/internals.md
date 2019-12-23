@@ -64,6 +64,7 @@ nextevtime
 checktime
 setTimes
 startup!
+init!
 loop
 scale
 ```

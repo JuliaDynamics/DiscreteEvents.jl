@@ -252,7 +252,7 @@ julia> import Unitful: s, minute, hr
 julia> c = Clock()                 # create a unitless clock (standard)
 Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 
-julia> init!(c)                    # initialize it explicitly (normally done implicitly)
+julia> Simulate.init!(c)           # initialize it explicitly (normally done implicitly)
 Simulate.Idle()
 
 julia> c = Clock(1s, unit=minute)  # create a clock with units, does conversions automatically

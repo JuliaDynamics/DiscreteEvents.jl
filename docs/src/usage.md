@@ -143,52 +143,5 @@ resume!
 sync!
 ```
 
-## Logging
-
-A `Logger` allows to register variables and to record their states on demand.
-The last record is stored in the logging variable. According to the Logger's state it can be printed or stored in a table.
-
-### Example
-
-```@repl usage
-sim = Clock(); # create a clock
-l = Logger(); # create a logging variable
-init!(l, sim); # initialize the logger
-(a, b, c) = 1, 1, 1 # create some variables
-setup!(l, [:a, :b, :c], scope = m); # register them for logging
-record!(l) # record the variables with the current clock time
-l.last # show the last record
-function f()  # a function for increasing and recording the variables
-  global a += 1
-  global b = a^2
-  global c = a^3
-  record!(l)
-end
-switch!(l, 1); # switch logger to printing
-f() # increase and record the variables
-switch!(l, 2); # switch logger to storing in data table
-for i in 1:10 # create some events
-    event!(sim, :(f()), i, scope = m)
-end
-run!(sim, 10) # run a simulation
-l.df # view the recorded values
-```
-
-### Types
-
-```@docs
-Logger
-```
-
-### Functions
-
-```@docs
-init!
-setup!
-switch!
-record!
-clear!
-```
-
 [^1]: currently [builds fail on x86 machines with Julia 1.0](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/master), Appveyor is set to allow this.
     There is an [issue in the repo](https://github.com/pbayer/Simulate.jl/issues/8), maybe someone can look into it or fix it.

@@ -77,7 +77,7 @@ ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
 
 sim = Clock()  # set up clock without sampling
 @test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
-init!(sim)
+Simulate.init!(sim)
 @test sim.state == Simulate.Idle()
 @test τ(sim) == 0
 sim = Clock(t0=100)
@@ -238,7 +238,7 @@ c = Clock(1s, t0=1hr)
 @test c.unit == s
 @test c.time == 3600
 @test c.Δt ==1
-init!(c)
+Simulate.init!(c)
 println(c)
 @test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
 
