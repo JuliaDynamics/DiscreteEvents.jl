@@ -237,7 +237,7 @@ Functions can be started as asynchronous [tasks or coroutines](https://docs.juli
 From a modeling or simulation standpoint we call such tasks *processes*, because they can represent some ongoing activity in nature. Tasks seen as processes are a powerful modeling device, but you need to take care that
 
 1. they *give back control* to the clock and other such processes by calling delays or conditional waits or requesting resources (and thus implicitly waiting for them to become available) and
-2. they *get not out of sync* with simulation time by transferring critical operations to the clock.
+2. they *transfer critical operations to the clock* in order to not get out of sync with simulation time.
 
 ### Create and start a process
 
@@ -281,7 +281,7 @@ In order to synchronize with the clock, a process can
 - [`delay!`](@ref), which suspends it until after the given time `t` or
 - [`wait!`](@ref) for a condition. This creates a conditional [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})) which reactivates the process when the conditions become true.
 
-Processes can also interact directly e.g. via [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with [`take!`](https://docs.julialang.org/en/v1/base/parallel/#Base.take!-Tuple{Channel}) and [`put!`](https://docs.julialang.org/en/v1/base/parallel/#Base.put!-Tuple{Channel,Any}). This also may suspend them until there is something to take from a channel or until they are allowed to put something into it. In simulations they must take care that they keep synchronized with the clock.
+Processes can also interact directly e.g. via [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with [`take!`](https://docs.julialang.org/en/v1/base/parallel/#Base.take!-Tuple{Channel}) and [`put!`](https://docs.julialang.org/en/v1/base/parallel/#Base.put!-Tuple{Channel,Any}). This also may suspend them until there is something to take from a channel or until they are allowed to put something into it.
 
 ```julia
 function watchdog(name)

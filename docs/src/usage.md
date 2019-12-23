@@ -93,7 +93,7 @@ val
 
 ## Processes
 
-Julia functions can be registered and run as processes if they have an input and an output channel as their first two arguments. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
+Julia functions can be registered and run as processes. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
 
 ```@docs
 SimProcess
@@ -106,7 +106,7 @@ stop!(::SimProcess, ::SEvent)
 
 ### Delay and wait …
 
-Processes must not handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. This usually comes in handy. They are then suspended until certain conditions are met or requested resources are available.
+Processes do not need to handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. This usually comes in handy. They are then suspended until certain conditions are met or requested resources are available.
 
 ```@docs
 delay!
