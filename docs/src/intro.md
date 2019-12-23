@@ -325,7 +325,7 @@ julia> run!(𝐶, 10)
 
 ### IO-operations
 
-If they invoke IO-operations like printing, reading or writing from or to files, tasks give control back to the Julia scheduler. In this case the clock may proceed further before the operation has been completed and the task has got out of sync with simulation time. Processes therefore should enclose IO-operations in a [`now!`](@ref) call. This will transfer them for execution to the clock, which must finish them before proceeding any further.
+Tasks must transfer critical IO operations to the clock with a [`now!`](@ref) call. When tasks invoke IO-operations like printing, reading or writing from or to files, directly, they give control back to the Julia scheduler. While the IO-operation continues the clock may advance with time and the task has got out of sync with simulation time. Processes therefore should enclose their IO-operations in a [`now!`](@ref) call. This will transfer them for execution to the clock, which must finish them before proceeding any further.
 
 ```julia
 function bad()                                   # bad: IO-operation DIY
