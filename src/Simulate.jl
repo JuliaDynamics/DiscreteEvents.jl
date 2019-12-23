@@ -38,7 +38,7 @@ v"0.3.0"
 """
 const version = v"0.3.0"
 
-using Unitful, Random, DataStructures, DataFrames
+using Unitful, Random, DataStructures
 import Unitful: FreeUnits, Time
 import Base.show
 

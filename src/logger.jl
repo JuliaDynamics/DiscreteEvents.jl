@@ -1,3 +1,30 @@
+import Tables
+
+struct LogTable
+    data::Dict{Symbol,AbstractVector}
+end
+
+LogTable() = LogTable(Dict{Symbol,AbstractVector}())
+
+data(df::LogTable) = getfield(df, :data)
+
+Base.size(df::LogTable) = (size(df, 1), size(df, 2))
+function Base.size(df::LogTable, i::Int)
+    if i == 1
+        length(data(df)[first(keys(data(df)))])
+    elseif i == 2
+        length(keys(data(df)))
+    else
+        0
+    end
+end
+
+# LogTable satisfies the Tables.columns interface
+Base.getproperty(df::LogTable, s::Symbol) = getindex(data(df), s)
+Base.propertynames(df::LogTable) = collect(keys(data(df)))
+Base.setproperty!(df::LogTable, s::Symbol, x::AbstractVector) = setindex!(data(df), x, s)
+Tables.columns(df::LogTable) = df
+
 #
 # a simple event logger
 #
@@ -14,10 +41,16 @@ mutable struct Logger <: SEngine
     ltype::Int64
     lvars::Array{Symbol,1}
     scope::Module
-    df::DataFrame
+    df::LogTable
 
-    Logger() = new(0, Undefined(), NamedTuple(), 0, Symbol[], Main, DataFrame())
+    Logger() = new(0, Undefined(), NamedTuple(), 0, Symbol[], Main, LogTable())
 end
+
+# Allows Logger to be directly treated as a table
+Tables.columns(l::Logger) = l.df
+Tables.istable(::Type{Logger}) = true
+Tables.columnaccess(::Type{Logger}) = true
+# TODO: defining Tables.schema can enable performance gains for consumers of table
 
 """
     step!(A::Logger, ::Undefined, σ::Init)
@@ -39,7 +72,7 @@ function step!(A::Logger, ::Empty, σ::Setup)
     A.scope = σ.scope
     A.df.time = Float64[]
     for v ∈ A.lvars
-        A.df[!, v] = typeof(Core.eval(A.scope, v))[]
+        setproperty!(A.df, v, typeof(Core.eval(A.scope, v))[])
     end
     A.state = Idle()
 end
@@ -51,7 +84,9 @@ Clear the last record and the data table of a logger.
 """
 function step!(A::Logger, ::Idle, ::Clear)
     A.last = NamedTuple();
-    deleterows!(A.df, 1:size(A.df,1))
+    for v in values(data(A.df))
+        empty!(v)
+    end
 end
 
 """
@@ -66,7 +101,9 @@ function step!(A::Logger, ::Idle, σ::Log)
     if A.ltype == 1
         println(A.last)
     elseif A.ltype == 2
-        push!(A.df, [i for i in A.last])
+        for (k, v) in pairs(A.last)
+            push!(data(A.df)[k], v)
+        end
     end
 end
 
