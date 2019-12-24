@@ -11,6 +11,7 @@ A Julia package for discrete event simulation.
 - [**Usage**](usage.md): Get detailed informations about types, functions and macros in `Simulate.jl`.
 - [**Examples**](examples/examples.md): Look at and learn from examples.
 - [**Internals**](internals.md): Get informations about internal functions.
+- [**Performance**](performance.md): How to get good performance for your simulations.
 - [**Troubleshooting**](troubleshooting.md): If something doesn't work as expected.
 
 ## Development
