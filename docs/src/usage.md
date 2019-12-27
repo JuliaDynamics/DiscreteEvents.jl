@@ -53,7 +53,12 @@ function events()
 end
 ```
 
-All given expressions or functions are then evaluated at a given simulation time or when during simulation the given conditions become true.
+All given functions or expressions are then called or evaluated at a given simulation time or when during simulation the given conditions become true.
+
+!!! warning
+    Expressions evaluate at global scope and are much slower than `SimFunction`s.
+    If performance is any issue, use `SimFunction`. See [Performance](performance.md).
+
 
 ### Timed events
 

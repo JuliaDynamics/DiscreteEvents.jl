@@ -1,5 +1,7 @@
 # Performance
 
+I'm collecting the performance stuff now in the following notebook: [`performance.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/performance.ipynb).
+
 Julia is fast and most modern computers running it are fast too. Therefore for
 small models and simulations users probably won't care much about performance and
 will still get quick results. But for larger models and simulations over longer

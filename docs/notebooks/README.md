@@ -16,3 +16,7 @@ The notebooks are intended to show the application of `Simulate.jl` to modeling 
 - [`dicegame.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/dicegame.ipynb): a simulation of assembly lines inspired by Goldratt's dice game,
 - [`house_heating.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/house_heating.ipynb): a simulation of a hybrid system,
   combining all three schemes: events, continuous sampling and processes.
+
+## Performance
+
+- [`performance.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/performance.ipynb): this notebook looks at performance issues.
