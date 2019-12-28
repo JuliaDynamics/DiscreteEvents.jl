@@ -343,9 +343,9 @@ end
 @printf("Time elapsed: %5.2f minutes, %d events on %d threads", t/60, events, Threads.nthreads())
 ```
 
-Time elapsed: 17.47 minutes, 33558658 events on 4 threads
+    Time elapsed:  4.02 minutes, 33513556 events on 4 threads
 
-It takes over 17 minutes on 4 threads of a 2013 MacBook Pro and over $33\times 10^6$ events.
+It takes 4 minutes on 4 threads of a 2013 MacBook Pro and over $33\times 10^6$ events.
 
 ## Data analysis
 

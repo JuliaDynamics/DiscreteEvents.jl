@@ -43,3 +43,5 @@ source: `bench_channel.jl`
     evals/sample:     1
 
 speedup: 1.473
+**Note:** The DOE-example in Goldratt's dice-game speeds up 4x with this
+optimization, 4.02 instead of 17.47 minutes
