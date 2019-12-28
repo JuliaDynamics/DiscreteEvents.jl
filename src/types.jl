@@ -90,7 +90,7 @@ const SF = SimFunction
 
 A type which is either a `SimFunction` or Julia expression, `Expr`-type.
 """
-SimExpr = Union{Expr, SimFunction}
+const SimExpr = Union{Expr, SimFunction}
 
 """
     sconvert(ex::Union{SimExpr,Array,Tuple})::Array{SimExpr,1}
