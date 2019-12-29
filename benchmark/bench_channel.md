@@ -83,4 +83,5 @@ optimization, 4.02 instead of 17.47 minutes
       evals/sample:     1
 
 speedup: 2.108 (relative to first benchmark)
- 
+**Note:** The DOE-example in Goldratt's dice-game takes longer again with this
+optimization: 7.23 minutes. This shows that we need **different benchmarks**. 
