@@ -60,3 +60,27 @@ Environment:
 speedup: 1.473\
 **Note:** The DOE-example in Goldratt's dice-game speeds up 4x with this
 optimization, 4.02 instead of 17.47 minutes
+
+## Replace `Array`s with `Tuple`s and comprehensions with `map`
+
+2019-12-29
+
+    2019-12-29 T17:43:54.573
+      0.000202 seconds (2.05 k allocations: 67.953 KiB)
+      0.173119 seconds (1.59 M allocations: 34.860 MiB)
+    run! finished with 1000 clock events, 1438 sample steps, simulation time: 500.0
+    result=3.137592669589475
+    BenchmarkTools.Trial:
+      memory estimate:  34.85 MiB
+      allocs estimate:  1587418
+      --------------
+      minimum time:     166.838 ms (0.00% GC)
+      median time:      172.417 ms (2.36% GC)
+      mean time:        173.043 ms (1.88% GC)
+      maximum time:     190.001 ms (0.00% GC)
+      --------------
+      samples:          50
+      evals/sample:     1
+
+speedup: 2.108 (relative to first benchmark)
+ 

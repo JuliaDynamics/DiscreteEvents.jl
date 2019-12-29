@@ -35,12 +35,12 @@ a = 21; b = 22; c = 23; d = 24;
 @test Simulate.simExec((SF(i, a=10, b=20))) == 30
 
 conv = Simulate.sconvert
-@test isa(conv(ex1), Array{SimExpr,1})
-@test isa(conv([ex1, ex2]), Array{SimExpr,1})
-@test isa(conv(SF(f,1)), Array{SimExpr,1})
-@test isa(conv([SF(f,1),SF(g,1)]), Array{SimExpr,1})
-@test isa(conv([ex1,SF(f,1),SF(g,1),ex2]), Array{SimExpr,1})
-@test isa(conv((ex1,SF(f,1),SF(g,1),ex2)), Array{SimExpr,1})
+@test isa(conv(ex1), Tuple{Vararg{SimExpr}})
+@test isa(conv([ex1, ex2]), Tuple{Vararg{SimExpr}})
+@test isa(conv(SF(f,1)), Tuple{Vararg{SimExpr}})
+@test isa(conv([SF(f,1),SF(g,1)]), Tuple{Vararg{SimExpr}})
+@test isa(conv([ex1,SF(f,1),SF(g,1),ex2]), Tuple{Vararg{SimExpr}})
+@test isa(conv((ex1,SF(f,1),SF(g,1),ex2)), Tuple{Vararg{SimExpr}})
 
 # one expression
 ev = Simulate.SimEvent(conv(:(1+1)), Main, 10, 0)

@@ -1,4 +1,5 @@
 using Simulate, BenchmarkTools, Random
+import Dates.now
 res = Dict(); # results dictionary
 
 function take(id::Int64, ch::Channel, step::Int64, qpi::Array{Float64,1})
@@ -35,6 +36,7 @@ setup(250)
 run!(𝐶, 500)
 
 # then take measurements
+println(now())
 @time setup(250)
 println(@time run!(𝐶, 500))
 println("result=", sum(qpi))
