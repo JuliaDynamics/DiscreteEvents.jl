@@ -2,6 +2,21 @@
 
 source: `bench_channel.jl`
 
+benchmarks were done with:
+```julia
+julia> versioninfo()
+Julia Version 1.3.0
+Commit 46ce4d7933 (2019-11-26 06:09 UTC)
+Platform Info:
+  OS: macOS (x86_64-apple-darwin19.0.0)
+  CPU: Intel(R) Core(TM) i7-4850HQ CPU @ 2.30GHz
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-6.0.1 (ORCJIT, haswell)
+Environment:
+  JULIA_NUM_THREADS = 4
+```
+
 ## First benchmark
 
 2019-12-27:
@@ -42,6 +57,6 @@ source: `bench_channel.jl`
     samples:          50
     evals/sample:     1
 
-speedup: 1.473
+speedup: 1.473\
 **Note:** The DOE-example in Goldratt's dice-game speeds up 4x with this
 optimization, 4.02 instead of 17.47 minutes
