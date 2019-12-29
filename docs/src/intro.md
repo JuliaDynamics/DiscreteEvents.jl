@@ -145,15 +145,21 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
 
 Julia *functions* or *expressions* are scheduled as events on the clock's time line. In order to not be invoked immediately,
 
-- event expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()` and
-- event functions must be stored in a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction),
+- event functions must be stored in a [`SimFunction`](@ref), alias [`SF`](@ref SimFunction) and
+- event expressions must be [quoted](https://docs.julialang.org/en/v1/manual/metaprogramming/#Quoting-1) with `:()`.
 
 Event functions in a `SimFunction` can get 1) values, variables or 2) symbols,
 expressions or even other `SimFunction`s as arguments. The 2nd case arguments are
 evaluated not till event time before they are passed to the event funtion.
 
-Quoted expressions and SimFunctions can be scheduled as events combined in a
+Several `SimFunction`s and expressions can be scheduled as events combined in a
 tuple or an array.
+
+!!! warning
+    Evaluating expressions or symbols at global scope is much slower than using
+    `SimFunction`s and gives a one time warning. See [Performance](performance.md).
+    This functionality may be removed entirely in a future version. (Please write
+    an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
 
 ### Timed events
 

@@ -2,6 +2,7 @@
 # clock and event routines
 #
 
+using Logging
 
 """
     setUnit!(sim::Clock, new::FreeUnits)
@@ -260,7 +261,9 @@ function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
         function evaluate(y, m::Module)
             if y isa Union{Symbol,Expr}
                 try
-                    return Core.eval(m, y)
+                    ret = Core.eval(m, y)
+                    @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
+                    return ret
                 catch
                     return y
                 end

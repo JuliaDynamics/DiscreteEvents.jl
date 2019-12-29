@@ -56,9 +56,10 @@ end
 All given functions or expressions are then called or evaluated at a given simulation time or when during simulation the given conditions become true.
 
 !!! warning
-    Expressions evaluate at global scope and are much slower than `SimFunction`s.
-    If performance is any issue, use `SimFunction`. See [Performance](performance.md).
-
+    Evaluating expressions or symbols at global scope is much slower than using
+    `SimFunction`s and gives a one time warning. See [Performance](performance.md).
+    This functionality may be removed entirely in a future version. (Please write
+    an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
 
 ### Timed events
 
