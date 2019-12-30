@@ -1,0 +1,6 @@
+#
+# mean benchmark times
+#
+Simulate,datetime,channel [ms],dice [ms],heating [ms]
+v0.2.0,2019-12-30T18:10:06.993,245.855,643.394,163.561
+v0.3.0dev,2019-12-30T18:46:09.955,139.054,493.715,148.559

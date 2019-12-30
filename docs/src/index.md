@@ -27,7 +27,7 @@ A Julia package for discrete event simulation.
   other SimFunctions. They will then be evaluated at event time before they are
   passed to the event function.
   - `Simulate.version` gives now the package version.
-  - `Simulate.jl` is now **much faster** (up to 4x) due to optimizations.
+  - `Simulate.jl` is now faster due to optimizations.
 
 ### Deprecated functionality in v0.3.0
 - Evaluating expressions or symbols at global scope is much slower than using

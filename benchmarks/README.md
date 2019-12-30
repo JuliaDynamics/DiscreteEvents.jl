@@ -6,4 +6,5 @@ This contains benchmark programs and results.
 - `bench_dice.jl`: process based without sampling,
 - `bench_heating.jl`: mixed events, processes and sampling,
 - `bench_all.jl`: combined benchmark,
-- `bench_all.csv`: results table.
+- `bench_all_min.csv`: results table, minimum benchmark times,
+- `bench_all_mean.csv`: results table, mean benchmark times,
