@@ -249,7 +249,7 @@ Return the internal time (unitless) of next scheduled event.
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
 """
-    simExec(ex::Union{SimExpr, Tuple{Vararg{SimExpr}}}, m::Module=Main)
+    simExec(ex::Union{SimExpr, Tuple, m::Module=Main)
 
 Evaluate an event's expressions or SimFunctions. If symbols, expressions or
 other Simfunctions are stored as arguments inside a SF, evaluate those first
@@ -259,12 +259,14 @@ before passing them to `SF.efun`.
 
 the evaluated value or a tuple of evaluated values.
 """
-function simExec(ex::Union{SimExpr, Tuple{Vararg{SimExpr}}}, m::Module=Main)
+function simExec(ex::Union{SimExpr, Tuple}, m::Module=Main)
 
     function sexec(x::SimExpr)
 
         function evaluate(y, m::Module)
-            if y isa Union{Symbol,Expr}
+            if y isa SimFunction
+                return sexec(y)
+            elseif y isa Union{Symbol,Expr}
                 try
                     ret = Core.eval(m, y)
                     @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
@@ -272,8 +274,6 @@ function simExec(ex::Union{SimExpr, Tuple{Vararg{SimExpr}}}, m::Module=Main)
                 catch
                     return y
                 end
-            elseif y isa SimFunction
-                return sexec(y)
             else
                 return y
             end
@@ -283,7 +283,7 @@ function simExec(ex::Union{SimExpr, Tuple{Vararg{SimExpr}}}, m::Module=Main)
             if x.efun == event!  # should arguments be maintained?
                 arg = x.arg; kw = x.kw
             else                 # otherwise evaluate them
-                x.arg === nothing || (arg = Tuple(map(i->evaluate(i, x.emod), x.arg)))
+                x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
                 x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
             end
             if x.kw === nothing
@@ -298,7 +298,7 @@ function simExec(ex::Union{SimExpr, Tuple{Vararg{SimExpr}}}, m::Module=Main)
         end
     end # sexec
 
-    return ex isa SimExpr ? sexec(ex) : Tuple(map(x->sexec(x), ex))
+    return ex isa SimExpr ? sexec(ex) : map(x->sexec(x), ex)
 end
 
 """
@@ -321,7 +321,7 @@ end
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}, t::Number;
+event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector}, t::Number;
        scope::Module=Main, cycle::Number=0.0)::Float64
 ```
 Schedule an event for a given simulation time.
@@ -598,19 +598,18 @@ function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
 
     function exec_next_tick()
         sim.time = sim.tsa
+        # map(s->simExec(s.ex, s.scope), sim.sexpr)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
-        ix = findfirst(c->all(simExec(c.cond)), sim.cevents)
+        ix = findfirst(c->all(simExec(c.cond, c.scope)), sim.cevents)
         while ix !== nothing
-            ex = sim.cevents[ix].ex
-            deleteat!(sim.cevents, ix)
-            simExec(ex)           # execute it
+            simExec(splice!(sim.cevents, ix).ex)
             if isempty(sim.cevents)
                 isempty(sim.sexpr) && (sim.Δt = 0.0)  # delete sample rate
                 break
             end
-            ix = findfirst(c->all(simExec(c.cond)), sim.cevents)
+            ix = findfirst(c->all(simExec(c.cond, c.scope)), sim.cevents)
         end
         sim.scount +=1
     end
