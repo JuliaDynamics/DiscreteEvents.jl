@@ -50,4 +50,4 @@ println(now())
 println(@time run!(𝐶, 500))
 println("result=", sum(qpi))
 
-t = run(@benchmarkable run!(𝐶, 500) setup=setup(250) evals=1 seconds=15.0 samples=50)
+t = run(@benchmarkable run!(𝐶, 500) setup=setup(250) evals=1 seconds=15.0 samples=100)
