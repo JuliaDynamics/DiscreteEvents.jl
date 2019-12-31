@@ -102,67 +102,67 @@ const SimExpr = Union{Expr, SimFunction}
 
 convert a SimExpr or an array or a tuple of it to a Tuple{Vararg{SimExpr}}
 """
-function sconvert(ex::Union{SimExpr, Tuple, Vector})::Tuple{Vararg{SimExpr}}
-    if ex isa SimExpr
-        return (ex,)
-    elseif ex isa Tuple
-        return ex
-    else
-        return Tuple(ex)
-    end
-end
+sconvert(ex::Union{SimFunction, Expr, Tuple}) = ex
+sconvert(ex::Vector) = Tuple(ex)
+# function sconvert(ex::Union{SimExpr, Tuple, Vector})::Tuple{Vararg{SimExpr}}
+#     if ex isa SimExpr
+#         return ex
+#     elseif ex isa Tuple
+#         return ex
+#     else
+#         return Tuple(ex)
+#     end
+# end
 
 """
 ```
-SimEvent(ex::Tuple{SimExpr}, scope::Module, t::Float64, Δt::Float64)
+SimEvent{T<:Union{SimFunction,Expr,Tuple}}
 ```
-Create a simulation event: a SimExpr or an array of SimExpr to be
-executed at event time.
+A simulation event is a `SimFunction` or an expression or a tuple of them to be
+executed at an event time.
 
 # Arguments, fields
-- `ex::Tuple{SimExpr}`: a tuple of SimExpr to be evaluated at event time,
+- `ex::T`: a `SimFunction` or an expression or a tuple of them,
 - `scope::Module`: evaluation scope,
 - `t::Float64`: event time,
-- `Δt::Float64`: repeat rate with which the event gets repeated.
+- `Δt::Float64`: repeat rate with for repeating events.
 """
-struct SimEvent
-    ex::Tuple{Vararg{SimExpr}}
+struct SimEvent{T<:Union{SimFunction,Expr,Tuple}}
+    ex::T
     scope::Module
     t::Float64
     Δt::Float64
-
-    SimEvent(ex::Tuple{Vararg{SimExpr}}, scope::Module, t::Number, Δt::Number) =
-        new(ex, scope, t, Δt)
 end
 
 """
-    SimCond(cond::Tuple{SimExpr}, ex::Tuple{SimExpr}, scope::Module)
-
-Create a condition to be evaluated repeatedly with expressions or functions
+```
+SimCond{S<:Union{SimFunction,Expr,Tuple}, T<:Union{SimFunction,Expr,Tuple}}
+```
+A condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
 # Arguments, fields
-- `cond::Tuple{SimExpr}`: expressions or `SF`s to be evaluated as conditions
-- `ex::Tuple{SimExpr}`: expressions or `SF`s to be evaluated if conditions are all true
+- `cond::S`: a `SimFunction` or an expression or a tuple of them,
+- `ex::T`: a `SimFunction` or an expression or a tuple of them,
 - `scope::Module`: evaluation scope
 """
-struct SimCond
-    cond::Tuple{Vararg{SimExpr}}
-    ex::Tuple{Vararg{SimExpr}}
+struct SimCond{S<:Union{SimFunction,Expr,Tuple}, T<:Union{SimFunction,Expr,Tuple}}
+    cond::S
+    ex::T
     scope::Module
 end
 
 """
-    Sample(ex::SimExpr, scope::Module)
+    Sample{T<:Union{SimFunction,Expr}}
 
-Create a sampling expression.
+A sampling function or expression is called at sampling time.
 
 # Arguments, fields
 - `ex::SimExpr`: expression or SimFunction to be called at sample time
 - `scope::Module`: evaluation scope
 """
-struct Sample
-    ex::SimExpr
+struct Sample{T<:Union{SimFunction,Expr}}
+    ex::T
     scope::Module
 end
 

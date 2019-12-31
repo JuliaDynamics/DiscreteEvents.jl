@@ -79,6 +79,9 @@ function process!(sim::Clock, p::SimProcess, cycles::Number=Inf)
 end
 process!(p::SimProcess, cycles=Inf) = process!(𝐶, p, cycles)
 
+"wakeup a process waiting for a `Condition`"
+wakeup(c::Condition) = (notify(c), yield())
+
 """
 ```
 delay!([sim::Clock], t::Number)
@@ -91,9 +94,9 @@ process until being reactivated by the clock at the appropriate time.
 - `t::Number`: the time interval for the delay.
 """
 function delay!(sim::Clock, t::Number)
-    c = Channel{Int64}(0)
-    event!(sim, (SF(put!, c, 1), SF(yield)), after, t)
-    take!(c)
+    c = Condition()
+    event!(sim, SF(wakeup, c), after, t)
+    wait(c)
 end
 delay!(t::Number) = delay!(𝐶, t)
 
@@ -112,9 +115,9 @@ Used for delaying a process *until* a given time t.
 function delay!(sim::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > sim.time
-        c = Channel{Int64}(0)
-        event!(sim, (SF(put!, c, 1), SF(yield)), t)
-        take!(c)
+        c = Condition()
+        event!(sim, SF(wakeup, c), t)
+        wait(c)
     else
         now!(sim, SF(println, stderr, "warning: delay until $t ≤ τ=$(tau(sim))"))
     end
@@ -139,9 +142,9 @@ function wait!(sim::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Mai
     if all(simExec(sconvert(cond)))   # all conditions met
         return         # return immediately
     else
-        c = Channel{Int64}(0)
-        event!(sim, (SF(put!, c, 1), SF(yield)), cond, scope=scope)
-        take!(c)
+        c = Condition()
+        event!(sim, SF(wakeup, c), cond, scope=scope)
+        wait(c)
     end
 end
 wait!(cond::Union{SimExpr, Array, Tuple}; scope::Module=Main) = wait!(𝐶, cond, scope=scope)

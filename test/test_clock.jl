@@ -35,39 +35,39 @@ a = 21; b = 22; c = 23; d = 24;
 @test Simulate.simExec((SF(i, a=10, b=20))) == 30
 
 conv = Simulate.sconvert
-@test isa(conv(ex1), Tuple{Vararg{SimExpr}})
+@test isa(conv(ex1), Expr)
 @test isa(conv([ex1, ex2]), Tuple{Vararg{SimExpr}})
-@test isa(conv(SF(f,1)), Tuple{Vararg{SimExpr}})
+@test isa(conv(SF(f,1)), SimFunction)
 @test isa(conv([SF(f,1),SF(g,1)]), Tuple{Vararg{SimExpr}})
 @test isa(conv([ex1,SF(f,1),SF(g,1),ex2]), Tuple{Vararg{SimExpr}})
 @test isa(conv((ex1,SF(f,1),SF(g,1),ex2)), Tuple{Vararg{SimExpr}})
 
 # one expression
-ev = Simulate.SimEvent(conv(:(1+1)), Main, 10, 0)
-@test Simulate.simExec(ev.ex) == (2,)
+ev = Simulate.SimEvent(conv(:(1+1)), Main, 10.0, 0.0)
+@test Simulate.simExec(ev.ex) == 2
 @test ev.t == 10
 
 # two expressions
-ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 15, 0)
+ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 15.0, 0.0)
 @test Simulate.simExec(ev.ex) == (2, 3)
 @test ev.t == 15
 
 # one SimFunction
-ev = Simulate.SimEvent(conv(SF(f, 1)), Main, 10, 0)
-@test Simulate.simExec(ev.ex) == (4,)
+ev = Simulate.SimEvent(conv(SF(f, 1)), Main, 10.0, 0.0)
+@test Simulate.simExec(ev.ex) == 4
 
 # two SimFunctions
-ev = Simulate.SimEvent(conv([SF(f, 1), SF(g, 1)]), Main, 10, 0)
+ev = Simulate.SimEvent(conv([SF(f, 1), SF(g, 1)]), Main, 10.0, 0.0)
 @test Simulate.simExec(ev.ex) == (4, 5)
 
 # expressions and SimFunctions mixed in an array
-ev = Simulate.SimEvent(conv([:(1+1), SF(g,2), :(1+2), SF(f, 1)]), Main, 10, 0)
+ev = Simulate.SimEvent(conv([:(1+1), SF(g,2), :(1+2), SF(f, 1)]), Main, 10.0, 0.0)
 @test sum([Simulate.simExec(ex) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
 # expressions and SimFunctions mixed in a tuple
-ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
+ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10.0, 0.0)
 @test sum([Simulate.simExec(ex) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)

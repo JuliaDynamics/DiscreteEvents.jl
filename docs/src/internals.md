@@ -59,11 +59,14 @@ SimCond
 Sample
 sconvert
 simExec
+sexec
+evaluate
 nextevent
 nextevtime
 checktime
 setTimes
 startup!
+wakeup
 init!
 loop
 scale

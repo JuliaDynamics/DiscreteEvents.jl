@@ -248,58 +248,52 @@ Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
+"catchall function: forward the value y"
+evaluate(y::Any,  m::Module) = y
+
+"recursive call to `sexec` for a nested `SimFunction`."
+evaluate(y::SimFunction, m::Module) = sexec(y, m)
+
+"evaluate a symbol or expression and give a warning."
+function evaluate(y::Union{Symbol,Expr}, m::Module)
+    try
+        ret = Core.eval(m, y)
+        @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
+        return ret
+    catch
+        return y
+    end
+end
+
+"execute a `SimFunction`"
+function sexec(x::SimFunction, m::Module)
+    if x.efun == event!  # should arguments be maintained?
+        arg = x.arg; kw = x.kw
+    else                 # otherwise evaluate them
+        x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
+        x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
+    end
+    if x.kw === nothing
+        return x.arg === nothing ? x.efun() : x.efun(arg...)
+    else
+        return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
+    end
+end
+
+"Forward an expression to `evaluate`."
+sexec(x::Expr, m::Module) = evaluate(x, m)
+
 """
     simExec(ex::Union{SimExpr, Tuple, m::Module=Main)
 
-Evaluate an event's expressions or SimFunctions. If symbols, expressions or
-other Simfunctions are stored as arguments inside a SF, evaluate those first
-before passing them to `SF.efun`.
+Forward an event's `SimFunction`s or expressions to further execution or evaluation.
 
 # Return
-
 the evaluated value or a tuple of evaluated values.
 """
-function simExec(ex::Union{SimExpr, Tuple}, m::Module=Main)
-
-    function sexec(x::SimExpr)
-
-        function evaluate(y, m::Module)
-            if y isa SimFunction
-                return sexec(y)
-            elseif y isa Union{Symbol,Expr}
-                try
-                    ret = Core.eval(m, y)
-                    @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
-                    return ret
-                catch
-                    return y
-                end
-            else
-                return y
-            end
-        end
-
-        if x isa SimFunction
-            if x.efun == event!  # should arguments be maintained?
-                arg = x.arg; kw = x.kw
-            else                 # otherwise evaluate them
-                x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
-                x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
-            end
-            if x.kw === nothing
-                return x.arg === nothing ? x.efun() : x.efun(arg...)
-            else
-                return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
-            end
-        else
-            ret = Core.eval(m, x)
-            @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
-            return ret
-        end
-    end # sexec
-
-    return ex isa SimExpr ? sexec(ex) : map(x->sexec(x), ex)
-end
+simExec(ex::SimFunction, m::Module=Main) = sexec(ex, m)
+simExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
+simExec(ex::Tuple, m::Module=Main) = map(x->sexec(x, m), ex)
 
 """
     checktime(sim::Clock, t::Number)::Float64
