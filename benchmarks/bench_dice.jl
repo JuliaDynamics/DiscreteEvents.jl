@@ -23,8 +23,6 @@ mutable struct Worker
     Worker(nr, clk, input, output, dist, perform) = new(nr, clk, input, output, dist, 1/perform, 0)
 end
 
-stats(t::Float64, nr::Int64, len::Int64) = push!(df, (t, nr, len))  ## write buffersize to dataframe
-
 function work(w::Worker)
     job = take!(w.input)
     delay!(w.clk, rand(w.dist) * w.retard)
