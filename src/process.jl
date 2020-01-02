@@ -39,7 +39,7 @@ end
 Start a `SimProcess` as a task in a loop.
 """
 function startup!(p::SimProcess, cycles::Number)
-    start = Channel{Int64}(0)
+    start = Channel{Int}(0)
     p.task = @async loop(p, start, cycles)
     p.state = Idle()
     put!(start, 1) # let the process start
