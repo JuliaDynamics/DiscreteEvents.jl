@@ -6,22 +6,11 @@
 CurrentModule = Simulate
 ```
 
-`Simulate.jl` runs on Julia versions ≥ v"1.0" [^1]. The current stable, registered version is installed with
+`Simulate.jl` runs on Julia versions ≥ v"1.0" [^1].
 
-```julia
-pkg> add Simulate
-```
-
-The development version is installed with:
-
-```julia
-pkg> add("https://github.com/pbayer/Simulate.jl")
-```
-
-The package is then loaded with
-
-```@repl usage
-using Simulate
+```@docs
+Simulate
+version
 ```
 
 ## The clock
@@ -64,7 +53,13 @@ function events()
 end
 ```
 
-All given expressions or functions are then evaluated at a given simulation time or when during simulation the given conditions become true.
+All given functions or expressions are then called or evaluated at a given simulation time or when during simulation the given conditions become true.
+
+!!! warning
+    Evaluating expressions or symbols at global scope is much slower than using
+    `SimFunction`s and gives a one time warning. See [Performance](performance.md).
+    This functionality may be removed entirely in a future version. (Please write
+    an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
 
 ### Timed events
 
@@ -104,7 +99,7 @@ val
 
 ## Processes
 
-Julia functions can be registered and run as processes if they have an input and an output channel as their first two arguments. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
+Julia functions can be registered and run as processes. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
 
 ```@docs
 SimProcess
@@ -117,7 +112,7 @@ stop!(::SimProcess, ::SEvent)
 
 ### Delay and wait …
 
-Processes must not handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. This usually comes in handy. They are then suspended until certain conditions are met or requested resources are available.
+Processes do not need to handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. This usually comes in handy. They are then suspended until certain conditions are met or requested resources are available.
 
 ```@docs
 delay!
@@ -152,53 +147,6 @@ run!
 stop!(::Clock)
 resume!
 sync!
-```
-
-## Logging
-
-A `Logger` allows to register variables and to record their states on demand.
-The last record is stored in the logging variable. According to the Logger's state it can be printed or stored in a table.
-
-### Example
-
-```@repl usage
-sim = Clock(); # create a clock
-l = Logger(); # create a logging variable
-init!(l, sim); # initialize the logger
-(a, b, c) = 1, 1, 1 # create some variables
-setup!(l, [:a, :b, :c], scope = m); # register them for logging
-record!(l) # record the variables with the current clock time
-l.last # show the last record
-function f()  # a function for increasing and recording the variables
-  global a += 1
-  global b = a^2
-  global c = a^3
-  record!(l)
-end
-switch!(l, 1); # switch logger to printing
-f() # increase and record the variables
-switch!(l, 2); # switch logger to storing in data table
-for i in 1:10 # create some events
-    event!(sim, :(f()), i, scope = m)
-end
-run!(sim, 10) # run a simulation
-l.df # view the recorded values
-```
-
-### Types
-
-```@docs
-Logger
-```
-
-### Functions
-
-```@docs
-init!
-setup!
-switch!
-record!
-clear!
 ```
 
 [^1]: currently [builds fail on x86 machines with Julia 1.0](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/master), Appveyor is set to allow this.

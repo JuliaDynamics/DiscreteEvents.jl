@@ -9,46 +9,65 @@ f(a) = a+3
 g(a) = a+4
 h(a, b; c = 1, d = 2) = a + b + c + d
 i(; a = 1, b = 2) = a + b
+j(x) = x == :unknown
 
 @test Simulate.simExec(SF(e)) == 123
 @test Simulate.simExec(SF(f, 1)) == 4
 @test Simulate.simExec(SF(h, 1, 2, c=3, d=4)) == 10
+
+a = 11; b = 12; c = 13; d = 14;
+m = @__MODULE__
+sf1 = SF(h, a, b, c=c, d=d)
+sf2 = SF(h, :a, :b, c=:c, d=:d)
+sf3 = SF(m, h, a, b, c=c, d=d)
+sf4 = SF(m, h, :a, :b, c=:c, d=:d)
+@test Simulate.simExec(sf1) == 50
+@test Simulate.simExec(sf2) == 50
+@test Simulate.simExec(sf3) == 50
+@test Simulate.simExec(sf4) == 50
+a = 21; b = 22; c = 23; d = 24;
+@test Simulate.simExec(sf1) == 50
+@test Simulate.simExec(sf2) == 90
+@test Simulate.simExec(SF(h, :a, 2, c=:c, d=4)) == 50
+@test Simulate.simExec(SF(j, :unknown))
+@test Simulate.simExec(SF(<=, SF(tau), 1))
+
 @test Simulate.simExec((SF(i, a=10, b=20))) == 30
 
 conv = Simulate.sconvert
-@test isa(conv(ex1), Array{SimExpr,1})
-@test isa(conv([ex1, ex2]), Array{SimExpr,1})
-@test isa(conv(SF(f,1)), Array{SimExpr,1})
-@test isa(conv([SF(f,1),SF(g,1)]), Array{SimExpr,1})
-@test isa(conv([ex1,SF(f,1),SF(g,1),ex2]), Array{SimExpr,1})
-@test isa(conv((ex1,SF(f,1),SF(g,1),ex2)), Array{SimExpr,1})
+@test isa(conv(ex1), Expr)
+@test isa(conv([ex1, ex2]), Tuple{Vararg{SimExpr}})
+@test isa(conv(SF(f,1)), SimFunction)
+@test isa(conv([SF(f,1),SF(g,1)]), Tuple{Vararg{SimExpr}})
+@test isa(conv([ex1,SF(f,1),SF(g,1),ex2]), Tuple{Vararg{SimExpr}})
+@test isa(conv((ex1,SF(f,1),SF(g,1),ex2)), Tuple{Vararg{SimExpr}})
 
 # one expression
-ev = Simulate.SimEvent(conv(:(1+1)), Main, 10, 0)
-@test Simulate.simExec(ev.ex) == (2,)
+ev = Simulate.SimEvent(conv(:(1+1)), Main, 10.0, 0.0)
+@test Simulate.simExec(ev.ex) == 2
 @test ev.t == 10
 
 # two expressions
-ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 15, 0)
+ev = Simulate.SimEvent(conv([:(1+1), :(1+2)]), Main, 15.0, 0.0)
 @test Simulate.simExec(ev.ex) == (2, 3)
 @test ev.t == 15
 
 # one SimFunction
-ev = Simulate.SimEvent(conv(SF(f, 1)), Main, 10, 0)
-@test Simulate.simExec(ev.ex) == (4,)
+ev = Simulate.SimEvent(conv(SF(f, 1)), Main, 10.0, 0.0)
+@test Simulate.simExec(ev.ex) == 4
 
 # two SimFunctions
-ev = Simulate.SimEvent(conv([SF(f, 1), SF(g, 1)]), Main, 10, 0)
+ev = Simulate.SimEvent(conv([SF(f, 1), SF(g, 1)]), Main, 10.0, 0.0)
 @test Simulate.simExec(ev.ex) == (4, 5)
 
 # expressions and SimFunctions mixed in an array
-ev = Simulate.SimEvent(conv([:(1+1), SF(g,2), :(1+2), SF(f, 1)]), Main, 10, 0)
+ev = Simulate.SimEvent(conv([:(1+1), SF(g,2), :(1+2), SF(f, 1)]), Main, 10.0, 0.0)
 @test sum([Simulate.simExec(ex) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
 
 # expressions and SimFunctions mixed in a tuple
-ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
+ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10.0, 0.0)
 @test sum([Simulate.simExec(ex) for ex in ev.ex if isa(ex, SimFunction)]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.simExec(ev.ex) == (2, 6, 3, 4)
@@ -58,7 +77,7 @@ ev = Simulate.SimEvent(conv((:(1+1), SF(g,2), :(1+2), SF(f, 1))), Main, 10, 0)
 
 sim = Clock()  # set up clock without sampling
 @test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
-init!(sim)
+Simulate.init!(sim)
 @test sim.state == Simulate.Idle()
 @test τ(sim) == 0
 sim = Clock(t0=100)
@@ -219,7 +238,7 @@ c = Clock(1s, t0=1hr)
 @test c.unit == s
 @test c.time == 3600
 @test c.Δt ==1
-init!(c)
+Simulate.init!(c)
 println(c)
 @test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
 

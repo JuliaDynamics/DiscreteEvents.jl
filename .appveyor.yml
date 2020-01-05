@@ -9,8 +9,6 @@ platform:
   - x64
 matrix:
   allow_failures:
-    - platform: x86
-      julia_version: 1.0
     - julia_version: nightly
 branches:
   only:

@@ -17,7 +17,3 @@ end
 @testset "utils.jl" begin
     include("test_utils.jl")
 end
-
-@testset "logger.jl" begin
-        include("test_logger.jl")
-end

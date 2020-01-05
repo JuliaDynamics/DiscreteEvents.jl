@@ -11,26 +11,29 @@ A Julia package for discrete event simulation.
 - [**Usage**](usage.md): Get detailed informations about types, functions and macros in `Simulate.jl`.
 - [**Examples**](examples/examples.md): Look at and learn from examples.
 - [**Internals**](internals.md): Get informations about internal functions.
+- [**Performance**](performance.md): How to get good performance for your simulations.
 - [**Troubleshooting**](troubleshooting.md): If something doesn't work as expected.
 
 ## Development
 
 `Simulate.jl` is a new package and still in early development. Please use, test and help  evolve it. Its GitHub repository is at [https://github.com/pbayer/Simulate.jl](https://github.com/pbayer/Simulate.jl).
 
-### New in v0.2.0
+### Breaking changes in v0.3.0
+- **breaking change**: Logging functions are now removed (they were not useful
+  enough).
 
-v0.2.0 is the first version supporting fully the three schemes.
+### New functionality in v0.3.0
+- Arguments to `SimFunction` can now be given also as symbols, expressions or as
+  other SimFunctions. They will then be evaluated at event time before they are
+  passed to the event function.
+- `Simulate.version` gives now the package version.
+- `Simulate.jl` is now faster due to optimizations.
 
-- [`now!`](@ref) for IO-operations of processes,
-- functions and macros for defining conditions,
-- conditional [`wait!(cond)`](@ref wait!),
-- conditional events with [`event!(sim, ex, cond)`](@ref event!),
-- most functions can be called without the first clock argument, default to [`𝐶`](@ref),
-- [`event!`](@ref) takes an expression or a [`SimFunction`](@ref) or a tuple or an array of them,
-- introduced aliases: [`SF`](@ref SimFunction) for [`SimFunction`](@ref) and [`SP`](@ref SimProcess) for [`SimProcess`](@ref)
-- introduced process-based simulation: [`SimProcess`](@ref) and [`process!`](@ref) and [`delay!`](@ref),
-- extensive documentation,
-- more examples.
+### Deprecated functionality in v0.3.0
+- Evaluating expressions or symbols at global scope is much slower than using
+  `SimFunction`s and gives now a one time warning. This functionality may be
+  removed entirely in a future version. (Please write an issue if you want to
+  keep it.)
 
 ### Earlier releases
 

@@ -1,8 +1,11 @@
-# Define components for simulation and logging machines
-# -------------------------------------------------------
-# I choose Sim.jl to be self sufficient and not to depend
-# on StateMachines.jl.
 #
+# This file is part of the Simulate.jl Julia package, MIT license
+#
+# Paul Bayer, 2019
+#
+# This is a Julia package for discrete event simulation
+#
+
 
 "supertype for state machines in `Sim.jl`"
 abstract type SEngine end

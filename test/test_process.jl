@@ -45,7 +45,7 @@ for p in values(𝐶.processes)
 end
 
 put!(ch1, 1)
-sleep(0.01) 
+sleep(0.01)
 run!(𝐶, 10)
 
 @test length(A) > 20

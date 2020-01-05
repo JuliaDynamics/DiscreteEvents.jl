@@ -1,6 +1,11 @@
 #
-# types for Simulate.jl
+# This file is part of the Simulate.jl Julia package, MIT license
 #
+# Paul Bayer, 2019
+#
+# This is a Julia package for discrete event simulation
+#
+
 
 """
     Timing
@@ -17,21 +22,27 @@ Enumeration type for scheduling events and timed conditions:
 
 """
 ```
-SimFunction(func::Function, arg...; kw...)
-SF(func::Function, arg...; kw...)
+SimFunction([emod::Module], efun::Function, arg...; kw...)
+alias    SF([emod::Module], efun::Function, arg...; kw...)
 ```
-Prepare a function for being called as an event in a simulation.
+Store a function and its arguments for being called later as an event.
 
 # Arguments, fields
-- `func::Function`: function to be executed at a later simulation time
-- `arg...`: arguments to the function
-- `kw...`: keyword arguments
+- `emod::Module`: evaluation scope for symbols or expressions given as arguments.
+    If `emod` is not supplied, the evaluation scope is `Main`.
+- `efun::Function`:  event function to be executed at event time,
+- `arg...`: arguments to the event function,
+- `kw...`: keyword arguments to the event function.
+
+Arguments and keyword arguments can be 1) values or variables mixed with 2) symbols,
+expressions or even other SimFunctions. In the 2nd cases they are evaluated at
+event time before they are passed to the event function.
 
 !!! note
-    If the variables stored in a SimFunction are composite types,
-    they can change until they are evaluated later by `func`.
+    Composite types or variables given symbolically can change until they
+    are evaluated later at event time.
 
-# Example
+# Examples
 ```jldoctest
 julia> using Simulate
 
@@ -40,7 +51,7 @@ f (generic function with 1 method)
 
 julia> sf = SF(f, 10, 20, 30, d=14, e=15);  # store it as SimFunction
 
-julia> sf.func(sf.arg...; sf.kw...)         # it can be executed later
+julia> sf.efun(sf.arg...; sf.kw...)         # it can be executed later
 89
 
 julia> d = Dict(:a => 1, :b => 2);          # we set up a dictionary
@@ -55,19 +66,26 @@ julia> ff = SimFunction(g, d);              # we set up a SimFunction
 
 julia> d[:a] = 10;                          # later somehow we change d
 
-julia> ff.func(ff.arg...)                   # calling ff then gives a different result
+julia> ff.efun(ff.arg...)                   # calling ff then gives a different result
 12
 ```
 """
 struct SimFunction
-    func::Function
+    emod::Module
+    efun::Function
     arg::Union{Nothing, Tuple}
     kw::Union{Nothing, Base.Iterators.Pairs}
 
-    function SimFunction(func::Function, arg...; kw...)
+    function SimFunction(emod::Module, efun::Function, arg...; kw...)
         !isempty(arg) || ( arg = nothing )
         !isempty(kw)  || ( kw  = nothing )
-        new(func, arg, kw)
+        new(emod, efun, arg, kw)
+    end
+
+    function SimFunction(efun::Function, arg...; kw...)
+        !isempty(arg) || ( arg = nothing )
+        !isempty(kw)  || ( kw  = nothing )
+        new(Main, efun, arg, kw,)
     end
 end
 const SF = SimFunction
@@ -77,74 +95,74 @@ const SF = SimFunction
 
 A type which is either a `SimFunction` or Julia expression, `Expr`-type.
 """
-SimExpr = Union{Expr, SimFunction}
+const SimExpr = Union{Expr, SimFunction}
 
 """
-    sconvert(ex::Union{SimExpr,Array,Tuple})::Array{SimExpr,1}
+    sconvert(ex::Union{SimExpr, Tuple, Vector})::Tuple{Vararg{SimExpr}}
 
-convert a SimExpr or an array or a tuple of it to an Array{SimExpr,1}
+convert a SimExpr or an array or a tuple of it to a Tuple{Vararg{SimExpr}}
 """
-function sconvert(ex::Union{SimExpr,Array,Tuple})::Array{SimExpr,1}
-    if isa(ex, SimExpr)
-        return convert(Array{SimExpr,1}, [ex])
-    elseif isa(ex, Array)
-        return convert(Array{SimExpr,1}, ex)
-    else
-        return convert(Array{SimExpr,1}, [i for i in ex])
-    end
-end
+sconvert(ex::Union{SimFunction, Expr, Tuple}) = ex
+sconvert(ex::Vector) = Tuple(ex)
+# function sconvert(ex::Union{SimExpr, Tuple, Vector})::Tuple{Vararg{SimExpr}}
+#     if ex isa SimExpr
+#         return ex
+#     elseif ex isa Tuple
+#         return ex
+#     else
+#         return Tuple(ex)
+#     end
+# end
 
 """
 ```
-SimEvent(ex::Array{SimExpr, 1}, scope::Module, t::Float64, Δt::Float64)
+SimEvent{T<:Union{SimFunction,Expr,Tuple}}
 ```
-Create a simulation event: a SimExpr or an array of SimExpr to be
-executed at event time.
+A simulation event is a `SimFunction` or an expression or a tuple of them to be
+executed at an event time.
 
 # Arguments, fields
-- `ex::Array{SimExpr, 1}`: an array of SimExpr to be evaluated at event time,
+- `ex::T`: a `SimFunction` or an expression or a tuple of them,
 - `scope::Module`: evaluation scope,
 - `t::Float64`: event time,
-- `Δt::Float64`: repeat rate with which the event gets repeated.
+- `Δt::Float64`: repeat rate with for repeating events.
 """
-struct SimEvent
-    ex::Array{SimExpr, 1}
+struct SimEvent{T<:Union{SimFunction,Expr,Tuple}}
+    ex::T
     scope::Module
     t::Float64
     Δt::Float64
-
-    SimEvent(ex::Array{SimExpr, 1}, scope::Module, t::Number, Δt::Number) =
-        new(ex, scope, t, Δt)
 end
 
 """
-    SimCond(cond::Array{SimExpr, 1}, ex::Array{SimExpr, 1}, scope::Module)
-
-create a condition to be evaluated repeatedly with expressions or functions
+```
+SimCond{S<:Union{SimFunction,Expr,Tuple}, T<:Union{SimFunction,Expr,Tuple}}
+```
+A condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
 # Arguments, fields
-- `cond::Array{SimExpr, 1}`: Expr or SFs to be evaluated as conditions
-- `ex::Array{SimExpr, 1}`: Expr or SFs to be evaluated if conditions are all true
+- `cond::S`: a `SimFunction` or an expression or a tuple of them,
+- `ex::T`: a `SimFunction` or an expression or a tuple of them,
 - `scope::Module`: evaluation scope
 """
-struct SimCond
-    cond::Array{SimExpr, 1}
-    ex::Array{SimExpr, 1}
+struct SimCond{S<:Union{SimFunction,Expr,Tuple}, T<:Union{SimFunction,Expr,Tuple}}
+    cond::S
+    ex::T
     scope::Module
 end
 
 """
-    Sample(ex::SimExpr, scope::Module)
+    Sample{T<:Union{SimFunction,Expr}}
 
-Create a sampling expression.
+A sampling function or expression is called at sampling time.
 
 # Arguments, fields
 - `ex::SimExpr`: expression or SimFunction to be called at sample time
 - `scope::Module`: evaluation scope
 """
-struct Sample
-    ex::SimExpr
+struct Sample{T<:Union{SimFunction,Expr}}
+    ex::T
     scope::Module
 end
 
@@ -166,12 +184,12 @@ end
 """
 ```
 SimProcess( id, func::Function, arg...; kw...)
-SP(id, func::Function, arg...; kw...)
+alias   SP( id, func::Function, arg...; kw...)
 ```
 Prepare a function to run as a process in a simulation.
 
 # Arguments, fields
-- `id`: some unique identification, it should get registered with
+- `id`: some unique identification for registration,
 - `func::Function`: a function `f(arg...; kw...)`
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
@@ -239,7 +257,7 @@ julia> import Unitful: s, minute, hr
 julia> c = Clock()                 # create a unitless clock (standard)
 Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 
-julia> init!(c)                    # initialize it explicitly (normally done implicitly)
+julia> Simulate.init!(c)           # initialize it explicitly (normally done implicitly)
 Simulate.Idle()
 
 julia> c = Clock(1s, unit=minute)  # create a clock with units, does conversions automatically

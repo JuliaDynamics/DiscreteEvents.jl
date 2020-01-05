@@ -1,7 +1,13 @@
 #
-# clock and event routines
+# This file is part of the Simulate.jl Julia package, MIT license
+#
+# Paul Bayer, 2019
+#
+# This is a Julia package for discrete event simulation
 #
 
+
+using Logging
 
 """
     setUnit!(sim::Clock, new::FreeUnits)
@@ -84,7 +90,7 @@ end
 𝐶
 Clk
 ```
-`𝐶` (𝐶 = \\itC+tab) or `Clk` is the central simulation clock. If you do one
+`𝐶` (𝐶 = \\itC+[tab]) or `Clk` is the central simulation clock. If you do one
 simulation at a time, you can use 𝐶 or Clk for time keeping.
 
 # Examples
@@ -242,31 +248,52 @@ Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(sim::Clock) = peek(sim.events)[2]
 
-"""
-    simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
+"catchall function: forward the value y"
+evaluate(y::Any,  m::Module) = y
 
-evaluate the event expressions or SimFunctions.
+"recursive call to `sexec` for a nested `SimFunction`."
+evaluate(y::SimFunction, m::Module) = sexec(y, m)
+
+"evaluate a symbol or expression and give a warning."
+function evaluate(y::Union{Symbol,Expr}, m::Module)
+    try
+        ret = Core.eval(m, y)
+        @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
+        return ret
+    catch
+        return y
+    end
+end
+
+"execute a `SimFunction`"
+function sexec(x::SimFunction, m::Module)
+    if x.efun == event!  # should arguments be maintained?
+        arg = x.arg; kw = x.kw
+    else                 # otherwise evaluate them
+        x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
+        x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
+    end
+    if x.kw === nothing
+        return x.arg === nothing ? x.efun() : x.efun(arg...)
+    else
+        return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
+    end
+end
+
+"Forward an expression to `evaluate`."
+sexec(x::Expr, m::Module) = evaluate(x, m)
+
+"""
+    simExec(ex::Union{SimExpr, Tuple, m::Module=Main)
+
+Forward an event's `SimFunction`s or expressions to further execution or evaluation.
 
 # Return
-
-the evaluated value or a tuple of evaluated values
+the evaluated value or a tuple of evaluated values.
 """
-function simExec(ex::Union{SimExpr, Array{SimExpr,1}}, m::Module=Main)
-
-    function sexec(x::SimExpr)
-        if x isa SimFunction
-            if x.kw === nothing
-                return x.arg === nothing ? x.func() : x.func(x.arg...)
-            else
-                return x.arg === nothing ? x.func(; x.kw...) : x.func(x.arg...; x.kw...)
-            end
-        else
-            return Core.eval(m, x)
-        end
-    end
-
-    return ex isa SimExpr ? sexec(ex) : Tuple([sexec(x) for x in ex])
-end
+simExec(ex::SimFunction, m::Module=Main) = sexec(ex, m)
+simExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
+simExec(ex::Tuple, m::Module=Main) = map(x->sexec(x, m), ex)
 
 """
     checktime(sim::Clock, t::Number)::Float64
@@ -288,14 +315,14 @@ end
 
 """
 ```
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)::Float64
-event!(ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0)
+event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector}, t::Number;
+       scope::Module=Main, cycle::Number=0.0)::Float64
 ```
 Schedule an event for a given simulation time.
 
 # Arguments
-- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
-- `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
+- `sim::Clock`: it not supplied, the event is scheduled to 𝐶,
+- `ex::Union{SimExpr, Tuple, Vector}`: an expression or SimFunction or an array or tuple of them,
 - `t::Real` or `t::Time`: simulation time, if t < sim.time set t = sim.time,
 - `scope::Module=Main`: scope for expressions to be evaluated in,
 - `cycle::Float64=0.0`: repeat cycle time for an event.
@@ -330,7 +357,7 @@ julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 60.0
 ```
 """
-function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
+function event!(sim::Clock, ex::Union{SimExpr, Tuple, Vector}, t::Number;
                 scope::Module=Main, cycle::Number=0.0)::Float64
     t = checktime(sim, t)
     (t < sim.time) && (t = sim.time)
@@ -342,19 +369,19 @@ function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, t::Number;
     sim.events[ev] = t
     return t
 end
-event!( ex::Union{SimExpr, Array, Tuple}, t::Number; scope::Module=Main, cycle::Number=0.0) =
+event!( ex::Union{SimExpr, Tuple, Vector}, t::Number; scope::Module=Main, cycle::Number=0.0) =
             event!(𝐶, ex, t, scope=scope, cycle=cycle)
 
 """
 ```
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)::Float64
-event!(ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main)
+event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
+       scope::Module=Main)::Float64
 ```
 Schedule a timed event, that is an event with a timing.
 
 # Arguments
-- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
-- `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
+- `sim::Clock`: if not supplied, the event is scheduled to 𝐶,
+- `ex::{SimExpr, Tuple, Vector}`: an expression or SimFunction or an array or tuple of them,
 - `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
 - `t::Float64` or `t::Time`: simulation time,
 - `scope::Module=Main`: scope for the expressions to be evaluated
@@ -374,11 +401,11 @@ julia> setUnit!(𝐶, s)
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 
-julia> event!(𝐶, SimFunction(myfunc, 5, 6), after, 1hr)
+julia> event!(SimFunction(myfunc, 5, 6), after, 1hr)
 3600.0
 ```
 """
-function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number;
+function event!(sim::Clock, ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
                 scope::Module=Main)
     @assert T in (at, after, every) "bad Timing $T for event!"
     t = checktime(sim, t)
@@ -390,7 +417,7 @@ function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Numb
         event!(sim, sconvert(ex), t, scope=scope)
     end
 end
-event!( ex::Union{SimExpr, Array, Tuple}, T::Timing, t::Number; scope::Module=Main) =
+event!( ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number; scope::Module=Main) =
             event!(𝐶, ex, T, t; scope=scope)
 
 """
@@ -413,8 +440,8 @@ end
 
 """
 ```
-event!(sim::Clock, ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main):
-event!(ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector},
+       cond::Union{SimExpr, Tuple, Vector}; scope::Module=Main):
 ```
 Schedule a conditional event.
 
@@ -425,9 +452,9 @@ sampling rate is setup depending on the scale of the remaining simulation time
 ``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
 
 # Arguments
-- `sim::Clock`: simulation clock, if no clock is given, the event goes to 𝐶,
-- `ex::{SimExpr, Array, Tuple}`: an expression or SimFunction or an array or tuple of them,
-- `cond::{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
+- `sim::Clock`: if no clock is supplied, the event is scheduled to 𝐶,
+- `ex::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}`: an expression or SimFunction or an array or tuple of them,
+- `cond::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}`: a condition is an expression or SimFunction
     or an array or tuple of them. It is true only if all expressions or SimFunctions
     therein return true,
 - `scope::Module=Main`: scope for the expressions to be evaluated
@@ -456,8 +483,8 @@ julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fi
 After the event is triggered, sampling is again switched off.
 
 """
-function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
-                cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+function event!(sim::Clock, ex::Union{SimExpr, Tuple, Vector},
+                cond::Union{SimExpr, Tuple, Vector}; scope::Module=Main)
     if sim.state == Busy() && all(simExec(sconvert(cond)))   # all conditions met
         simExec(sconvert(ex))                                # execute immediately
     else
@@ -466,18 +493,17 @@ function event!(sim::Clock, ex::Union{SimExpr, Array, Tuple},
     end
     return tau(sim)
 end
-event!( ex::Union{SimExpr, Array, Tuple}, cond::Union{SimExpr, Array, Tuple};
+event!( ex::Union{SimExpr, Tuple, Vector}, cond::Union{SimExpr, Tuple, Vector};
         scope::Module=Main) = event!(𝐶, ex, cond, scope=scope)
 
 """
 ```
-sample_time!(sim::Clock, Δt::Number)
-sample_time!(Δt::Number)
+sample_time!([sim::Clock], Δt::Number)
 ```
 set the clock's sample rate starting from now (`tau(sim)`).
 
 # Arguments
-- `sim::Clock`: if no clock is given, set the sample rate on 𝐶,
+- `sim::Clock`: if not supplied, set the sample rate on 𝐶,
 - `Δt::Number`: sample rate, time interval for sampling
 """
 function sample_time!(sim::Clock, Δt::Number)
@@ -488,12 +514,11 @@ sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
-sample!(sim::Clock, ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
-sample!(ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
+sample!([sim::Clock], ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
 ```
 enqueue an expression for sampling.
 # Arguments
-- `sim::Clock`: if no clock is given, it samples on 𝐶,
+- `sim::Clock`: if not supplied, it samples on 𝐶,
 - `ex::Union{Expr, SimFunction}`: an expression or function,
 - `Δt::Number=sim.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
@@ -567,23 +592,18 @@ function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
 
     function exec_next_tick()
         sim.time = sim.tsa
+        # map(s->simExec(s.ex, s.scope), sim.sexpr)
         for s ∈ sim.sexpr
             simExec(s.ex, s.scope)
         end
-        cond = [all(simExec(c.cond)) for c in sim.cevents]
-        while any(cond)
-            vc = Array(1:length(cond))
-            ix = vc[cond][1]      # get the first index of a satisfied condition
-            ex = sim.cevents[ix].ex
-            subs = trues(length(cond))
-            subs[ix] = false
-            sim.cevents = sim.cevents[subs]
-            simExec(ex)           # execute it
+        ix = findfirst(c->all(simExec(c.cond, c.scope)), sim.cevents)
+        while ix !== nothing
+            simExec(splice!(sim.cevents, ix).ex)
             if isempty(sim.cevents)
                 isempty(sim.sexpr) && (sim.Δt = 0.0)  # delete sample rate
                 break
             end
-            cond = [all(simExec(c.cond)) for c in sim.cevents]
+            ix = findfirst(c->all(simExec(c.cond, c.scope)), sim.cevents)
         end
         sim.scount +=1
     end
