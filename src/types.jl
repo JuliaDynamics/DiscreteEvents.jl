@@ -190,6 +190,9 @@ Prepare a function to run as a process in a simulation.
 
 # Arguments, fields
 - `id`: some unique identification for registration,
+- `task::Union{Task,Nothing}`: a task structure,
+- `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
+- `state::SState`: process state, 
 - `func::Function`: a function `f(arg...; kw...)`
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
@@ -208,7 +211,7 @@ julia> using Simulate
 mutable struct SimProcess
     id::Any
     task::Union{Task,Nothing}
-    sim::Union{SEngine,Nothing}
+    clk::Union{AbstractClock,Nothing}
     state::SState
     func::Function
     arg::Tuple
@@ -218,6 +221,25 @@ mutable struct SimProcess
         new(id, nothing, nothing, Undefined(), func, arg, kw)
 end
 const SP = SimProcess
+
+"""
+    Schedule()
+
+A Schedule contains events, conditional events and sampling functions to be
+executed or evaluated on the clock's time line.
+
+# Fields
+- `events::PriorityQueue{SimEvent,Float64}`: scheduled events,
+- `cevents::Array{SimCond,1}`: conditional events to evaluate at each tick,
+- `sexpr::Array{Sample,1}`: sampling expressions to evaluate at each tick,
+"""
+mutable struct Schedule
+    events::PriorityQueue{SimEvent,Float64}
+    cevents::Array{SimCond,1}
+    sexpr::Array{Sample,1}
+
+    Schedule() = new(PriorityQueue{SimEvent,Float64}(), SimCond[], Sample[])
+end
 
 """
 ```
@@ -234,19 +256,16 @@ Create a new simulation clock.
     t0 to a time, e.g. `t0=60s`.
 
 # Fields
-- `state::SState`: clock state
-- `time::Float64`: clock time
-- `unit::FreeUnits`: time unit
-- `events::PriorityQueue{SimEvent,Float64}`: scheduled events
-- `cevents::Array{SimCond,1}`: conditional events
-- `processes::Dict{Any, SimProcess}`: registered processes
-- `end_time::Float64`: end time for simulation
-- `evcount::Int64`: event counter
-- `scount::Int64`: sample count
-- `tev::Float64`: next event time
-- `Δt::Float64`: sampling time, timestep between ticks
-- `sexpr::Array{Sample,1}`: sampling expressions to evaluate at each tick
-- `tsa::Float64`: next sample time
+- `thread::Int`: thread on which the clock is running,
+- `state::SState`: clock state,
+- `time::Float64`: clock time,
+- `unit::FreeUnits`: time unit,
+- `end_time::Float64`: end time for simulation,
+- `Δt::Float64`: sampling time, timestep between ticks,
+- `tn::Float64`: next timestep,
+- `tev::Float64`: next event time,
+- `evcount::Int64`: event counter,
+- `scount::Int64`: sample counter
 
 # Examples
 ```jldoctest
@@ -273,20 +292,19 @@ julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt ta
 Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 ```
 """
-mutable struct Clock <: SEngine
+mutable struct Clock <: AbstractClock
+    thread::Int
     state::SState
     time::Float64
     unit::FreeUnits
-    events::PriorityQueue{SimEvent,Float64}
-    cevents::Array{SimCond,1}
+    Δt::Float64
+    sc::Schedule
     processes::Dict{Any, SimProcess}
+    tn::Float64
+    tev::Float64
     end_time::Float64
     evcount::Int64
     scount::Int64
-    tev::Float64
-    Δt::Float64
-    sexpr::Array{Sample,1}
-    tsa::Float64
 
     function Clock(Δt::Number=0;
                    t0::Number=0, unit::FreeUnits=NoUnits)
@@ -303,21 +321,20 @@ mutable struct Clock <: SEngine
         else
             nothing
         end
-        new(Undefined(), t0, unit, PriorityQueue{SimEvent,Float64}(), SimCond[],
-            Dict{Any, SimProcess}(), t0, 0, 0, t0, Δt, Sample[],
-            t0 + Δt)
+        new(threadid(), Undefined(), t0, unit, Δt, Schedule(),
+            Dict{Any, SimProcess}(), t0 + Δt, t0, t0, 0, 0)
     end
 end
 
-function show(io::IO, sim::Clock)
-    s1::String = "Clock: "
-    s2::String = "state=$(sim.state), "
-    s3::String = "time=$(sim.time), "
-    s4::String = "unit=$(sim.unit), "
-    s5::String = "events: $(length(sim.events)), "
-    s6::String = "cevents: $(length(sim.cevents)), "
-    s7::String = "processes: $(length(sim.processes)), "
-    s8::String = "sampling: $(length(sim.sexpr)), "
-    s9::String = "sample rate Δt=$(sim.Δt)"
-    print(io, s1 * s2 * s3 * s4 * s5 * s6 * s7 * s8 * s9)
-end
+# function show(io::IO, c::Clock)
+#     s1::String = "Id=$(c.id)"
+#     s2::String = "state=$(c.state), "
+#     s3::String = "t=$(c.time), "
+#     s4::String = "u=$(c.unit), "
+#     s5::String = "Δt=$(c.Δt)"
+#     s6::String = "ev: $(length(c.sc.events)), "
+#     s7::String = "cev: $(length(c.sc.cevents)), "
+#     s8::String = "procs: $(length(c.processes)), "
+#     s9::String = "sampl: $(length(c.sc.sexpr)), "
+#     println(io, s1 * s2 * s3 * s4 * s5 * s6 * s7 * s8 * s9)
+# end

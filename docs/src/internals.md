@@ -11,7 +11,7 @@ CurrentModule = Simulate
 We have some definitions for them to work.
 
 ```@docs
-SEngine
+AbstractClock
 ```
 
 ### States
@@ -58,7 +58,7 @@ SimEvent
 SimCond
 Sample
 sconvert
-simExec
+evExec
 sexec
 evaluate
 nextevent
