@@ -88,9 +88,10 @@ conditional events and if conditions are met, execute them.
 """
 function do_tick!(c::Clock)
     c.time = c.tn
-    for x ∈ c.sc.sexpr
-        evExec(x.ex, x.scope)
-    end
+    foreach(x -> evExec(x.ex, x.scope), c.sc.sexpr)
+    # for x ∈ c.sc.sexpr
+    #     evExec(x.ex, x.scope)
+    # end
     ix = findfirst(x->all(evExec(x.cond, x.scope)), c.sc.cevents)
     while ix !== nothing
         evExec(splice!(c.sc.cevents, ix).ex)
