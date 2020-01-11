@@ -8,7 +8,7 @@
 
 
 "supertype for state machines in `Sim.jl`"
-abstract type SEngine end
+abstract type AbstractClock end
 
 "supertype for states"
 abstract type SState end
@@ -72,18 +72,18 @@ struct Clear <: SEvent end
 
 
 """
-    step!(A::SEngine, q::SState, σ::SEvent)
+    step!(A::AbstractClock, q::SState, σ::SEvent)
 
 Default transition for clock and logger.
 
 This is called if no otherwise defined transition occurs.
 
 # Arguments
-- `A::SEngine`: state machine for which a transition is called
+- `A::AbstractClock`: state machine for which a transition is called
 - `q::SState`:  state of the state machine
 - `σ::SEvent`:  event, triggering the transition
 """
-function step!(A::SEngine, q::SState, σ::SEvent)
+function step!(A::AbstractClock, q::SState, σ::SEvent)
     println(stderr, "Warning: undefined transition ",
             "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))")
 end

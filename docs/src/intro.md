@@ -4,9 +4,13 @@ Get an overview and learn the basics.
 
 `Simulate.jl` provides 1) a *clock* with a virtual simulation time and 2) the ability to schedule Julia functions and expressions as *events* on the clock's timeline or 3) run them as *processes* synchronizing with the clock. The clock can 4) invoke *sampling* functions or expressions continuously at a given rate.
 
+!!! note
+    `Simulate.jl` doesn't have a special concept for shared resources since this
+    can be expressed in native Julia via tokens in a `Channel`.
+
 ## A first example
 
-A server takes something from its input and puts it out modified after some time. We implement the server's activity in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
+A server takes something (a resource) from its input and puts it out modified after some time. We implement the server's activity in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
 
 ```julia
 using Simulate, Printf, Random
@@ -14,7 +18,7 @@ reset!(𝐶) # reset the central clock
 
 # describe the activity of the server
 function serve(input::Channel, output::Channel, name, id, op)
-    token = take!(input)         # take something from the input
+    token = take!(input)         # take a resource from the input
     now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
     delay!(rand())               # after a delay
     put!(output, op(token, id))  # put it out with some op applied
@@ -28,7 +32,7 @@ for i in 1:2:8    # create, register and start 8 SimProcesses (alias SP)
     process!(SP(i+1, serve, ch2, ch1, "bar", i+1, *))
 end
 
-put!(ch1, 1)  # put first token into channel 1
+put!(ch1, 1)  # put first resource into channel 1
 ```
 ```julia
 julia> run!(𝐶, 10)   # run for 10 time units
@@ -388,7 +392,7 @@ If no sample rate is set, the clock jumps from event to event.
 
 After you have setup the clock, scheduled events, setup sampling or started processes – as you have seen – you can step or run through a simulation, stop or resume it.
 
-- [`run!(sim::Clock, duration::Number)`](@ref run!): run a simulation for a given duration. Call all scheduled events and sampling actions in that timeframe.
-- [`incr!(sim::Clock)`](@ref incr!): take one simulation step, call the next tick or event.
-- [`stop!(sim::Clock)`](@ref stop!(::Clock)): stop a simulation
-- [`resume!(sim::Clock)`](@ref resume!): resume a halted simulation.
+- [`run!(clk::Clock, duration::Number)`](@ref run!): run a simulation for a given duration. Call all scheduled events and sampling actions in that timeframe.
+- [`incr!(clk::Clock)`](@ref incr!): take one simulation step, call the next tick or event.
+- [`stop!(clk::Clock)`](@ref stop!(::Clock)): stop a simulation
+- [`resume!(clk::Clock)`](@ref resume!): resume a halted simulation.

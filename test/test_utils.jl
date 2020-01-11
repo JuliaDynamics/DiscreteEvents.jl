@@ -38,16 +38,16 @@ run!(c, 5)
 @test (@tau c) == 5
 @test (@tau) == 15
 
-@test Simulate.simExec(@tau c :(==) 5)   # :(==) is strange, but :== does not work
-@test !Simulate.simExec(@tau :≥ 100)
-@test Simulate.simExec(@tau :< 100)
-@test Simulate.simExec(@tau :> :a)
+@test Simulate.evExec(@tau c :(==) 5)   # :(==) is strange, but :== does not work
+@test !Simulate.evExec(@tau :≥ 100)
+@test Simulate.evExec(@tau :< 100)
+@test Simulate.evExec(@tau :> :a)
 event!(SF(()->global a+=1), (@tau :>= 18))
 run!(𝐶, 5)
 @test a == 7
 
-@test Simulate.simExec(@val 1 :≤ 2)
-@test Simulate.simExec(@val :a :≤ 7)
+@test Simulate.evExec(@val 1 :≤ 2)
+@test Simulate.evExec(@val :a :≤ 7)
 event!(SF(()->global a+=1), ((@tau :>= 23), (@val :a :<= 8)))
 run!(𝐶, 5)
 @test a == 8

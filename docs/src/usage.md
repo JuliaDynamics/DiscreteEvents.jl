@@ -6,7 +6,7 @@
 CurrentModule = Simulate
 ```
 
-`Simulate.jl` runs on Julia versions ≥ v"1.0" [^1].
+`Simulate.jl` runs on Julia versions ≥ v"1.0".
 
 ```@docs
 Simulate
@@ -121,7 +121,7 @@ wait!
 
 ### Now
 
-If processes want IO-operations to finish before letting the clock proceed, they can enclose those operations in a `now!` call.
+Processes in a simulation want their IO-operations to finish before the clock proceeds. Therefore they must enclose those operations in a `now!` call.
 
 ```@docs
 now!
@@ -148,6 +148,3 @@ stop!(::Clock)
 resume!
 sync!
 ```
-
-[^1]: currently [builds fail on x86 machines with Julia 1.0](https://ci.appveyor.com/project/pbayer/simulate-jl-ueug1/branch/master), Appveyor is set to allow this.
-    There is an [issue in the repo](https://github.com/pbayer/Simulate.jl/issues/8), maybe someone can look into it or fix it.

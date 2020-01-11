@@ -7,16 +7,14 @@
 #
 
 
-using Logging
-
 """
-    setUnit!(sim::Clock, new::FreeUnits)
+    setUnit!(clk::Clock, new::FreeUnits)
 
 set a clock to a new time unit in `Unitful`. If necessary convert
 current clock times to the new unit.
 
 # Arguments
-- `sim::Clock`
+- `clk::Clock`
 - `new::FreeUnits`: new is one of `ms`, `s`, `minute` or `hr` or another Unitful
     `Time` unit.
 
@@ -63,26 +61,26 @@ julia> c.unit               # internal clock unit is set to Unitful.minute
 minute
 ```
 """
-function setUnit!(sim::Clock, new::FreeUnits)
+function setUnit!(clk::Clock, new::FreeUnits)
     if isa(1new, Time)
-        if sim.unit == new
+        if clk.unit == new
             println("clock is already set to $new")
-        elseif sim.unit == NoUnits
-            sim.unit = new
+        elseif clk.unit == NoUnits
+            clk.unit = new
         else
-            old = sim.unit
-            sim.unit = new
+            old = clk.unit
+            clk.unit = new
             fac = uconvert(new, 1*old).val
-            sim.time *= fac
-            sim.end_time *= fac
-            sim.tev *= fac
-            sim.Δt *= fac
-            sim.tsa *= fac
+            clk.time *= fac
+            clk.end_time *= fac
+            clk.tev *= fac
+            clk.Δt *= fac
+            clk.tn *= fac
         end
     else
-        sim.unit = NoUnits
+        clk.unit = NoUnits
     end
-    tau(sim)
+    tau(clk)
 end
 
 """
@@ -113,8 +111,8 @@ const 𝐶 = Clk = Clock()
 
 """
 ```
-tau(sim::Clock=𝐶)
-τ(sim::Clock=𝐶)
+tau(clk::Clock=𝐶)
+τ(clk::Clock=𝐶)
 ```
 Return the current simulation time (τ = \\tau+tab).
 
@@ -131,48 +129,48 @@ julia> τ() # alias, gives the central time
 0.0
 ```
 """
-tau(sim::Clock=𝐶) = sim.unit == NoUnits ? sim.time : sim.time*sim.unit
+tau(clk::Clock=𝐶) = clk.unit == NoUnits ? clk.time : clk.time*clk.unit
 const τ = tau
 
 """
 ```
-sync!(sim::Clock, to::Clock=𝐶)
+sync!(clk::Clock, to::Clock=𝐶)
 ```
 Force a synchronization of two clocks. Change all registered times of
-`sim` accordingly. Convert or force sim.unit to to.unit.
+`clk` accordingly. Convert or force clk.unit to to.unit.
 """
-function sync!(sim::Clock, to::Clock=𝐶)
-    if (sim.unit == NoUnits) | (sim.unit == to.unit)
+function sync!(clk::Clock, to::Clock=𝐶)
+    if (clk.unit == NoUnits) | (clk.unit == to.unit)
         fac = 1
     elseif to.unit == NoUnits
         println(stderr, "Warning: deleted time unit without conversion")
         fac = 1
     else
-        fac = uconvert(to.unit, 1sim.unit).val
+        fac = uconvert(to.unit, 1clk.unit).val
     end
-    Δt = to.time - sim.time*fac
-    sim.time = sim.time*fac + Δt
-    sim.unit = to.unit
-    sim.tsa  = sim.tsa*fac + Δt
-    sim.tev  = sim.tev*fac + Δt
-    sim.end_time = sim.end_time*fac + Δt
-    sim.Δt = to.Δt
+    Δt = to.time - clk.time*fac
+    clk.time = clk.time*fac + Δt
+    clk.unit = to.unit
+    clk.tn  = clk.tn*fac + Δt
+    clk.tev  = clk.tev*fac + Δt
+    clk.end_time = clk.end_time*fac + Δt
+    clk.Δt = to.Δt
     evq = PriorityQueue{SimEvent,Float64}()
-    for (ev, t) ∈ pairs(sim.events)
+    for (ev, t) ∈ pairs(clk.sc.events)
         evq[ev] = t*fac + Δt
     end
-    sim.events = evq
-    sim
+    clk.sc.events = evq
+    clk
 end
 
 """
 ```
-reset!(sim::Clock, Δt::Number=0; t0::Number=0, hard::Bool=true, unit=NoUnits)
+reset!(clk::Clock, Δt::Number=0; t0::Number=0, hard::Bool=true, unit=NoUnits)
 ```
 reset a clock
 
 # Arguments
-- `sim::Clock`
+- `clk::Clock`
 - `Δt::Number=0`: time increment
 - `t0::Float64=0` or `t0::Time`: start time
 - `hard::Bool=true`: time is reset, all scheduled events and sampling are
@@ -199,7 +197,7 @@ julia> c
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
 ```
 """
-function reset!(sim::Clock, Δt::Number=0;
+function reset!(clk::Clock, Δt::Number=0;
                 t0::Number=0, hard::Bool=true, unit=NoUnits)
     if  isa(1unit, Time)
         Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
@@ -215,115 +213,55 @@ function reset!(sim::Clock, Δt::Number=0;
         nothing
     end
     if hard
-        sim.state = Idle()
-        sim.time = t0
-        sim.unit = unit
-        sim.tsa = t0
-        sim.tev = t0
-        sim.end_time = t0
-        sim.evcount = 0
-        sim.scount = 0
-        sim.Δt = Δt
-        sim.events = PriorityQueue{SimEvent,Float64}()
-        sim.cevents = SimCond[]
-        sim.processes = Dict{Any, SimProcess}()
-        sim.sexpr = Sample[]
+        clk.state = Idle()
+        clk.time = t0
+        clk.unit = unit
+        clk.tn = t0
+        clk.tev = t0
+        clk.end_time = t0
+        clk.evcount = 0
+        clk.scount = 0
+        clk.Δt = Δt
+        clk.sc.events = PriorityQueue{SimEvent,Float64}()
+        clk.sc.cevents = SimCond[]
+        clk.processes = Dict{Any, SimProcess}()
+        clk.sc.sexpr = Sample[]
     else
-        sync!(sim, Clock(Δt, t0=t0, unit=unit))
+        sync!(clk, Clock(Δt, t0=t0, unit=unit))
     end
     "clock reset to t₀=$(float(t0*unit)), sampling rate Δt=$(float(Δt*unit))."
 end
 
-"""
-    nextevent(sim::Clock)
-
-Return the next scheduled event.
-"""
-nextevent(sim::Clock) = peek(sim.events)[1]
 
 """
-    nextevtime(sim::Clock)
-
-Return the internal time (unitless) of next scheduled event.
-"""
-nextevtime(sim::Clock) = peek(sim.events)[2]
-
-"catchall function: forward the value y"
-evaluate(y::Any,  m::Module) = y
-
-"recursive call to `sexec` for a nested `SimFunction`."
-evaluate(y::SimFunction, m::Module) = sexec(y, m)
-
-"evaluate a symbol or expression and give a warning."
-function evaluate(y::Union{Symbol,Expr}, m::Module)
-    try
-        ret = Core.eval(m, y)
-        @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
-        return ret
-    catch
-        return y
-    end
-end
-
-"execute a `SimFunction`"
-function sexec(x::SimFunction, m::Module)
-    if x.efun == event!  # should arguments be maintained?
-        arg = x.arg; kw = x.kw
-    else                 # otherwise evaluate them
-        x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
-        x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
-    end
-    if x.kw === nothing
-        return x.arg === nothing ? x.efun() : x.efun(arg...)
-    else
-        return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
-    end
-end
-
-"Forward an expression to `evaluate`."
-sexec(x::Expr, m::Module) = evaluate(x, m)
-
-"""
-    simExec(ex::Union{SimExpr, Tuple, m::Module=Main)
-
-Forward an event's `SimFunction`s or expressions to further execution or evaluation.
-
-# Return
-the evaluated value or a tuple of evaluated values.
-"""
-simExec(ex::SimFunction, m::Module=Main) = sexec(ex, m)
-simExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
-simExec(ex::Tuple, m::Module=Main) = map(x->sexec(x, m), ex)
-
-"""
-    checktime(sim::Clock, t::Number)::Float64
+    checktime(clk::Clock, t::Number)::Float64
 
 check `t` given according to clock settings and return a Float64 value
 """
-function checktime(sim::Clock, t::Number)::Float64
+function checktime(clk::Clock, t::Number)::Float64
     if isa(t, Real)
         return t
     else
-        if sim.unit == NoUnits
+        if clk.unit == NoUnits
             println(stderr, "Warning: clock has no time unit, ignoring units")
             return t.val
         else
-            return uconvert(sim.unit, t).val
+            return uconvert(clk.unit, t).val
         end
     end
 end
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector}, t::Number;
+event!([clk::Clock], ex::Union{SimExpr, Tuple, Vector}, t::Number;
        scope::Module=Main, cycle::Number=0.0)::Float64
 ```
 Schedule an event for a given simulation time.
 
 # Arguments
-- `sim::Clock`: it not supplied, the event is scheduled to 𝐶,
+- `clk::Clock`: it not supplied, the event is scheduled to 𝐶,
 - `ex::Union{SimExpr, Tuple, Vector}`: an expression or SimFunction or an array or tuple of them,
-- `t::Real` or `t::Time`: simulation time, if t < sim.time set t = sim.time,
+- `t::Real` or `t::Time`: simulation time, if t < clk.time set t = clk.time,
 - `scope::Module=Main`: scope for expressions to be evaluated in,
 - `cycle::Float64=0.0`: repeat cycle time for an event.
 
@@ -357,16 +295,16 @@ julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
 60.0
 ```
 """
-function event!(sim::Clock, ex::Union{SimExpr, Tuple, Vector}, t::Number;
+function event!(clk::Clock, ex::Union{SimExpr, Tuple, Vector}, t::Number;
                 scope::Module=Main, cycle::Number=0.0)::Float64
-    t = checktime(sim, t)
-    (t < sim.time) && (t = sim.time)
-    cycle = checktime(sim, cycle)
-    while any(i->i==t, values(sim.events)) # in case an event at that time exists
+    t = checktime(clk, t)
+    (t < clk.time) && (t = clk.time)
+    cycle = checktime(clk, cycle)
+    while any(i->i==t, values(clk.sc.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
     end
     ev = SimEvent(sconvert(ex), scope, t, cycle)
-    sim.events[ev] = t
+    clk.sc.events[ev] = t
     return t
 end
 event!( ex::Union{SimExpr, Tuple, Vector}, t::Number; scope::Module=Main, cycle::Number=0.0) =
@@ -374,13 +312,13 @@ event!( ex::Union{SimExpr, Tuple, Vector}, t::Number; scope::Module=Main, cycle:
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
+event!([clk::Clock], ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
        scope::Module=Main)::Float64
 ```
 Schedule a timed event, that is an event with a timing.
 
 # Arguments
-- `sim::Clock`: if not supplied, the event is scheduled to 𝐶,
+- `clk::Clock`: if not supplied, the event is scheduled to 𝐶,
 - `ex::{SimExpr, Tuple, Vector}`: an expression or SimFunction or an array or tuple of them,
 - `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
 - `t::Float64` or `t::Time`: simulation time,
@@ -405,16 +343,16 @@ julia> event!(SimFunction(myfunc, 5, 6), after, 1hr)
 3600.0
 ```
 """
-function event!(sim::Clock, ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
+function event!(clk::Clock, ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
                 scope::Module=Main)
     @assert T in (at, after, every) "bad Timing $T for event!"
-    t = checktime(sim, t)
+    t = checktime(clk, t)
     if T == after
-        event!(sim, sconvert(ex), t + sim.time, scope=scope)
+        event!(clk, sconvert(ex), t + clk.time, scope=scope)
     elseif T == every
-        event!(sim, sconvert(ex), sim.time, scope=scope, cycle=t)
+        event!(clk, sconvert(ex), clk.time, scope=scope, cycle=t)
     else
-        event!(sim, sconvert(ex), t, scope=scope)
+        event!(clk, sconvert(ex), t, scope=scope)
     end
 end
 event!( ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number; scope::Module=Main) =
@@ -440,7 +378,7 @@ end
 
 """
 ```
-event!([sim::Clock], ex::Union{SimExpr, Tuple, Vector},
+event!([clk::Clock], ex::Union{SimExpr, Tuple, Vector},
        cond::Union{SimExpr, Tuple, Vector}; scope::Module=Main):
 ```
 Schedule a conditional event.
@@ -452,7 +390,7 @@ sampling rate is setup depending on the scale of the remaining simulation time
 ``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
 
 # Arguments
-- `sim::Clock`: if no clock is supplied, the event is scheduled to 𝐶,
+- `clk::Clock`: if no clock is supplied, the event is scheduled to 𝐶,
 - `ex::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}`: an expression or SimFunction or an array or tuple of them,
 - `cond::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}`: a condition is an expression or SimFunction
     or an array or tuple of them. It is true only if all expressions or SimFunctions
@@ -460,7 +398,7 @@ sampling rate is setup depending on the scale of the remaining simulation time
 - `scope::Module=Main`: scope for the expressions to be evaluated
 
 # returns
-current simulation time `tau(sim)`.
+current simulation time `tau(clk)`.
 
 # Examples
 ```jldoctest
@@ -483,262 +421,207 @@ julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fi
 After the event is triggered, sampling is again switched off.
 
 """
-function event!(sim::Clock, ex::Union{SimExpr, Tuple, Vector},
+function event!(clk::Clock, ex::Union{SimExpr, Tuple, Vector},
                 cond::Union{SimExpr, Tuple, Vector}; scope::Module=Main)
-    if sim.state == Busy() && all(simExec(sconvert(cond)))   # all conditions met
-        simExec(sconvert(ex))                                # execute immediately
+    if clk.state == Busy() && all(evExec(sconvert(cond)))   # all conditions met
+        evExec(sconvert(ex))                                # execute immediately
     else
-        (sim.Δt == 0) && (sim.Δt = scale(sim.end_time - sim.time)/100)
-        push!(sim.cevents, SimCond(sconvert(cond), sconvert(ex), scope))
+        (clk.Δt == 0) && (clk.Δt = scale(clk.end_time - clk.time)/100)
+        push!(clk.sc.cevents, SimCond(sconvert(cond), sconvert(ex), scope))
     end
-    return tau(sim)
+    return tau(clk)
 end
 event!( ex::Union{SimExpr, Tuple, Vector}, cond::Union{SimExpr, Tuple, Vector};
         scope::Module=Main) = event!(𝐶, ex, cond, scope=scope)
 
 """
 ```
-sample_time!([sim::Clock], Δt::Number)
+sample_time!([clk::Clock], Δt::Number)
 ```
-set the clock's sample rate starting from now (`tau(sim)`).
+set the clock's sample rate starting from now (`tau(clk)`).
 
 # Arguments
-- `sim::Clock`: if not supplied, set the sample rate on 𝐶,
+- `clk::Clock`: if not supplied, set the sample rate on 𝐶,
 - `Δt::Number`: sample rate, time interval for sampling
 """
-function sample_time!(sim::Clock, Δt::Number)
-    sim.Δt = checktime(sim, Δt)
-    sim.tsa = sim.time + sim.Δt
+function sample_time!(clk::Clock, Δt::Number)
+    clk.Δt = checktime(clk, Δt)
+    clk.tn = clk.time + clk.Δt
 end
 sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
-sample!([sim::Clock], ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt; scope::Module=Main)
+sample!([clk::Clock], ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt; scope::Module=Main)
 ```
 enqueue an expression for sampling.
 # Arguments
-- `sim::Clock`: if not supplied, it samples on 𝐶,
+- `clk::Clock`: if not supplied, it samples on 𝐶,
 - `ex::Union{Expr, SimFunction}`: an expression or function,
-- `Δt::Number=sim.Δt`: set the clock's sampling rate, if no Δt is given, it takes
+- `Δt::Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
 - `scope::Module=Main`: optional, an evaluation scope for a given expression.
 """
-function sample!(sim::Clock, ex::Union{Expr, SimFunction}, Δt::Number=sim.Δt;
+function sample!(clk::Clock, ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt;
                  scope::Module=Main)
-    sim.Δt = Δt == 0 ? scale(sim.end_time - sim.time)/100 : Δt
-    push!(sim.sexpr, Sample(ex, scope))
+    clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
+    push!(clk.sc.sexpr, Sample(ex, scope))
 end
 sample!(ex::Union{Expr, SimFunction}, Δt::Number=𝐶.Δt; scope::Module=Main) =
     sample!(𝐶, ex, Δt, scope=scope)
 
 """
-    step!(sim::Clock, ::Undefined, ::Init)
+    step!(clk::Clock, ::Undefined, ::Init)
 
 initialize a clock.
 """
-function step!(sim::Clock, ::Undefined, ::Init)
-    sim.state = Idle()
+function step!(clk::Clock, ::Undefined, ::Init)
+    clk.state = Idle()
 end
 
 """
-    step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
+    step!(clk::Clock, ::Undefined, σ::Union{Step,Run})
 
 if uninitialized, initialize and then Step or Run.
 """
-function step!(sim::Clock, ::Undefined, σ::Union{Step,Run})
-    step!(sim, sim.state, Init(0))
-    step!(sim, sim.state, σ)
+function step!(clk::Clock, ::Undefined, σ::Union{Step,Run})
+    step!(clk, clk.state, Init(0))
+    step!(clk, clk.state, σ)
 end
 
 """
-    setTimes(sim::Clock)
+    setTimes(clk::Clock)
 
 set clock times for next event or sampling action. The internal clock times
-`sim.tev` and `sim.tsa` must always be set to be at least `sim.time`.
+`clk.tev` and `clk.tn` must always be set to be at least `clk.time`.
 """
-function setTimes(sim::Clock)
-    if length(sim.events) ≥ 1
-        sim.tev = nextevtime(sim)
-        sim.tsa = sim.Δt > 0 ? sim.time + sim.Δt : sim.time
+function setTimes(clk::Clock)
+    if length(clk.sc.events) ≥ 1
+        clk.tev = nextevtime(clk)
+        clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : clk.time
     else
-        sim.tsa = sim.Δt > 0 ? sim.time + sim.Δt : sim.time
-        sim.tev = sim.tsa
+        clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : clk.time
+        clk.tev = clk.tn
     end
 end
 
 """
-    step!(sim::Clock, ::Union{Idle,Busy,Halted}, ::Step)
+    step!(c::Clock, ::Union{Idle,Busy,Halted}, ::Step)
 
 step forward to next tick or scheduled event.
 
 At a tick evaluate 1) all sampling functions or expressions, 2) all conditional
 events, then 3) if an event is encountered, trigger the event.
 
-The internal clock times `sim.tev` and `sim.tsa` is always at least `sim.time`.
+The internal clock times `c.tev` and `c.tn` are always at least `c.time`.
 """
-function step!(sim::Clock, ::Union{Idle,Halted}, ::Step)
-
-    function exec_next_event()
-        sim.time = sim.tev
-        ev = dequeue!(sim.events)
-        simExec(ev.ex, ev.scope)
-        sim.evcount += 1
-        if ev.Δt > 0.0  # schedule repeat event
-            event!(sim, ev.ex, sim.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
-        end
-        sim.tev = length(sim.events) ≥ 1 ? nextevtime(sim) : sim.time
-    end
-
-    function exec_next_tick()
-        sim.time = sim.tsa
-        # map(s->simExec(s.ex, s.scope), sim.sexpr)
-        for s ∈ sim.sexpr
-            simExec(s.ex, s.scope)
-        end
-        ix = findfirst(c->all(simExec(c.cond, c.scope)), sim.cevents)
-        while ix !== nothing
-            simExec(splice!(sim.cevents, ix).ex)
-            if isempty(sim.cevents)
-                isempty(sim.sexpr) && (sim.Δt = 0.0)  # delete sample rate
-                break
-            end
-            ix = findfirst(c->all(simExec(c.cond, c.scope)), sim.cevents)
-        end
-        sim.scount +=1
-    end
-
-    sim.state = Busy()
-    if (sim.tev ≤ sim.time) && (length(sim.events) ≥ 1)
-        sim.tev = nextevtime(sim)
-    end
-
-    if (length(sim.events) ≥ 1) | (sim.Δt > 0.0)
-        if length(sim.events) ≥ 1
-            if (sim.Δt > 0.0)
-                if sim.tsa <= sim.tev
-                    exec_next_tick()
-                    if sim.tsa == sim.tev
-                        exec_next_event()
-                    end
-                    sim.tsa += sim.Δt
-                else
-                    exec_next_event()
-                end
-            else
-                exec_next_event()
-                sim.tsa = sim.time
-            end
-        else
-            exec_next_tick()
-            sim.tsa += sim.Δt
-            sim.tev = sim.time
-        end
-    else
-        println(stderr, "step!: nothing to evaluate")
-    end
-    length(sim.processes) == 0 || yield() # let processes run
-    (sim.state == Busy()) && (sim.state = Idle())
+function step!(c::Clock, ::Union{Idle,Halted}, ::Step)
+    c.state = Busy()
+    do_step!(c)
+    # if isempty(c.sc.cevents)
+    #     isempty(c.sc.sexpr) && (c.Δt = 0.0)  # delete schedule sample rate
+    # end
+    (c.state == Busy()) && (c.state = Idle())
 end
 
 """
-    step!(sim::Clock, ::Idle, σ::Run)
+    step!(clk::Clock, ::Idle, σ::Run)
 
 Run a simulation for a given duration.
 
 The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
-function step!(sim::Clock, ::Idle, σ::Run)
-    length(sim.processes) > 0 && sleep(0.05)  # let processes startup
-    sim.end_time = sim.time + σ.duration
-    sim.evcount = 0
-    sim.scount = 0
-    setTimes(sim)
-    while any(i->(sim.time < i ≤ sim.end_time), (sim.tsa, sim.tev))
-        step!(sim, sim.state, Step())
-        if sim.state == Halted()
+function step!(clk::Clock, ::Idle, σ::Run)
+    length(clk.processes) > 0 && sleep(0.05)  # let processes startup
+    clk.end_time = clk.time + σ.duration
+    clk.evcount = 0
+    clk.scount = 0
+    setTimes(clk)
+    while any(i->(clk.time < i ≤ clk.end_time), (clk.tn, clk.tev))
+        step!(clk, clk.state, Step())
+        if clk.state == Halted()
             return
         end
     end
-    tend = sim.end_time
+    tend = clk.end_time
 
     # catch remaining events
-    while (length(sim.events) ≥ 1) && (nextevtime(sim) ≤ tend + Base.eps(tend)*10)
-        step!(sim, sim.state, Step())
+    while (length(clk.sc.events) ≥ 1) && (nextevtime(clk) ≤ tend + Base.eps(tend)*10)
+        step!(clk, clk.state, Step())
         tend = nextfloat(tend)
     end
 
-    sim.time = sim.end_time
+    clk.time = clk.end_time
     sleep(0.01) # let processes finish
-    "run! finished with $(sim.evcount) clock events, $(sim.scount) sample steps, simulation time: $(sim.time)"
+    "run! finished with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(clk.time)"
 end
 
 """
-    step!(sim::Clock, ::Busy, ::Stop)
+    step!(clk::Clock, ::Busy, ::Stop)
 
 Stop the clock.
 """
-function step!(sim::Clock, ::Busy, ::Stop)
-    sim.state = Halted()
-    "Halted after $(sim.evcount) events, simulation time: $(sim.time)"
+function step!(clk::Clock, ::Busy, ::Stop)
+    clk.state = Halted()
+    "Halted after $(clk.evcount) events, simulation time: $(clk.time)"
 end
 
 """
-    step!(sim::Clock, ::Halted, ::Resume)
+    step!(clk::Clock, ::Halted, ::Resume)
 
 Resume a halted clock.
 """
-function step!(sim::Clock, ::Halted, ::Resume)
-    sim.state = Idle()
-    step!(sim, sim.state, Run(sim.end_time - sim.time))
+function step!(clk::Clock, ::Halted, ::Resume)
+    clk.state = Idle()
+    step!(clk, clk.state, Run(clk.end_time - clk.time))
 end
 
 """
-    step!(sim::Clock, q::SState, σ::SEvent)
+    step!(clk::Clock, q::SState, σ::SEvent)
 
 catch all step!-function.
 """
-function step!(sim::Clock, q::SState, σ::SEvent)
+function step!(clk::Clock, q::SState, σ::SEvent)
     println(stderr, "Warning: undefined transition ",
-            "$(typeof(sim)), ::$(typeof(q)), ::$(typeof(σ)))\n",
+            "$(typeof(clk)), ::$(typeof(q)), ::$(typeof(σ)))\n",
             "maybe, you should reset! the clock!")
 end
 
 """
-    run!(sim::Clock, duration::Number)
+    run!(clk::Clock, duration::Number)
 
 Run a simulation for a given duration. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
-run!(sim::Clock, duration::Number) =
-                        step!(sim, sim.state, Run(checktime(sim, duration)))
+run!(clk::Clock, duration::Number) =
+                        step!(clk, clk.state, Run(checktime(clk, duration)))
 
 
 """
-    incr!(sim::Clock)
+    incr!(clk::Clock)
 
 Take one simulation step, execute the next tick or event.
 """
-incr!(sim::Clock) = step!(sim, sim.state, Step())
+incr!(clk::Clock) = step!(clk, clk.state, Step())
 
 """
-    stop!(sim::Clock)
+    stop!(clk::Clock)
 
 Stop a running simulation.
 """
-stop!(sim::Clock) = step!(sim, sim.state, Stop())
+stop!(clk::Clock) = step!(clk, clk.state, Stop())
 
 """
-    resume!(sim::Clock)
+    resume!(clk::Clock)
 
 Resume a halted simulation.
 """
-resume!(sim::Clock) = step!(sim, sim.state, Resume())
+resume!(clk::Clock) = step!(clk, clk.state, Resume())
 
 """
-    init!(sim::Clock)
+    init!(clk::Clock)
 
 initialize a clock.
 """
-init!(sim::Clock) = step!(sim, sim.state, Init(""))
+init!(clk::Clock) = step!(clk, clk.state, Init(""))
