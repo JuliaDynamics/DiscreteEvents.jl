@@ -533,7 +533,6 @@ The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function step!(clk::Clock, ::Idle, σ::Run)
-    length(clk.processes) > 0 && sleep(0.05)  # let processes startup
     clk.end_time = clk.time + σ.duration
     clk.evcount = 0
     clk.scount = 0
@@ -553,7 +552,6 @@ function step!(clk::Clock, ::Idle, σ::Run)
     end
 
     clk.time = clk.end_time
-    sleep(0.01) # let processes finish
     "run! finished with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(clk.time)"
 end
 
