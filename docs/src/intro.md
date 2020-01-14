@@ -167,7 +167,7 @@ tuple or an array.
 
 ### Timed events
 
-Timed events with [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)) schedule functions and expressions to execute at a given time:
+Timed events with [`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Number)) schedule functions and expressions to execute at a given time:
 
 ```julia
 ev1 = :(println(tau(), ": I'm a quoted expression"))
@@ -205,7 +205,7 @@ julia> run!(𝐶, 5)                              # run
 
 ### Conditional events
 
-*Conditional events*  with ([`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple}))) execute under given conditions. Conditions can be formulated by using the [`@tau`](@ref @tau(::Any, ::Symbol, ::Union{Number, QuoteNode})) macro questioning the simulation time, the [`@val`](@ref) macro questioning a variable or any other logical expression or function or combinations of them.
+*Conditional events*  with ([`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector}))) execute under given conditions. Conditions can be formulated by using the [`@tau`](@ref @tau(::Any, ::Symbol, ::Union{Number, QuoteNode})) macro questioning the simulation time, the [`@val`](@ref) macro questioning a variable or any other logical expression or function or combinations of them.
 
 ```julia
 reset!(𝐶)                                       # reset the clock
@@ -289,7 +289,7 @@ julia> run!(𝐶, 3)                               # doit(5) is done with 5, not
 In order to synchronize with the clock, a process can
 - get the simulation time [`tau()`](@ref tau),
 - [`delay!`](@ref), which suspends it until after the given time `t` or
-- [`wait!`](@ref) for a condition. This creates a conditional [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})) which reactivates the process when the conditions become true.
+- [`wait!`](@ref) for a condition. This creates a conditional [`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})) which reactivates the process when the conditions become true.
 
 Processes can also interact directly e.g. via [channels](https://docs.julialang.org/en/v1/manual/parallel-computing/#Channels-1) with [`take!`](https://docs.julialang.org/en/v1/base/parallel/#Base.take!-Tuple{Channel}) and [`put!`](https://docs.julialang.org/en/v1/base/parallel/#Base.put!-Tuple{Channel,Any}). This also may suspend them until there is something to take from a channel or until they are allowed to put something into it.
 
@@ -384,7 +384,7 @@ If you provide the clock with a time interval `Δt`, it ticks with a fixed sampl
 Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
 
 !!! note
-    Conditions set by conditional [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})) or by [`wait!`](@ref) are also evaluated with the sampling rate. But the conditional event disappears after the conditions are met and the sample rate is then canceled if no sampling functions are registered.
+    Conditions set by conditional [`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})) or by [`wait!`](@ref) are also evaluated with the sampling rate. But the conditional event disappears after the conditions are met and the sample rate is then canceled if no sampling functions are registered.
 
 If no sample rate is set, the clock jumps from event to event.
 

@@ -6,6 +6,14 @@
 # This is a Julia package for discrete event simulation
 #
 
+"supertype for state machines in `Simulate.jl`"
+abstract type StateMachine end
+
+"supertype for states"
+abstract type SState end
+
+"supertype for events"
+abstract type SEvent end
 
 """
     Timing
@@ -192,7 +200,7 @@ Prepare a function to run as a process in a simulation.
 - `id`: some unique identification for registration,
 - `task::Union{Task,Nothing}`: a task structure,
 - `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
-- `state::SState`: process state, 
+- `state::SState`: process state,
 - `func::Function`: a function `f(arg...; kw...)`
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
@@ -211,7 +219,7 @@ julia> using Simulate
 mutable struct SimProcess
     id::Any
     task::Union{Task,Nothing}
-    clk::Union{AbstractClock,Nothing}
+    clk::Union{StateMachine,Nothing}
     state::SState
     func::Function
     arg::Tuple
@@ -242,6 +250,24 @@ mutable struct Schedule
 end
 
 """
+    AC
+
+AC is a channel to an active clock. An active clock is a task running on a
+parallel thread and operating a (parallel) clock. It is controlled by the
+master clock (on thread 1) via messages over a channel.
+
+# Fields
+- `ref::Ref{Task}`: a pointer to an active clock,
+- `ch::Channel`: a communication channel to an active clock,
+- `id::Int`: the thread id of the active clock.
+"""
+mutable struct AC
+    ref::Ref{Task}
+    ch::Channel
+    id::Int
+end
+
+"""
 ```
 Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)
 ```
@@ -262,6 +288,9 @@ Create a new simulation clock.
 - `unit::FreeUnits`: time unit,
 - `end_time::Float64`: end time for simulation,
 - `Δt::Float64`: sampling time, timestep between ticks,
+- `ac::Vector{AC}`: active clocks running on parallel threads,
+- `sc::Schedule`: the clock schedule (events, cond events and sampling),
+- `processes::Dict{Any, SimProcess}`: registered `SimProcess`es,
 - `tn::Float64`: next timestep,
 - `tev::Float64`: next event time,
 - `evcount::Int64`: event counter,
@@ -292,12 +321,13 @@ julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt ta
 Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 ```
 """
-mutable struct Clock <: AbstractClock
-    thread::Int
+mutable struct Clock <: StateMachine
+    id::Int
     state::SState
     time::Float64
     unit::FreeUnits
     Δt::Float64
+    ac::Vector{AC}
     sc::Schedule
     processes::Dict{Any, SimProcess}
     tn::Float64
@@ -321,20 +351,22 @@ mutable struct Clock <: AbstractClock
         else
             nothing
         end
-        new(threadid(), Undefined(), t0, unit, Δt, Schedule(),
+        new(threadid(), Undefined(), t0, unit, Δt, AC[], Schedule(),
             Dict{Any, SimProcess}(), t0 + Δt, t0, t0, 0, 0)
     end
 end
 
 # function show(io::IO, c::Clock)
-#     s1::String = "Id=$(c.id)"
+#     s1::String = "Clockid=$(c.id)"
 #     s2::String = "state=$(c.state), "
 #     s3::String = "t=$(c.time), "
 #     s4::String = "u=$(c.unit), "
 #     s5::String = "Δt=$(c.Δt)"
-#     s6::String = "ev: $(length(c.sc.events)), "
-#     s7::String = "cev: $(length(c.sc.cevents)), "
-#     s8::String = "procs: $(length(c.processes)), "
-#     s9::String = "sampl: $(length(c.sc.sexpr)), "
-#     println(io, s1 * s2 * s3 * s4 * s5 * s6 * s7 * s8 * s9)
+#     s6::String = "ac: $(length(s.ac))"
+#     s7::String = "procs: $(length(c.processes)), "
+#     sc1::String = "ev: $(length(c.sc.events)), "
+#     sc2::String = "cev: $(length(c.sc.cevents)), "
+#     sc3::String = "sampl: $(length(c.sc.sexpr)), "
+#     println(io, s1 * s2 * s3 * s4 * s5 * s6 * s7)
+#     println(io, "  schedule: " * sc1 * sc2 * sc3)
 # end

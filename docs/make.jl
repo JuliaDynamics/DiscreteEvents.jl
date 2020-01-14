@@ -18,6 +18,7 @@ makedocs(
                        "examples/dicegame/dicegame.md",
                        "examples/house_heating/house_heating.md"],
         "Internals" => "internals.md",
+        "Parallel simulations" => "parallel.md",
         "Performance" => "performance.md",
         "Troubleshooting" => "troubleshooting.md",
         "Release notes" => "history.md"

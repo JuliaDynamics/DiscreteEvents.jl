@@ -466,6 +466,7 @@ function sample!(clk::Clock, ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt;
                  scope::Module=Main)
     clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
     push!(clk.sc.sexpr, Sample(ex, scope))
+    return true
 end
 sample!(ex::Union{Expr, SimFunction}, Δt::Number=𝐶.Δt; scope::Module=Main) =
     sample!(𝐶, ex, Δt, scope=scope)
