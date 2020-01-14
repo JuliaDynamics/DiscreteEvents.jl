@@ -6,6 +6,13 @@
 # This is a Julia package for discrete event simulation
 #
 
+@static if VERSION >= v"1.3"
+    using Base.Threads: @spawn
+else
+    @eval const $(Symbol("@spawn")) = $(Symbol("@async"))
+end
+
+
 """
     loop(p::SimProcess, start::Channel, cycles::Number)
 
@@ -40,7 +47,7 @@ Start a `SimProcess` as a task in a loop.
 function startup!(p::SimProcess, cycles::Number, spawn::Bool)
     start = Channel{Int}(0)
     if spawn && (VERSION ≥ v"1.3") && (nthreads() > 1)
-        p.task = Base.Threads.@spawn loop(p, start, cycles)
+        p.task = @spawn loop(p, start, cycles)
     else
         p.task = @async loop(p, start, cycles)
     end
