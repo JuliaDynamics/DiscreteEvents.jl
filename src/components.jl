@@ -6,16 +6,6 @@
 # This is a Julia package for discrete event simulation
 #
 
-
-"supertype for state machines in `Sim.jl`"
-abstract type AbstractClock end
-
-"supertype for states"
-abstract type SState end
-
-"supertype for events"
-abstract type SEvent end
-
 "a state machine is undefined (after creation)"
 struct Undefined <: SState end
 
@@ -58,6 +48,16 @@ struct Run <: SEvent
     duration::Float64
 end
 
+"`Register()`: command"
+struct Register{T <: Union{SimEvent,SimCond,Sample}} <: SEvent
+    x::T
+end
+
+"`Sync()`: command"
+struct Sync{T <: StateMachine} <: SEvent
+    clock::T
+end
+
 "`Start()`: command"
 struct Start <: SEvent end
 
@@ -70,20 +70,30 @@ struct Resume <: SEvent end
 "`Clear()`: command"
 struct Clear <: SEvent end
 
+"`Query()`: command"
+struct Query <: SEvent end
+
+"`Reset()`: command"
+struct Reset <: SEvent end
+
+"`Response()`: response from an active clock"
+struct Response <: SEvent
+    x::Any
+end
 
 """
-    step!(A::AbstractClock, q::SState, σ::SEvent)
+    step!(A::StateMachine, q::SState, σ::SEvent)
 
 Default transition for clock and logger.
 
 This is called if no otherwise defined transition occurs.
 
 # Arguments
-- `A::AbstractClock`: state machine for which a transition is called
+- `A::StateMachine`: state machine for which a transition is called
 - `q::SState`:  state of the state machine
 - `σ::SEvent`:  event, triggering the transition
 """
-function step!(A::AbstractClock, q::SState, σ::SEvent)
+function step!(A::StateMachine, q::SState, σ::SEvent)
     println(stderr, "Warning: undefined transition ",
             "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))")
 end

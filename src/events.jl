@@ -9,18 +9,18 @@
 #
 
 """
-    nextevent(c::AbstractClock)
+    nextevent(c::Clock)
 
 Return the next scheduled event.
 """
-nextevent(c::AbstractClock) = peek(c.sc.events)[1]
+nextevent(c::Clock) = peek(c.sc.events)[1]
 
 """
-    nextevtime(c::AbstractClock)
+    nextevtime(c::Clock)
 
 Return the internal time (unitless) of next scheduled event.
 """
-nextevtime(c::AbstractClock) = peek(c.sc.events)[2]
+nextevtime(c::Clock) = peek(c.sc.events)[2]
 
 "catchall function: forward the value y"
 evaluate(y::Any,  m::Module) = y
@@ -69,6 +69,11 @@ evExec(ex::SimFunction, m::Module=Main) = sfExec(ex, m)
 evExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
 evExec(ex::Tuple, m::Module=Main) = map(x->evExec(x, m), ex)
 
+"""
+    do_event!(c::Clock)
+
+Execute or evaluate the next timed event on a clock c.
+"""
 function do_event!(c::Clock)
     c.time = c.tev
     ev = dequeue!(c.sc.events)

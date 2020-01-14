@@ -92,8 +92,8 @@ create a `SimFunction` from arguments f, arg...
 
 !!! note
     1. keyword arguments don't work with this macro, use SF instead.
-    2. if you give @SF as argument(s) to a function, you must enclose it/them
-        in parentheses ( @SF ... ) or ( (@SF ...), (@SF ...) )
+    2. if you give `@SF` as argument(s) to a function, you must enclose it/them
+        in parentheses `( @SF ... )` or `( (@SF ...), (@SF ...) )`.
 
 # Examples
 ```@jldoctest
@@ -186,8 +186,8 @@ variable.
 - `val::Union{Number, QuoteNode}`: a value or a symbolic variable,
 
 !!! note
-    If you give @tau as argument(s) to a function, you must enclose it/them
-    in parentheses ( @tau ... ) or ( (@tau ...), (@tau ...) )!
+    If you give `@tau` as argument(s) to a function, you must enclose it/them
+    in parentheses `( @tau ... )` or `( (@tau ...), (@tau ...) )`!
 
 # Examples
 ```jldoctest
@@ -245,8 +245,8 @@ Create a Simfunction comparing two values a and b or two symbolic variables
 - `check::QuoteNode`: a comparison operator as a symbol like `:>` or `:≤`
 
 !!! note
-    If you give @val as argument(s) to a function, you must enclose it/them
-    in parentheses ( @val ... ) or e.g. ( (@tau ...), (@val ...) )!
+    If you give `@val` as argument(s) to a function, you must enclose it/them
+    in parentheses `( @val ... )` or e.g. `( (@tau ...), (@val ...) `)!
 
 # Examples
 ```jldoctest

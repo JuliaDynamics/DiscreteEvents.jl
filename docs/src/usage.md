@@ -15,8 +15,24 @@ version
 
 ## The clock
 
+A clock in `Simulate.jl` is an active object residing in a thread and continuously
+registering function calls or expressions as events, scheduling them for execution
+or evaluation at a given time or under a given condition and executing them at
+their time or if conditions are met.
+
+Some preliminary definitions:
+
+```@docs
+Schedule
+AC
+```
+
+A clock can be created. It is operated as a state machine. It can control
+active clocks as slaves on other threads.
+
 ```@docs
 Clock
+ActiveClock
 ```
 
 The central clock  is 𝐶. You can set time units and query the current simulation time.
@@ -66,13 +82,13 @@ All given functions or expressions are then called or evaluated at a given simul
 SimFunctions and expressions can be scheduled for execution at given clock times.
 
 ```@docs
-event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Number)
+event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Number)
 ```
 
 As a convenience the `Timing` can be also choosen using `at`, `after` or `every` `t`.
 
 ```@docs
-event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Timing, ::Number)
+event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Timing, ::Number)
 ```
 
 ### Conditional events
@@ -80,11 +96,11 @@ event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Timing, ::Number)
 They are evaluated at each clock tick (like sampling functions) and are fired when all conditions are met.
 
 ```@docs
-event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})
+event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})
 ```
 
 !!! note
-    Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. ``:(tau() ≥ 100)`` is preferable to ``:(tau() == 100)``.
+    Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `:(tau() ≥ 100)` is preferable to `:(tau() == 100)`.
 
 There are some helper functions and macros for defining conditions. It is usually
 more convenient to use the macros since the generate the necessary SimFunctions
@@ -134,6 +150,13 @@ Functions or expressions can register for sampling and are then executed "contin
 ```@docs
 sample_time!
 sample!
+```
+
+## Multithreading
+
+```@docs
+multiply
+pclock
 ```
 
 ## Running simulations

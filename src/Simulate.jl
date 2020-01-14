@@ -42,10 +42,11 @@ using Unitful, Random, DataStructures, Logging, .Threads
 import Unitful: FreeUnits, Time
 import Base.show
 
-include("components.jl")
 include("types.jl")
+include("components.jl")
 include("events.jl")
 include("clock.jl")
+include("threads.jl")
 include("process.jl")
 include("utils.jl")
 

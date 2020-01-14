@@ -6,12 +6,12 @@ CurrentModule = Simulate
 
 ## State machines
 
-`Simulate.jl` contains two main types: `Clock` and `Logger`. Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.
+`Simulate.jl` contains two clock types: [`Clock`](@ref) and [`ActiveClock`](@ref). Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.
 
 We have some definitions for them to work.
 
 ```@docs
-AbstractClock
+StateMachine
 ```
 
 ### States
@@ -39,10 +39,23 @@ Switch
 Log
 Step
 Run
+Reset
+Query
+Response
+Register
+Sync
 Start
 Stop
 Resume
 Clear
+```
+
+### Multithreading
+
+```@docs
+start_threads
+startup
+activeClock
 ```
 
 ### Transition functions
@@ -58,12 +71,15 @@ SimEvent
 SimCond
 Sample
 sconvert
-evExec
-sexec
-evaluate
 nextevent
 nextevtime
 checktime
+evExec
+sfExec
+do_event!
+do_tick!
+do_step!
+evaluate
 setTimes
 startup!
 wakeup

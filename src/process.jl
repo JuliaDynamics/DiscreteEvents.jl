@@ -6,6 +6,7 @@
 # This is a Julia package for discrete event simulation
 #
 
+import Base.Threads.@spawn
 
 """
     loop(p::SimProcess, start::Channel, cycles::Number)
@@ -38,16 +39,20 @@ end
 
 Start a `SimProcess` as a task in a loop.
 """
-function startup!(p::SimProcess, cycles::Number)
+function startup!(p::SimProcess, cycles::Number, spawn::Bool)
     start = Channel{Int}(0)
-    p.task = @async loop(p, start, cycles)
+    if spawn && (VERSION ≥ v"1.3") && (nthreads() > 1)
+        p.task = @spawn loop(p, start, cycles)
+    else
+        p.task = @async loop(p, start, cycles)
+    end
     p.state = Idle()
     put!(start, 1) # let the process start
 end
 
 """
 ```
-process!([clk::Clock], p::SimProcess, cycles=Inf)
+process!([clk::Clock], p::SimProcess, cycles=Inf; spawn::Bool=false)
 ```
 Register a [`SimProcess`](@ref) to a clock, start it as an asynchronous process and
 return the `id` it was registered with. It can then be found under `clk.processes[id]`.
@@ -55,9 +60,15 @@ return the `id` it was registered with. It can then be found under `clk.processe
 # Arguments
 - `clk::Clock`: if not provided, the process runs under 𝐶,
 - `p::SimProcess`: it contains a function and its arguments,
-- `cycles::Number=Inf`: number of cycles the process should run.
+- `cycles::Number=Inf`: number of cycles the process should run,
+- `spawn::Bool=false`: if true, the process may be scheduled on another thread
+    in parallel.
+
+!!! note
+    Processes on multiple threads are possible in Julia ≥ 1.3 and with
+    [`JULIA_NUM_THREADS > 1`](https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_NUM_THREADS-1).
 """
-function process!(clk::Clock, p::SimProcess, cycles::Number=Inf)
+function process!(clk::Clock, p::SimProcess, cycles::Number=Inf; spawn::Bool=false)
     id = p.id
     while haskey(clk.processes, id)
         if isa(id, Float64)
@@ -74,7 +85,7 @@ function process!(clk::Clock, p::SimProcess, cycles::Number=Inf)
     clk.processes[id] = p
     p.id = id
     p.clk = clk
-    startup!(p, cycles)
+    startup!(p, cycles, spawn)
     id
 end
 process!(p::SimProcess, cycles=Inf) = process!(𝐶, p, cycles)

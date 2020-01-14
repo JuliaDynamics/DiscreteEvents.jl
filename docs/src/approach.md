@@ -429,7 +429,7 @@ title!("House heating with people")
 
 We have now all major schemes: events, continuous sampling and processes combined in one example.
 
-**see:** [`tau`](@ref), [`SF`](@ref SimFunction), [`event!`](@ref event!(::Clock, ::Union{SimExpr, Array, Tuple}, ::Union{SimExpr, Array, Tuple})), [`@val`](@ref), [`delay!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`reset!`](@ref), [`𝐶`](@ref)\
+**see:** [`tau`](@ref), [`SF`](@ref SimFunction), [`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})), [`@val`](@ref), [`delay!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`reset!`](@ref), [`𝐶`](@ref)\
 **see also**: the [full house heating example](examples/house_heating/house_heating.md) for further explanations.
 
 ## Theories
