@@ -6,7 +6,9 @@
 # This is a Julia package for discrete event simulation
 #
 
-import Base.Threads.@spawn
+if VERSION ≥ v"1.3"
+    import Base.Threads.@spawn
+end
 
 """
     loop(p::SimProcess, start::Channel, cycles::Number)
