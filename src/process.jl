@@ -8,6 +8,8 @@
 
 if VERSION ≥ v"1.3"
     import Base.Threads.@spawn
+else
+    @spawn = @async
 end
 
 """
