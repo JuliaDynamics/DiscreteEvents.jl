@@ -11,7 +11,7 @@ In this case multiple simulations are executed on parallel threads using the `@t
 When using Julia ≥ 1.3 you can spawn processes on multiple threads by starting
 them with [`process!`](@ref) and `spawn=true`. A process may then run on another thread than the clock to which it reports. Each time it calls the clock or is
 called by it, there is synchronization between threads. This requires not
-too lightweight processes in order to be efficient.
+too lightweight processes to be efficient.
 
 --> benchmarks needed.
 
@@ -20,6 +20,6 @@ too lightweight processes in order to be efficient.
 Multithreading in that sense is still experimental and in active development:
 
 Big simulations consist of multiple events, sampling functions and asynchronous processes. In order to avoid that a single clock becomes the constraint of a simulation, we [`multiply`](@ref) it to each thread. All threads then have an
-**active clock** with events and scheduling. Time gets synchronized between
-the clocks at each time step Δt. In the meantime events are computed in parallel
-on each thread. 
+[active clock](@ref ActiveClock) with events and scheduling. Time gets synchronized
+to the master clock on thread 1 at each time step Δt or sooner if requested. In the
+meantime events are registered, scheduled and computed in parallel on each thread. 
