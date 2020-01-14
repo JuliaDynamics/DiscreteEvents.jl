@@ -14,8 +14,8 @@ matrix:
 notifications:
   email: false
 after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+  - JULIA_NUM_THREADS=4 julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - JULIA_NUM_THREADS=4 julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 
 jobs:
   include:
