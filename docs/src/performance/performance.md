@@ -1,7 +1,5 @@
 # Performance
 
-I'm collecting the performance stuff now in the following notebook: [`performance.ipynb`](https://nbviewer.jupyter.org/github/pbayer/Simulate.jl/blob/master/docs/notebooks/performance.ipynb).
-
 Julia is fast and most modern computers running it are fast too. Therefore for
 small models and simulations users probably won't care much about performance and
 will still get quick results. But for larger models and simulations over longer
@@ -15,23 +13,15 @@ benchmarks
 
 ## Use of variables
 
+- if values don't change, declare them as `const`,
 - declare composite global variables, achieve type stability
 
 benchmarks
 
-## Reactive programming
+## Event based simulations are faster than process based ones
 
-- avoid blocking arguments like `delay!` and `wait!` entirely
+If you work on a single thread, sequential execution of events is faster than
+events + task switching. The convenience of process based models comes at a
+performance cost.
 
-benchmarks
-
-## Parallelizing simulations
-
-- how to do simulations in parallel
-- simulations on multiple threads (v0.3)
-
-benchmarks
-
-## Benchmarks
-
-- comparisons with other DES frameworks
+benchmark results

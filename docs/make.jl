@@ -7,21 +7,25 @@ makedocs(
     authors  = "Paul Bayer",
     pages = [
         "Home" => "index.md",
-        "Getting started" => "intro.md",
-        "Building models" => "approach.md",
-        "Usage" => "usage.md",
-        "Examples" => ["examples/examples.md",
-                       "examples/greeting.md",
-                       "examples/tabletennis.md",
-                       "examples/singleserver.md",
-                       "examples/postoffice/postoffice.md",
-                       "examples/dicegame/dicegame.md",
-                       "examples/house_heating/house_heating.md"],
-        "Internals" => "internals.md",
-        "Parallel simulations" => "parallel.md",
-        "Performance" => "performance.md",
-        "Troubleshooting" => "troubleshooting.md",
-        "Release notes" => "history.md"
+        hide("news.md"),
+        "Manual" => [
+            "manual/intro.md",
+            "manual/approach.md",
+            "manual/usage.md"],
+        "Performance" => [
+            "performance/performance.md",
+            "performance/parallel.md",
+            "performance/benchmarks.md"],
+        "Examples" => [
+            "examples/examples.md",
+            "examples/tabletennis.md",
+            "examples/singleserver.md",
+            "examples/postoffice/postoffice.md",
+            "examples/dicegame/dicegame.md",
+            "examples/house_heating/house_heating.md"],
+        "Internals" => "manual/internals.md",
+        "Troubleshooting" => "manual/troubleshooting.md",
+        "Release notes" => "manual/history.md"
     ]
 )
 
