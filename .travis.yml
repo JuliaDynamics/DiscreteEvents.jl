@@ -10,6 +10,12 @@ julia:
 env:
   - JULIA_NUM_THREADS=1
   - JULIA_NUM_THREADS=4
+jobs:
+  exclude:
+    - julia: 1.0
+      env: JULIA_NUM_THREADS=4
+    - julia: nightly
+      env: JULIA_NUM_THREADS=1
 matrix:
   allow_failures:
     - julia: nightly
