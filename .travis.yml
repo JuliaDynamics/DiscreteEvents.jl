@@ -9,10 +9,6 @@ julia:
   - nightly
 env:
   - JULIA_NUM_THREADS=4
-matrix:
-  allow_failures:
-    - julia: nightly
-  fast_finish: true
 notifications:
   email: false
 after_success:
@@ -20,6 +16,9 @@ after_success:
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 
 jobs:
+  allow_failures:
+    - julia: nightly
+  fast_finish: true
   include:
     - julia: 1.0
       os: linux
