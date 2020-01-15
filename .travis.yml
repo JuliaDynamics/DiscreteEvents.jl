@@ -10,12 +10,6 @@ julia:
 env:
   - JULIA_NUM_THREADS=1
   - JULIA_NUM_THREADS=4
-jobs:
-  exclude:
-    - julia: 1.0
-      env: JULIA_NUM_THREADS=4
-    - julia: nightly
-      env: JULIA_NUM_THREADS=1
 matrix:
   allow_failures:
     - julia: nightly
@@ -27,6 +21,11 @@ after_success:
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 
 jobs:
+  exclude:
+    - julia: 1.0
+      env: JULIA_NUM_THREADS=4
+    - julia: nightly
+      env: JULIA_NUM_THREADS=1
   include:
     - stage: "Documentation"
       julia: 1.3
