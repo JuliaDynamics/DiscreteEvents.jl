@@ -44,8 +44,8 @@ if VERSION ≥ v"1.3"
         @test all(x->istaskdone(x.ref[]), clk.ac)
         @test all(x->x.ch.state == :closed, clk.ac)
     else
-        @test_warn "no parallel threads available!" multiply(clk)
+        @test_warn "no parallel threads available!" multiply!(clk)
     end
 else
-    @test_warn "threading is available for ≥ 1.3!" multiply(clk)
+    @test_warn "threading is available for ≥ 1.3!" multiply!(clk)
 end
