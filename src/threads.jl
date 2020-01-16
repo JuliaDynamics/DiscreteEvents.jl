@@ -5,7 +5,7 @@
 #
 # This is a Julia package for discrete event simulation
 #
-export multiply, pclock
+export multiply!, pclock
 
 """
     ActiveClock
@@ -33,11 +33,11 @@ step!(A::ActiveClock, ::SState, ::Query) = A.clock
 
 function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register)
     if σ.x isa SimEvent
-        return event!(A.clock, σ.x.ex, σ.x.t, σ.x.scope, σ.x.Δt)
+        return event!(A.clock, σ.x.ex, σ.x.t, scope=σ.x.scope, cycle=σ.x.Δt)
     elseif σ.x isa SimCond
-        return event!(A.clock, σ.x.ex, σ.x.cond, σ.x.scope)
+        return event!(A.clock, σ.x.ex, σ.x.cond, scope=σ.x.scope)
     elseif σ.x isa Sample
-        return sample!(A.clock, σ.x.ex, A.clock.Δt, σ.x.scope)
+        return sample!(A.clock, σ.x.ex, A.clock.Δt, scope=σ.x.scope)
     else
         nothing
     end
@@ -70,8 +70,8 @@ function activeClock(ch::Channel)
         println("clock $(threadid()) exception: $exp")
         throw(exp)
     end
-    println("clock $(threadid()) stopped!")
-    # close channel ch
+    # stop task
+    # close channel 
 end
 
 "Startup a task on a parallel thread."
@@ -116,7 +116,7 @@ function start_threads(f::Function, mul::Int=3) :: Vector{AC}
 end
 
 """
-    multiply(master::Clock)
+    multiply!(master::Clock)
 
 Establish copies of a clock on all parallel threads and operate them as active
 clocks under control of the master clock.
@@ -124,7 +124,7 @@ clocks under control of the master clock.
 # Arguments
 - `master::Clock`: the master clock, must be on thread 1
 """
-function multiply(master::Clock)
+function multiply!(master::Clock)
     if (master.id == 1) && (threadid() == 1)
         if VERSION >= v"1.3"
             if nthreads() > 1
