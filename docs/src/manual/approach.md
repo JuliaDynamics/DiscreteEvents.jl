@@ -13,7 +13,7 @@ A problem can be expressed differently through various modeling approaches. A si
 
 In this view *events* occur in time and trigger further events. Here the three server actions are seen as events and can be described in an event graph:
 
-![event graph](images/event.png)
+![event graph](../images/event.png)
 
 You define a data structure for the server, provide functions for the three actions, create channels and servers and start:
 
@@ -87,7 +87,7 @@ julia> include("docs/examples/channels1.jl")
 
 Here the server has three states: *Idle*, *Busy* and *End* (where *End* does nothing). On an arrival event it resets its internal clock ``x=0`` and determines the service time ``t_s``, moves to *Busy*, *works* on its input and puts it out when ``t_s`` is over. Then it goes back to *Idle*. A state transition diagram (Mealy model) of the timed automaton would look like:
 
-![timed automaton](images/state.png)
+![timed automaton](../images/state.png)
 
 Again you need a data structure for the server (state …). You define states and events and implement a `δ` transition function with two methods. Thereby you dispatch on states and events. Since you don't need to implement all combinations of states and events, you may implement a fallback transition.
 
@@ -171,7 +171,7 @@ julia> include("docs/examples/channels2.jl")
 
 The server's *activity* is the processing of the token. A timed Petri net would look like:
 
-![timed petri net](images/activity.png)
+![timed petri net](../images/activity.png)
 
 The *arrive* "transition" puts a "token" in the *Queue*. If both "places" *Idle* and *Queue* have tokens, the server *takes* them, shifts one to *Busy* and *puts* out two after a timed transition with delay ``v_{put}``. Then it is *Idle* again and the cycle restarts.
 
@@ -371,7 +371,7 @@ title!("House heating undisturbed")
 
 
 
-![svg](examples/house_heating/output_4_0.svg)
+![svg](../examples/house_heating/output_4_0.svg)
 
 
 
@@ -423,14 +423,14 @@ title!("House heating with people")
 
 
 
-![svg](examples/house_heating/output_7_0.svg)
+![svg](../examples/house_heating/output_7_0.svg)
 
 
 
 We have now all major schemes: events, continuous sampling and processes combined in one example.
 
 **see:** [`tau`](@ref), [`SF`](@ref SimFunction), [`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})), [`@val`](@ref), [`delay!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`reset!`](@ref), [`𝐶`](@ref)\
-**see also**: the [full house heating example](examples/house_heating/house_heating.md) for further explanations.
+**see also**: the [full house heating example](../examples/house_heating/house_heating.md) for further explanations.
 
 ## Theories
 

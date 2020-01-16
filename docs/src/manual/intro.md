@@ -97,7 +97,7 @@ julia> run!(c, 10)                           # run the clock for 10 time units
 If you work with only one simulation at a time, you normally use the *central clock* [`𝐶`](@ref) (\it𝐶+tab), alias [`Clk`](@ref 𝐶):
 
 !!! note
-    You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](examples/dicegame/dicegame.md) example for that.
+    You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](../examples/dicegame/dicegame.md) example for that.
 
 ```julia
 julia> tick() = println(tau(), ": tick!")         # the tick function now uses central time tau()
@@ -161,7 +161,7 @@ tuple or an array.
 
 !!! warning
     Evaluating expressions or symbols at global scope is much slower than using
-    `SimFunction`s and gives a one time warning. See [Performance](performance.md).
+    `SimFunction`s and gives a one time warning. See [Performance](../performance/performance.md).
     This functionality may be removed entirely in a future version. (Please write
     an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
 
