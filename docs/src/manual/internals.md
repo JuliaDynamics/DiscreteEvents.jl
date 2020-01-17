@@ -74,13 +74,14 @@ sconvert
 nextevent
 nextevtime
 checktime
+evaluate
 evExec
 sfExec
+setTimes
 do_event!
 do_tick!
 do_step!
-evaluate
-setTimes
+do_run!
 startup!
 wakeup
 init!

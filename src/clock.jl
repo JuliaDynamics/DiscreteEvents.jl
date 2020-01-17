@@ -516,13 +516,25 @@ events, then 3) if an event is encountered, trigger the event.
 
 The internal clock times `c.tev` and `c.tn` are always at least `c.time`.
 """
-function step!(c::Clock, ::Union{Idle,Halted}, ::Step)
-    c.state = Busy()
-    do_step!(c)
-    # if isempty(c.sc.cevents)
-    #     isempty(c.sc.sexpr) && (c.Δt = 0.0)  # delete schedule sample rate
-    # end
-    (c.state == Busy()) && (c.state = Idle())
+step!(c::Clock, ::Union{Idle,Halted}, ::Step) = do_step!(c)
+
+"""
+    do_run(c::Clock, Δt::Float64)
+
+Run a clock for a time Δt.
+"""
+function do_run!(c::Clock, Δt::Float64)
+    c.end_time = c.time + Δt
+    c.evcount = 0
+    c.scount = 0
+    setTimes(c)
+    while any(i->(c.time < i ≤ c.end_time), (c.tn, c.tev))
+        do_step!(c)
+        if c.state == Halted()
+            return c.end_time
+        end
+    end
+    c.end_time
 end
 
 """
@@ -534,17 +546,10 @@ The duration is given with `Run(duration)`. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function step!(clk::Clock, ::Idle, σ::Run)
-    clk.end_time = clk.time + σ.duration
-    clk.evcount = 0
-    clk.scount = 0
-    setTimes(clk)
-    while any(i->(clk.time < i ≤ clk.end_time), (clk.tn, clk.tev))
-        step!(clk, clk.state, Step())
-        if clk.state == Halted()
-            return
-        end
+    tend = do_run!(clk, σ.duration)
+    if clk.state == Halted()
+        return
     end
-    tend = clk.end_time
 
     # catch remaining events
     while (length(clk.sc.events) ≥ 1) && (nextevtime(clk) ≤ tend + Base.eps(tend)*10)

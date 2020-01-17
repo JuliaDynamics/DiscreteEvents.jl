@@ -8,13 +8,14 @@
 export multiply!, pclock
 
 """
-    ActiveClock
-
-contains the thread specific data of an active clock.
+```
+ActiveClock(clock::Clock, master::Ref{Clock}, ch::Channel)
+```
+A thread specific clock which can be operated via a channel.
 
 # Fields
-- `clock::Clock`: the thread local clock,
-- `master::Ref{Clock}`: a pointer to the master clock, accessing it may be expensive,
+- `clock::Clock`: the thread specific clock,
+- `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
 - `ch::Channel`: the communication channel between the two.
 """
 mutable struct ActiveClock <: Simulate.StateMachine
@@ -23,8 +24,8 @@ mutable struct ActiveClock <: Simulate.StateMachine
     ch::Channel
 end
 
-function step!(A::ActiveClock, ::Idle, σ::Run)
-end
+"Run an active clock for a given duration."
+step!(A::ActiveClock, ::Idle, σ::Run) = do_run!(A.clock, σ.duration)
 
 function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Sync)
 end
@@ -71,7 +72,7 @@ function activeClock(ch::Channel)
         throw(exp)
     end
     # stop task
-    # close channel 
+    # close channel
 end
 
 "Startup a task on a parallel thread."
