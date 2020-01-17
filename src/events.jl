@@ -93,15 +93,15 @@ conditional events and if conditions are met, execute them.
 """
 function do_tick!(c::Clock)
     c.time = c.tn
-    foreach(x -> evExec(x.ex, x.scope), c.sc.sexpr)
-    # for x ∈ c.sc.sexpr
-    #     evExec(x.ex, x.scope)
-    # end
+    foreach(x -> evExec(x.ex, x.scope), c.sc.sexpr)  # exec sampling
+    # then lookup conditional events
     ix = findfirst(x->all(evExec(x.cond, x.scope)), c.sc.cevents)
     while ix !== nothing
         evExec(splice!(c.sc.cevents, ix).ex)
         if isempty(c.sc.cevents)
-            isempty(c.sc.sexpr) && (c.Δt = 0.0) # delete sample rate
+            if isempty(c.sc.sexpr) && isempty(c.ac) # no sampling and active clocks
+                c.Δt = 0.0 # delete sample rate
+            end
             break
         end
         ix = findfirst(x->all(evExec(x.cond, x.scope)), c.sc.cevents)
@@ -115,15 +115,16 @@ end
 step forward to next tick or scheduled event.
 """
 function do_step!(c::Clock)
+    c.state = Busy()
     if (c.tev ≤ c.time) && (length(c.sc.events) > 0)
         c.tev = nextevtime(c)
     end
 
     if length(c.sc.events) > 0
         if c.Δt > 0.0
-            if c.tn <= c.tev
+            if c.tn <= c.tev     # if t_next_tick  ≤ t_next_event
                 do_tick!(c)
-                if c.tn == c.tev
+                if c.tn == c.tev # an event is scheduled at the same time
                     do_event!(c)
                 end
                 c.tn += c.Δt
@@ -142,4 +143,5 @@ function do_step!(c::Clock)
         error("do_step!: nothing to evaluate")
     end
     length(c.processes) == 0 || yield() # let processes run
+    (c.state == Busy()) && (c.state = Idle())
 end

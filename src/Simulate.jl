@@ -50,7 +50,7 @@ include("threads.jl")
 include("process.jl")
 include("utils.jl")
 
-export  Clock, setUnit!, SimExpr, SimFunction, SF, @SF,
+export  Clock, ActiveClock, setUnit!, SimExpr, SimFunction, SF, @SF,
         𝐶, Clk, Timing, at, after, every, before, until,
         tau, τ, @tau, sample_time!, event!, sample!, val, @val,
         incr!, run!, stop!, resume!, reset!, sync!,
