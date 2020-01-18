@@ -47,10 +47,16 @@ function sfExec(x::SimFunction, m::Module)
         x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
         x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
     end
-    if x.kw === nothing
-        return x.arg === nothing ? x.efun() : x.efun(arg...)
-    else
-        return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
+    try
+        if x.kw === nothing
+            return x.arg === nothing ? x.efun() : x.efun(arg...)
+        else
+            return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
+        end
+    catch exc
+        if exc isa MethodError
+            invokelatest(x.efun, arg..., kw...)
+        end
     end
 end
 
