@@ -8,6 +8,8 @@
 # this implements the event handling
 #
 
+import Base.invokelatest
+
 """
     nextevent(c::Clock)
 
@@ -55,7 +57,11 @@ function sfExec(x::SimFunction, m::Module)
         end
     catch exc
         if exc isa MethodError
-            invokelatest(x.efun, arg..., kw...)
+            if x.kw === nothing
+                return x.arg === nothing ? invokelatest(x.efun) : invokelatest(x.efun, arg...)
+            else
+                return x.arg === nothing ? invokelatest(x.efun; kw...) : invokelatest(x.efun, arg...; kw...)
+            end
         end
     end
 end
