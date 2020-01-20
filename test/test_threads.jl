@@ -10,46 +10,46 @@ println("... testing multithreading  ...")
 
 clk = Clock()
 @test clk.id == 1
-a = 0
-b = 0
-incra()=global a+=1
-incrb()=global b+=1
 
 if VERSION ≥ v"1.3"
     if nthreads() > 1
-        println("... multiply!: ")
+        println("... multiply! ...")
         multiply!(clk)
-        @test length(clk.ac) == nthreads()-1
-        for i in 2:nthreads()
-            @test clk.ac[i-1].id == i
-            c = pclock(clk, i)
-            @test c.id == i
-        end
+        @test length(clk.ac) ≥ (nthreads() >>> 1)
+        # for i in 2:nthreads()
+        #     @test clk.ac[i-1].id == i
+        #     c = pclock(clk, i)
+        #     @test c.id == i
+        # end
+        t1 = clk.ac[1].id        # get id of first parallel clock
 
-        println("... register remote events, cevents, samples:")
-        ev = Simulate.SimEvent(SF(incra),Main,1.0,0.0)
-        put!(clk.ac[1].ch, Simulate.Register(ev))
-        @test take!(clk.ac[1].ch).x == 1.0
-        c2 = pclock(clk, 2)
+        println("... remote error handling ...")
+        @test talk(clk, t1, Simulate.Clear()).x isa ErrorException
+        st = talk(clk, t1, Simulate.Diag()).x[1]
+        @test occursin(r"^activeClock\(\:\:Channel\{Any\}\) at threads\.jl", string(st))
+
+        println("... register parallel events, cevents, samples ...")
+        a = 0
+        ev = Simulate.SimEvent(SF(()->global a+=1),Main,1.0,0.0)
+        @test talk(clk, t1, Simulate.Register(ev)).x == 1.0
+        c2 = pclock(clk, t1)
         @test length(c2.sc.events) == 1
-        cev = Simulate.SimCond(SF(≥, SF(tau, c2), 5), SF(incra), Main)
-        put!(clk.ac[1].ch, Simulate.Register(cev))
-        @test take!(clk.ac[1].ch).x == 0.0
+        cev = Simulate.SimCond(SF(≥, SF(tau, c2), 5), SF(()->global a+=1), Main)
+        @test talk(clk, t1, Simulate.Register(cev)).x == 0.0
         @test length(c2.sc.cevents) == 1
-        sp = Simulate.Sample(SF(incrb), Main)
-        put!(clk.ac[1].ch, Simulate.Register(sp))
-        @test take!(clk.ac[1].ch).x == true
+        b = 0
+        sp = Simulate.Sample(SF(()->global b+=1), Main)
+        @test talk(clk, t1, Simulate.Register(sp)).x == true
         @test length(c2.sc.sexpr) == 1
 
-        println("... run remote clock 1 (thread 2):")
-        put!(clk.ac[1].ch, Simulate.Run(10.0))
-        @test take!(clk.ac[1].ch).x == 10.0
+        println("... run parallel clock 1 (thread $t1) ...")
+        @test talk(clk, t1, Simulate.Run(10.0)).x == 10.0
         @test c2.time ≈ 10
         @test c2.scount == 1000
         @test a == 2
         @test b == 1000
 
-        println("... stop remote clocks")
+        println("... stop parallel clocks ...")
         foreach(x->put!(x.ch, Simulate.Stop()), clk.ac)
         @test all(x->istaskdone(x.ref[]), clk.ac)
         @test all(x->x.ch.state == :closed, clk.ac)

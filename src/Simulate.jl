@@ -53,7 +53,7 @@ include("utils.jl")
 export  Clock, ActiveClock, setUnit!, SimExpr, SimFunction, SF, @SF,
         𝐶, Clk, Timing, at, after, every, before, until,
         tau, τ, @tau, sample_time!, event!, sample!, val, @val,
-        incr!, run!, stop!, resume!, reset!, sync!,
+        incr!, run!, stop!, resume!, reset!, sync!, talk,
         SimProcess, SP, @SP, process!, interrupt!, delay!, wait!, now!
 
 

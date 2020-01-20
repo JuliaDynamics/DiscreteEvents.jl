@@ -534,7 +534,7 @@ function do_run!(c::Clock, Δt::Float64)
             return c.end_time
         end
     end
-    c.end_time
+    c.time = c.end_time
 end
 
 """
@@ -550,14 +550,13 @@ function step!(clk::Clock, ::Idle, σ::Run)
     if clk.state == Halted()
         return
     end
-
-    # catch remaining events
+    # catch remaining events scheduled for the end_time
     while (length(clk.sc.events) ≥ 1) && (nextevtime(clk) ≤ tend + Base.eps(tend)*10)
         step!(clk, clk.state, Step())
         tend = nextfloat(tend)
     end
-
     clk.time = clk.end_time
+
     "run! finished with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(clk.time)"
 end
 

@@ -47,6 +47,9 @@ end
 function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Reset)
 end
 
+step!(A::ActiveClock, q::SState, σ::SEvent) =
+          error("transition q=$q, σ=$σ not implemented")
+
 """
     activeClock(ch::Channel)
 
@@ -55,31 +58,40 @@ Operate an active clock on a given channel.
 function activeClock(ch::Channel)
     ac = ActiveClock(Clock(),        # create an active clock, for it …
                      take!(ch), ch)  # 4. get a pointer to the master clock
-    try
-        ac.clock.state = Idle()
-        sync!(ac.clock, ac.master[])
+    sf = Array{Base.StackTraces.StackFrame,1}[]
+    ac.clock.state = Idle()
+    sync!(ac.clock, ac.master[])
 
-        while true
+    while true
+        try
             σ = take!(ch)
             if σ isa Stop
                 break
+            elseif σ isa Diag
+                put!(ch, Response(sf))
             else
                 put!(ch, Response(step!(ac, ac.clock.state, σ)))
             end
+        catch exp
+            sf = stacktrace()
+            println("clock $(threadid()) exception: $exp")
+            put!(ch, Response(exp))
+            # throw(exp)
         end
-    catch exp
-        println("clock $(threadid()) exception: $exp")
-        throw(exp)
     end
     # stop task
     # close channel
 end
 
-"Startup a task on a parallel thread."
+"""
+    startup(ch::Channel)
+
+Serves as task startup on a parallel thread.
+"""
 function startup(ch::Channel)
     put!(ch, threadid())   # 1. send threadid
-    if take!(ch) == true   # 2. get response, if true
-        f = take!(ch)      # 3. get function
+    if take!(ch) == true   # 2. receive response, if true
+        f = take!(ch)      # 3. receive function
         f(ch)              #    and call it
     else                   # else let task finish
     end
@@ -88,32 +100,32 @@ end
 """
     start_threads(f::Function, mul::Int=3)
 
-Start a function as a task on each available thread (other than 1).
+Start a task on each available thread (other than 1).
 
 # Arguments
 - `f::Function`: function to start, has to take a channel as its only argument,
 - `mul::Int=3`: startup multiplication factor,
 """
 function start_threads(f::Function, mul::Int=3) :: Vector{AC}
-    n = nthreads()                    #  how many threads are available
-    thrd = AC[]
+    n = nthreads()                    # how many threads are available
+    ac = AC[]                         # empty AC array
     ts = Vector{Int}()
     for i in 1:n*mul                  # n*mul trials
-        th = AC(Ref{Task}(), Channel(), 0)
-        th.ch = Channel(startup, taskref=th.ref, spawn=true)
-        th.id = take!(th.ch)          # 1. get threadid
-        push!(thrd, th)
+        ai = AC(Ref{Task}(), Channel(), 0)
+        ai.ch = Channel(startup, taskref=ai.ref, spawn=true)
+        ai.id = take!(ai.ch)          # 1. receive threadid from startup task
+        push!(ac, ai)
     end
 
-    ts = [t.id for t in thrd]         # threadids of all startup tasks spawned
-    ix = indexin(2:n, ts)             # get first indices of available threads > 1
+    ts = [t.id for t in ac]           # threadids of all startup tasks
+    ix = indexin(2:n, ts)             # get first indices of threads > 1
     ix = ix[ix .!= nothing]           # in case one could not established
-    foreach(t->put!(t.ch, true), thrd[ix])   # 2. send true to only one task on each thread
-    foreach(t->put!(t.ch, false), thrd[setdiff(1:n*mul,ix)]) # 2. send false to the rest
-    thrd = thrd[ix]                   # keep only the established ones
-    foreach(t->put!(t.ch, f), thrd)   # 3. sent them the function
-    println("got $(length(thrd)) threads parallel to master!")
-    return thrd
+    foreach(t->put!(t.ch, true), ac[ix])   # 2. send true to one task on each thread
+    foreach(t->put!(t.ch, false), ac[setdiff(1:n*mul,ix)]) # 2. send false to the rest
+    ac = ac[ix]                       # keep the established ones
+    foreach(t->put!(t.ch, f), ac)     # 3. sent them the function
+    println("got $(length(ac)) threads parallel to master!")
+    return ac
 end
 
 """
@@ -155,7 +167,7 @@ Get a parallel clock from a master clock.
 
 # Arguments
 - `master::Clock`: a master clock.
-- `id::Int`: threadid of the parallel clock.
+- `id::Int`: threadid of the active clock.
 """
 function pclock(master::Clock, id::Int) :: Clock
     @assert master.id == 1 "you can get parallel clocks only from a master clock"
@@ -166,5 +178,28 @@ function pclock(master::Clock, id::Int) :: Clock
         return take!(ch).x
     else
         return master
+    end
+end
+
+"""
+    talk(master::Clock, id::Int, σ::SEvent) :: Response
+
+Talk with a parallel clock: send an event σ and get the response. This is for
+user interaction with a parallel clock. It blocks until it has finished.
+
+# Arguments
+- `master::Clock`: a master clock,
+- `id::Int`: threadid of the active clock,
+- `σ::SEvent`: the event/command to send to the active clock.
+"""
+function talk(master::Clock, id::Int, σ::SEvent) :: Response
+    @assert master.id == 1 "you can talk only through a master clock"
+    cix = [ac.id for ac in master.ac]
+    if id in cix
+        ch = master.ac[findfirst(x->x==id, cix)].ch
+        put!(ch, σ)
+        return take!(ch)
+    else
+        return Response(id == 1 ? "id 1 is master" : "id $id not known")
     end
 end

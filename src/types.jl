@@ -85,15 +85,15 @@ struct SimFunction
     kw::Union{Nothing, Base.Iterators.Pairs}
 
     function SimFunction(emod::Module, efun::Function, arg...; kw...)
-        !isempty(arg) || ( arg = nothing )
-        !isempty(kw)  || ( kw  = nothing )
-        new(emod, efun, arg, kw)
+        isempty(arg) && ( arg = nothing )
+        isempty(kw)  && ( kw  = nothing )
+        new(Main, efun, arg, kw)
     end
 
     function SimFunction(efun::Function, arg...; kw...)
-        !isempty(arg) || ( arg = nothing )
-        !isempty(kw)  || ( kw  = nothing )
-        new(Main, efun, arg, kw,)
+        isempty(arg) && ( arg = nothing )
+        isempty(kw)  && ( kw  = nothing )
+        new(Main, efun, arg, kw)
     end
 end
 const SF = SimFunction
@@ -297,6 +297,7 @@ Create a new simulation clock.
 - `scount::Int64`: sample counter
 
 # Examples
+
 ```jldoctest
 julia> using Simulate, Unitful
 
