@@ -41,6 +41,7 @@ Step
 Run
 Reset
 Query
+Diag
 Response
 Register
 Sync
@@ -54,8 +55,8 @@ Clear
 
 ```@docs
 start_threads
-startup
 activeClock
+spawnid
 ```
 
 ### Transition functions
@@ -83,6 +84,7 @@ do_tick!
 do_step!
 do_run!
 startup!
+register!
 wakeup
 init!
 loop

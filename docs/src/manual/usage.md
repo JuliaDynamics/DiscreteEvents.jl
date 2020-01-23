@@ -32,7 +32,6 @@ active clocks as slaves on other threads.
 
 ```@docs
 Clock
-ActiveClock
 ```
 
 The central clock  is 𝐶. You can set time units and query the current simulation time.
@@ -42,6 +41,17 @@ The central clock  is 𝐶. You can set time units and query the current simulat
 setUnit!
 tau(::Clock)
 @tau(::Clock)
+```
+
+You can start clocks on multiple threads to parallelize simulations.
+
+```@docs
+ActiveClock
+PClock
+fork!
+collapse!
+talk
+pclock
 ```
 
 ## Events
@@ -150,13 +160,6 @@ Functions or expressions can register for sampling and are then executed "contin
 ```@docs
 sample_time!
 sample!
-```
-
-## Multithreading
-
-```@docs
-multiply!
-pclock
 ```
 
 ## Running simulations
