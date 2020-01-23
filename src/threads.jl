@@ -129,17 +129,21 @@ clocks under control of the master clock.
 """
 function fork!(master::Clock)
     if (master.id == 1) && (threadid() == 1)
-        if nthreads() > 1
-            if isempty(master.ac)
-                master.ac = start_threads(activeClock) # startup steps
-                for ac in master.ac                    # to all active clocks …
-                    put!(ac.ch, Ref(master))           # send pointer to master
+        if VERSION >= v"1.3"
+            if nthreads() > 1
+                if isempty(master.ac)
+                    master.ac = start_threads(activeClock) # startup steps
+                    for ac in master.ac                    # to all active clocks …
+                        put!(ac.ch, Ref(master))           # send pointer to master
+                    end
+                else
+                    println(stderr, "clock already has $(length(clk.ac)) active clocks!")
                 end
             else
-                println(stderr, "clock already has $(length(clk.ac)) active clocks!")
+                println(stderr, "no parallel threads available!")
             end
         else
-            println(stderr, "no parallel threads available!")
+            println(stderr, "you have Julia $VERSION, threading is available for ≥ 1.3!")
         end
     else
         println(stderr, "only the master clock on thread 1 can be multiplied!")
