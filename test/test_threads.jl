@@ -13,8 +13,8 @@ if VERSION ≥ v"1.3"
         include("test_threads1.jl")
         include("test_threads2.jl")
     else
-        @test_warn "no parallel threads available!" multiply!(clk)
+        @test_warn "no parallel threads available!" fork!(clk)
     end
 else
-    @test_warn "threading is available for ≥ 1.3!" multiply!(clk)
+    @test_warn "threading is available for ≥ 1.3!" fork!(clk)
 end
