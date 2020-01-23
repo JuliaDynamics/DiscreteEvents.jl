@@ -225,7 +225,7 @@ function reset!(clk::Clock, Δt::Number=0;
         clk.sc.events = PriorityQueue{SimEvent,Float64}()
         clk.sc.cevents = SimCond[]
         clk.processes = Dict{Any, SimProcess}()
-        clk.sc.sexpr = Sample[]
+        clk.sc.samples = Sample[]
     else
         sync!(clk, Clock(Δt, t0=t0, unit=unit))
     end
@@ -465,7 +465,7 @@ enqueue an expression for sampling.
 function sample!(clk::Clock, ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt;
                  scope::Module=Main)
     clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
-    push!(clk.sc.sexpr, Sample(ex, scope))
+    push!(clk.sc.samples, Sample(ex, scope))
     return true
 end
 sample!(ex::Union{Expr, SimFunction}, Δt::Number=𝐶.Δt; scope::Module=Main) =

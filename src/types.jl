@@ -201,14 +201,18 @@ Prepare a function to run as a process in a simulation.
 - `task::Union{Task,Nothing}`: a task structure,
 - `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
 - `state::SState`: process state,
-- `func::Function`: a function `f(arg...; kw...)`
+- `func::Function`: a function `f(clk, arg...; kw...)`, must take `clk` as its
+    first argument,
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
 !!! note
-    A function as a SimProcess most often runs in a loop. It has to
+    A function started as a SimProcess most often runs in a loop. It has to
     give back control by e.g. doing a `take!(input)` or by calling
     `delay!` etc., which will `yield` it. Otherwise it will starve everything else!
+
+!!! warn
+    That `func` nust take `clk` as first argument is a breaking change in v0.3!
 
 # Examples
 ```jldoctest
@@ -239,12 +243,12 @@ executed or evaluated on the clock's time line.
 # Fields
 - `events::PriorityQueue{SimEvent,Float64}`: scheduled events,
 - `cevents::Array{SimCond,1}`: conditional events to evaluate at each tick,
-- `sexpr::Array{Sample,1}`: sampling expressions to evaluate at each tick,
+- `samples::Array{Sample,1}`: sampling expressions to evaluate at each tick,
 """
 mutable struct Schedule
     events::PriorityQueue{SimEvent,Float64}
     cevents::Array{SimCond,1}
-    sexpr::Array{Sample,1}
+    samples::Array{Sample,1}
 
     Schedule() = new(PriorityQueue{SimEvent,Float64}(), SimCond[], Sample[])
 end
@@ -357,6 +361,31 @@ mutable struct Clock <: StateMachine
     end
 end
 
+"""
+    PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
+
+Setup a clock with parallel clocks on all available threads.
+
+# Arguments
+
+- `Δt::Number=0.01`: time increment. For parallel clocks Δt has to be > 0.
+    If given Δt ≤ 0 it is set to 0.01.
+- `t0::Number=0`: start time for simulation
+- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
+    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
+    t0 to a time, e.g. `t0=60s`.
+
+!!! note
+    Processes on multiple threads are possible in Julia ≥ 1.3 and with
+    [`JULIA_NUM_THREADS > 1`](https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_NUM_THREADS-1).
+"""
+function PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
+    Δt = Δt > 0 ? Δt : 0.01
+    clk = Clock(Δt, t0=t0, unit=unit)
+    fork!(clk)
+    return clk
+end
+
 # function show(io::IO, c::Clock)
 #     s1::String = "Clockid=$(c.id)"
 #     s2::String = "state=$(c.state), "
@@ -371,3 +400,20 @@ end
 #     println(io, s1 * s2 * s3 * s4 * s5 * s6 * s7)
 #     println(io, "  schedule: " * sc1 * sc2 * sc3)
 # end
+
+"""
+```
+ActiveClock(clock::Clock, master::Ref{Clock}, ch::Channel)
+```
+A thread specific clock which can be operated via a channel.
+
+# Fields
+- `clock::Clock`: the thread specific clock,
+- `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
+- `ch::Channel`: the communication channel between the two.
+"""
+mutable struct ActiveClock <: StateMachine
+    clock::Clock
+    master::Ref{Clock}
+    ch::Channel
+end
