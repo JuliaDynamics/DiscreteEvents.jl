@@ -1,4 +1,4 @@
-using Printf
+# using Printf
 
 println("... test threading 2 ...")
 

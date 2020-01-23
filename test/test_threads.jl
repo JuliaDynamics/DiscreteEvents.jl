@@ -7,6 +7,7 @@
 #
 
 println("... check if threading is available ...")
+clk = Clock()
 
 if VERSION ≥ v"1.3"
     if nthreads() > 1
