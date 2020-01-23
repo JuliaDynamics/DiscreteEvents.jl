@@ -70,8 +70,11 @@ struct Resume <: SEvent end
 "`Clear()`: command"
 struct Clear <: SEvent end
 
-"`Query()`: command"
+"`Query()`: command, causes an active clock to send its clock data."
 struct Query <: SEvent end
+
+"`Diag()`: command, causes an active clock to send the last stacktrace."
+struct Diag <: SEvent end
 
 "`Reset()`: command"
 struct Reset <: SEvent end

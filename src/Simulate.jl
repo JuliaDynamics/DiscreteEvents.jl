@@ -46,18 +46,20 @@ include("types.jl")
 include("components.jl")
 include("events.jl")
 include("clock.jl")
-include("threads.jl")
 include("process.jl")
+include("threads.jl")
 include("utils.jl")
 
-export  Clock, ActiveClock, setUnit!, SimExpr, SimFunction, SF, @SF,
+export  Clock, PClock, ActiveClock, setUnit!, SimExpr, SimFunction, SF, @SF,
         𝐶, Clk, Timing, at, after, every, before, until,
         tau, τ, @tau, sample_time!, event!, sample!, val, @val,
-        incr!, run!, stop!, resume!, reset!, sync!,
-        SimProcess, SP, @SP, process!, interrupt!, delay!, wait!, now!
+        incr!, run!, stop!, resume!, reset!, sync!, talk,
+        SimProcess, SP, @SP, process!, interrupt!, delay!, wait!, now!,
+        fork!, collapse!, pclock
 
 
 Random.seed!(123)
+rng = MersenneTwister(2020)
 𝐶.state == Undefined() ? init!(𝐶) : nothing
 
 end # module

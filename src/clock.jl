@@ -225,7 +225,7 @@ function reset!(clk::Clock, Δt::Number=0;
         clk.sc.events = PriorityQueue{SimEvent,Float64}()
         clk.sc.cevents = SimCond[]
         clk.processes = Dict{Any, SimProcess}()
-        clk.sc.sexpr = Sample[]
+        clk.sc.samples = Sample[]
     else
         sync!(clk, Clock(Δt, t0=t0, unit=unit))
     end
@@ -465,7 +465,7 @@ enqueue an expression for sampling.
 function sample!(clk::Clock, ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt;
                  scope::Module=Main)
     clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
-    push!(clk.sc.sexpr, Sample(ex, scope))
+    push!(clk.sc.samples, Sample(ex, scope))
     return true
 end
 sample!(ex::Union{Expr, SimFunction}, Δt::Number=𝐶.Δt; scope::Module=Main) =
@@ -534,7 +534,7 @@ function do_run!(c::Clock, Δt::Float64)
             return c.end_time
         end
     end
-    c.end_time
+    c.time = c.end_time
 end
 
 """
@@ -550,14 +550,13 @@ function step!(clk::Clock, ::Idle, σ::Run)
     if clk.state == Halted()
         return
     end
-
-    # catch remaining events
+    # catch remaining events scheduled for the end_time
     while (length(clk.sc.events) ≥ 1) && (nextevtime(clk) ≤ tend + Base.eps(tend)*10)
         step!(clk, clk.state, Step())
         tend = nextfloat(tend)
     end
-
     clk.time = clk.end_time
+
     "run! finished with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(clk.time)"
 end
 

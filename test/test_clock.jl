@@ -167,7 +167,7 @@ sim = Clock(1)  # clock with sample rate 1
 
 b = 0
 sample!(sim, :(b += 1))
-@test length(sim.sc.sexpr) == 1
+@test length(sim.sc.samples) == 1
 incr!(sim)
 @test sim.time == 1
 @test b == 1

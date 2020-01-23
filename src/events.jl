@@ -105,13 +105,13 @@ conditional events and if conditions are met, execute them.
 """
 function do_tick!(c::Clock)
     c.time = c.tn
-    foreach(x -> evExec(x.ex, x.scope), c.sc.sexpr)  # exec sampling
+    foreach(x -> evExec(x.ex, x.scope), c.sc.samples)  # exec sampling
     # then lookup conditional events
     ix = findfirst(x->all(evExec(x.cond, x.scope)), c.sc.cevents)
     while ix !== nothing
         evExec(splice!(c.sc.cevents, ix).ex)
         if isempty(c.sc.cevents)
-            if isempty(c.sc.sexpr) && isempty(c.ac) # no sampling and active clocks
+            if isempty(c.sc.samples) && isempty(c.ac) # no sampling and active clocks
                 c.Δt = 0.0 # delete sample rate
             end
             break
