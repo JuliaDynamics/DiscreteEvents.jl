@@ -1,12 +1,11 @@
 # Performance
 
 For larger models and simulations over longer timeframes performance matters and
-users can do a lot to get more of it. The generic process of getting more performant
-simulations is:
+users can do a lot to get more of it. The generic process of getting more performant simulations is:
 
 1. Follow the [performance tips](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-tips-1) in the Julia manual,
 2. follow the hints in this chapter,
-3. parallelize simulations following the next chapter.  
+3. parallelize simulations following.  
 
 ## Functions vs quoted expressions
 
