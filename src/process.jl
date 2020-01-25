@@ -118,7 +118,7 @@ return the `id` it was registered with. It can then be found under `clk.processe
 
 !!! note
     `spawn`ing a process is possible only with parallel clocks setup with
-    [`PClock`](@ref) or [`multiply!`](@ref).
+    [`PClock`](@ref) or [`fork!`](@ref).
 
 """
 function process!(c::StateMachine, p::SimProcess, cycles::Number=Inf; spawn::Bool=false)

@@ -10,13 +10,13 @@ makedocs(
         "News" => "news.md",
         "Manual" => [
             "manual/intro.md",
-            "manual/parallel.md",
             "manual/approach.md",
-            "manual/usage.md"],
-        "Performance" => [
-            "performance/performance.md",
-            "performance/par_perf.md",
-            "performance/benchmarks.md"],
+            "manual/parallel.md",
+            "manual/usage.md",
+            "Performance" => [
+                "performance/performance.md",
+                "performance/par_perf.md",
+                "performance/benchmarks.md"]],
         "Examples" => [
             "examples/examples.md",
             "examples/tabletennis.md",
