@@ -210,8 +210,8 @@ end
 
 """
 ```
-pclock(clk::Clock, id::Int=threadid() ) :: StateMachine
-pclock(ac::ActiveClock, id::Int=threadid()) :: StateMachine
+pclock(clk::Clock, id::Int=threadid() ) :: AbstractClock
+pclock(ac::ActiveClock, id::Int=threadid()) :: AbstractClock
 ```
 Get a parallel clock to a given clock. If id is not provided, it returns
 the clock for the current thread.
@@ -225,7 +225,7 @@ the clock for the current thread.
 - the master `Clock` if id==1,
 - a parallel `ActiveClock` else
 """
-function pclock(clk::Clock, id::Int=threadid() ) :: StateMachine
+function pclock(clk::Clock, id::Int=threadid() ) :: AbstractClock
     if id == 1
         return clk
     elseif id in ((i.id for i in clk.ac)...,)
@@ -234,7 +234,7 @@ function pclock(clk::Clock, id::Int=threadid() ) :: StateMachine
         println(stderr, "parallel clock on thread $id not available!")
     end
 end
-function pclock(ac::ActiveClock, id::Int=threadid()) :: StateMachine
+function pclock(ac::ActiveClock, id::Int=threadid()) :: AbstractClock
     if id == ac.clock.id
         return ac
     else

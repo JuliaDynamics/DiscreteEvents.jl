@@ -70,7 +70,7 @@ end
 
 Start a `SimProcess` as a task in a loop.
 """
-function startup!(c::StateMachine, p::SimProcess, cycles::Number, spawn::Bool)
+function startup!(c::AbstractClock, p::SimProcess, cycles::Number, spawn::Bool)
 
     function startit()
         start = Channel{Int}(0)
@@ -109,7 +109,7 @@ Register a [`SimProcess`](@ref) to a clock, start it as an asynchronous process 
 return the `id` it was registered with. It can then be found under `clk.processes[id]`.
 
 # Arguments
-- `c::StateMachine`: `Clock` or `ActiveClock`, if not provided, the process runs
+- `c::AbstractClock`: `Clock` or `ActiveClock`, if not provided, the process runs
     under `𝐶`,
 - `p::SimProcess`: it contains a function and its arguments,
 - `cycles::Number=Inf`: number of cycles the process should run,
@@ -121,7 +121,7 @@ return the `id` it was registered with. It can then be found under `clk.processe
     [`PClock`](@ref) or [`fork!`](@ref).
 
 """
-function process!(c::StateMachine, p::SimProcess, cycles::Number=Inf; spawn::Bool=false)
+function process!(c::AbstractClock, p::SimProcess, cycles::Number=Inf; spawn::Bool=false)
     p.clk = c
     startup!(c, p, cycles, spawn)
     p.id

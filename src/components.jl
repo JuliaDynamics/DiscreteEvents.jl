@@ -54,7 +54,7 @@ struct Register{T <: Union{SimEvent,SimCond,Sample}} <: SEvent
 end
 
 "`Sync()`: command"
-struct Sync{T <: StateMachine} <: SEvent
+struct Sync{T <: AbstractClock} <: SEvent
     clock::T
 end
 
@@ -85,18 +85,18 @@ struct Response <: SEvent
 end
 
 """
-    step!(A::StateMachine, q::SState, σ::SEvent)
+    step!(A::AbstractClock, q::SState, σ::SEvent)
 
-Default transition for clock and logger.
+Default transition for clock state machines.
 
 This is called if no otherwise defined transition occurs.
 
 # Arguments
-- `A::StateMachine`: state machine for which a transition is called
+- `A::AbstractClock`: state machine for which a transition is called
 - `q::SState`:  state of the state machine
 - `σ::SEvent`:  event, triggering the transition
 """
-function step!(A::StateMachine, q::SState, σ::SEvent)
+function step!(A::AbstractClock, q::SState, σ::SEvent)
     println(stderr, "Warning: undefined transition ",
             "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))")
 end
