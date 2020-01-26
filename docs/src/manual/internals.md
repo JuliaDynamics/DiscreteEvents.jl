@@ -4,19 +4,19 @@
 CurrentModule = Simulate
 ```
 
-## State machines
+## Clocks
 
-`Simulate.jl` contains two clock types: [`Clock`](@ref) and [`ActiveClock`](@ref). Both are implemented as state machines. The implementation functions and types are not exported. The exported functions documented above under **Usage** are commands to the internal state machines.
+`Simulate.jl` contains two clock types: [`Clock`](@ref) and [`ActiveClock`](@ref). Both are implemented as state machines. The implementation functions and types are not exported.
 
 We have some definitions for them to work.
 
 ```@docs
-StateMachine
+AbstractClock
 ```
 
 ### States
 
-Defined states for state machines.
+Defined clock states.
 
 ```@docs
 SState
@@ -53,6 +53,8 @@ Clear
 
 ### Multithreading
 
+Internal functions used for multithreading.
+
 ```@docs
 start_threads
 activeClock
@@ -61,7 +63,8 @@ spawnid
 
 ### Transition functions
 
-In state machines transitions occur depending on states and events. The different transitions are described through different methods of the `step!`-function.
+The internal clock transition function has several methods for different combinations of clock types, states and events:
+
 ```@docs
 step!
 ```

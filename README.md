@@ -16,47 +16,50 @@ A new⭐ Julia package for **discrete event simulation**.
 A server takes something from its input and puts it out modified after some time. We implement that in a function, create input and output channels and some "foo" and "bar" processes operating reciprocally on the channels:  
 
 ```julia
-using Simulate, Printf
-reset!(𝐶) # reset the central clock
+using Simulate, Printf, Random
 
-function serve(input::Channel, output::Channel, name, id, op)
+function simple(c::Clock, input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
-    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
-    delay!(rand())               # after a delay
+    now!(c, SF(println, @sprintf("%5.2f: %s %d took token %d", tau(c), name, id, token)))
+    d = delay!(c, rand())        # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
+
+clk = Clock()      # create a clock
+Random.seed!(123)  # seed the random number generator
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create and register 8 SimProcesses (alias SP)
-    process!(SP(i, serve, ch1, ch2, "foo", i, +))
-    process!(SP(i+1, serve, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8     # create and register 8 SimProcesses SP
+    process!(clk, SP(i, simple, ch1, ch2, "foo", i, +))
+    process!(clk, SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
-put!(ch1, 1)  # put first token into channel 1
-
-run!(𝐶, 10)   # an run for 10 time units
+put!(ch1, 1)       # put first token into channel 1
+yield()            # let the first task take it
+run!(clk, 10)      # and run for 10 time units
 ```
 
 If we source this program, it runs a simulation:
 
 ```julia
 julia> include("docs/examples/channels.jl")
- 0.00: foo 7 took token 1
- 0.25: bar 4 took token 8
- 0.29: foo 3 took token 32
- 0.55: bar 2 took token 35
- 1.21: foo 5 took token 70
- 1.33: bar 8 took token 75
-...
-...
- 8.90: foo 3 took token 5551732
- 9.10: bar 2 took token 5551735
- 9.71: foo 5 took token 11103470
- 9.97: bar 8 took token 11103475
-10.09: foo 1 took token 88827800
-"run! finished with 22 clock events, simulation time: 10.0"
+ 0.00: foo 1 took token 1
+ 0.77: bar 2 took token 2
+ 1.71: foo 3 took token 4
+ 2.38: bar 4 took token 7
+ 2.78: foo 5 took token 28
+ 3.09: bar 6 took token 33
+ ...
+ ...
+ 7.64: foo 1 took token 631016
+ 7.91: bar 2 took token 631017
+ 8.36: foo 3 took token 1262034
+ 8.94: bar 4 took token 1262037
+ 9.20: foo 5 took token 5048148
+ 9.91: bar 6 took token 5048153
+"run! finished with 43 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
 For further examples see the [documentation](https://pbayer.github.io/Simulate.jl/dev),  [notebooks](https://github.com/pbayer/Simulate.jl/tree/master/docs/notebooks) or [example programs](https://github.com/pbayer/Simulate.jl/tree/master/docs/examples).

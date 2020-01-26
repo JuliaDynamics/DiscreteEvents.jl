@@ -10,46 +10,49 @@ Get an overview and learn the basics.
 
 ## A first example
 
-A server takes something (a resource) from its input and puts it out modified after some time. We implement the server's activity in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
+A simple server takes something (a resource) from its input and puts it out modified after some time. We implement the server's activity in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
 
 ```julia
 using Simulate, Printf, Random
-reset!(𝐶) # reset the central clock
 
-# describe the activity of the server
-function serve(input::Channel, output::Channel, name, id, op)
-    token = take!(input)         # take a resource from the input
-    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
-    delay!(rand())               # after a delay
+function simple(c::Clock, input::Channel, output::Channel, name, id, op)
+    token = take!(input)         # take something from the input
+    now!(c, SF(println, @sprintf("%5.2f: %s %d took token %d", tau(c), name, id, token)))
+    d = delay!(c, rand())        # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
+
+clk = Clock()      # create a clock
+Random.seed!(123)  # seed the random number generator
 
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create, register and start 8 SimProcesses (alias SP)
-    process!(SP(i, serve, ch1, ch2, "foo", i, +))
-    process!(SP(i+1, serve, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create and register 8 SimProcesses SP
+    process!(clk, SP(i, simple, ch1, ch2, "foo", i, +))
+    process!(clk, SP(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
-put!(ch1, 1)  # put first resource into channel 1
+put!(ch1, 1)    # put first token into channel 1
+yield()         # let the first task take it
+run!(clk, 10)   # and run for 10 time units
 ```
+We then run it:
 ```julia
-julia> run!(𝐶, 10)   # run for 10 time units
- 0.00: foo 7 took token 1
- 0.25: bar 4 took token 8
- 0.29: foo 3 took token 32
- 0.55: bar 2 took token 35
- 1.21: foo 5 took token 70
- 1.33: bar 8 took token 75
-...
-...
- 8.90: foo 3 took token 5551732
- 9.10: bar 2 took token 5551735
- 9.71: foo 5 took token 11103470
- 9.97: bar 8 took token 11103475
-10.09: foo 1 took token 88827800
-"run! finished with 22 clock events, simulation time: 10.0"
+julia> include("docs/examples/channels.jl")
+ 0.00: foo 1 took token 1
+ 0.77: bar 2 took token 2
+ 1.71: foo 3 took token 4
+ 2.38: bar 4 took token 7
+ 2.78: foo 5 took token 28
+ ...
+ ...
+ 7.91: bar 2 took token 631017
+ 8.36: foo 3 took token 1262034
+ 8.94: bar 4 took token 1262037
+ 9.20: foo 5 took token 5048148
+ 9.91: bar 6 took token 5048153
+"run! finished with 43 clock events, 0 sample steps, simulation time: 10.0"
 ```
 #### Types and functions
 

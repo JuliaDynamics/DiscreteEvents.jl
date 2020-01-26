@@ -6,8 +6,8 @@
 # This is a Julia package for discrete event simulation
 #
 
-"supertype for state machines in `Simulate.jl`"
-abstract type StateMachine end
+"supertype for clocks in `Simulate.jl`"
+abstract type AbstractClock end
 
 "supertype for states"
 abstract type SState end
@@ -223,7 +223,7 @@ julia> using Simulate
 mutable struct SimProcess
     id::Any
     task::Union{Task,Nothing}
-    clk::Union{StateMachine,Nothing}
+    clk::Union{AbstractClock,Nothing}
     state::SState
     func::Function
     arg::Tuple
@@ -326,7 +326,7 @@ julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt ta
 Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
 ```
 """
-mutable struct Clock <: StateMachine
+mutable struct Clock <: AbstractClock
     id::Int
     state::SState
     time::Float64
@@ -412,7 +412,7 @@ A thread specific clock which can be operated via a channel.
 - `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
 - `ch::Channel`: the communication channel between the two.
 """
-mutable struct ActiveClock <: StateMachine
+mutable struct ActiveClock <: AbstractClock
     clock::Clock
     master::Ref{Clock}
     ch::Channel
