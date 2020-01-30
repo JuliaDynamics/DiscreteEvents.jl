@@ -45,17 +45,17 @@ import Base.show
 include("types.jl")
 include("components.jl")
 include("events.jl")
+include("schedule.jl")
 include("clock.jl")
 include("process.jl")
 include("threads.jl")
-include("utils.jl")
 
-export  Clock, PClock, ActiveClock, setUnit!, SimExpr, SimFunction, SF, @SF,
+export  Clock, PClock, ActiveClock, setUnit!, Action, Fun,
         𝐶, Clk, Timing, at, after, every, before, until,
-        tau, τ, @tau, sample_time!, event!, sample!, val, @val,
-        incr!, run!, stop!, resume!, reset!, sync!, talk,
-        SimProcess, SP, @SP, process!, interrupt!, delay!, wait!, now!,
-        fork!, collapse!, pclock
+        tau, sample_time!, event!, sample!,
+        incr!, run!, stop!, resume!, reset!, sync!,
+        Prc, process!, interrupt!, delay!, wait!, now!,
+        fork!, collapse!, pclock, diag
 
 
 Random.seed!(123)

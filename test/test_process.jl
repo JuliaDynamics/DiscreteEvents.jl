@@ -7,7 +7,7 @@
 #
 
 println("... basic tests: processes ...")
-simex = Simulate.SimException(Simulate.Stop())
+simex = Simulate.ClockException(Simulate.Stop())
 @test simex.ev == Simulate.Stop()
 @test simex.value === nothing
 
@@ -20,13 +20,13 @@ incr(𝐶, c1::Channel, c2::Channel, a) = (a+1, yield())
 a = [1,1,3.0,3.0,"A","A","A","A"]
 b = [1,2,3.0,nextfloat(3.0),"A","A#1","A#2","A#3"]
 for i in 1:8
-    @test process!(SP(a[i], incr, ch1, ch2, 1)) == b[i]
+    @test process!(Prc(a[i], incr, ch1, ch2, 1)) == b[i]
 end
 for i in 1:8
     @test 𝐶.processes[b[i]].id == b[i]
 end
-@test process!(SP((1,2), incr, ch1, ch2, 1)) == (1,2)
-@test_throws ArgumentError process!(SP((1,2), incr, ch1, ch2, 1))
+@test process!(Prc((1,2), incr, ch1, ch2, 1)) == (1,2)
+@test_throws ArgumentError process!(Prc((1,2), incr, ch1, ch2, 1))
 
 println("... test channel 4 example ...")
 A = []
@@ -41,14 +41,13 @@ end
 reset!(𝐶)
 Random.seed!(123)
 
-for i in 1:2:8    # create, register and start 8 SimProcesses SP
-    process!(SP(i, simple, ch1, ch2, "foo", i, +))
-    process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create, register and start 8 SimProcesses Prc
+    process!(Prc(i, simple, ch1, ch2, "foo", i, +))
+    process!(Prc(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
 @test length(𝐶.processes) == 8
 for p in values(𝐶.processes)
-    @test p.state == Simulate.Idle()
     @test istaskstarted(p.task)
 end
 
@@ -83,23 +82,23 @@ a = 1
 b = 1
 res = []
 incb() = global b +=1
-checktime(x) = τ() ≥ x
+checktime(x) = tau() ≥ x
 checka(x) = a == x
 checkb(x) = b ≥ x
 
 function testwait(clk::Clock, c1::Channel, c2::Channel)
-    wait!(clk, (SF(checktime, 2), SF(checka, 1)))
-    push!(res, (τ(), 1, a, b))
-    wait!(clk, SF(isa, a, Int)) # must return immediately
-    push!(res, (τ(), 2, a, b))
-    sample!(clk, SF(incb))
-    wait!(clk, SF(checkb, 201))
-    push!(res, (τ(), 3, a, b))
+    wait!(clk, (Fun(checktime, 2), Fun(checka, 1)))
+    push!(res, (tau(), 1, a, b))
+    wait!(clk, Fun(isa, a, Int)) # must return immediately
+    push!(res, (tau(), 2, a, b))
+    sample!(clk, Fun(incb))
+    wait!(clk, Fun(checkb, 201))
+    push!(res, (tau(), 3, a, b))
     take!(c1)
 end
 
 reset!(𝐶)
-process!(SP(1, testwait, ch1, ch2))
+process!(Prc(1, testwait, ch1, ch2))
 
 run!(𝐶, 10)
 r = [i[1] for i in res]
@@ -121,15 +120,15 @@ function testdelay2(clk::Clock)
 end
 
 reset!(𝐶)
-process!(SP(1, testdelay), 3)
-process!(SP(2, testdelay2), 3)
+process!(Prc(1, testdelay), 3)
+process!(Prc(2, testdelay2), 3)
 run!(𝐶, 10)
 
 @test 𝐶.processes[1].task.state == :failed
 @test a == 4
 
-testnow(c) = (delay!(c, 1); global a += 1; now!(c, SF(println, "$(tau(c)): a is $a")))
+testnow(c) = (delay!(c, 1); global a += 1; now!(c, Fun(println, "$(tau(c)): a is $a")))
 reset!(𝐶)
-process!(SP(1, testnow), 3)
+process!(Prc(1, testnow), 3)
 run!(𝐶, 5)
 @test a == 7

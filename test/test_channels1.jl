@@ -7,8 +7,8 @@
 #
 
 mutable struct Server
-  id::Int64
-  name::AbstractString
+  id::Int
+  name::String
   input::Channel
   output::Channel
   op     # operation to take
@@ -22,10 +22,10 @@ A = []
 function take(S::Server)
     if isready(S.input)
         S.token = take!(S.input)
-        push!(A, (τ(), S.name, S.id, S.token))
-        event!(SF(put, S), after, rand())         # call put after some time
+        push!(A, (tau(), S.name, S.id, S.token))
+        event!(Fun(put, S), after, rand())         # call put after some time
     else
-        event!(SF(take, S), SF(isready, S.input)) # call again if input is ready
+        event!(Fun(take, S), Fun(isready, S.input)) # call again if input is ready
     end
 end
 

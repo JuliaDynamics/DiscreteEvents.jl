@@ -9,11 +9,11 @@
 "supertype for clocks in `Simulate.jl`"
 abstract type AbstractClock end
 
-"supertype for states"
-abstract type SState end
+"supertype for clock states"
+abstract type ClockState end
 
-"supertype for events"
-abstract type SEvent end
+"supertype for clock events"
+abstract type ClockEvent end
 
 """
     Timing
@@ -30,20 +30,17 @@ Enumeration type for scheduling events and timed conditions:
 
 """
 ```
-SimFunction([emod::Module], efun::Function, arg...; kw...)
-alias    SF([emod::Module], efun::Function, arg...; kw...)
+Fun(f::Function, arg...; kw...)
 ```
 Store a function and its arguments for being called later as an event.
 
 # Arguments, fields
-- `emod::Module`: evaluation scope for symbols or expressions given as arguments.
-    If `emod` is not supplied, the evaluation scope is `Main`.
-- `efun::Function`:  event function to be executed at event time,
+- `f::Function`:  event function to be executed at event time,
 - `arg...`: arguments to the event function,
 - `kw...`: keyword arguments to the event function.
 
 Arguments and keyword arguments can be 1) values or variables mixed with 2) symbols,
-expressions or even other SimFunctions. In the 2nd cases they are evaluated at
+expressions or even other functions. In the 2nd cases they are evaluated at
 event time before they are passed to the event function.
 
 !!! note
@@ -57,9 +54,9 @@ julia> using Simulate
 julia> f(a,b,c; d=4, e=5) = a+b+c+d+e       # if you define a function and ...
 f (generic function with 1 method)
 
-julia> sf = SF(f, 10, 20, 30, d=14, e=15);  # store it as SimFunction
+julia> sf = SF(f, 10, 20, 30, d=14, e=15);  # store it as Fun
 
-julia> sf.efun(sf.arg...; sf.kw...)         # it can be executed later
+julia> sf.f(sf.arg...; sf.kw...)         # it can be executed later
 89
 
 julia> d = Dict(:a => 1, :b => 2);          # we set up a dictionary
@@ -70,129 +67,103 @@ g (generic function with 1 method)
 julia> g(d)                                 # our add function gives 3
 3
 
-julia> ff = SimFunction(g, d);              # we set up a SimFunction
+julia> ff = Fun(g, d);              # we set up a Fun
 
 julia> d[:a] = 10;                          # later somehow we change d
 
-julia> ff.efun(ff.arg...)                   # calling ff then gives a different result
+julia> ff.f(ff.arg...)                   # calling ff then gives a different result
 12
 ```
 """
-struct SimFunction
-    emod::Module
-    efun::Function
+struct Fun
+    f::Function
     arg::Union{Nothing, Tuple}
     kw::Union{Nothing, Base.Iterators.Pairs}
 
-    function SimFunction(emod::Module, efun::Function, arg...; kw...)
+    function Fun(f::Function, arg...; kw...)
         isempty(arg) && ( arg = nothing )
         isempty(kw)  && ( kw  = nothing )
-        new(Main, efun, arg, kw)
-    end
-
-    function SimFunction(efun::Function, arg...; kw...)
-        isempty(arg) && ( arg = nothing )
-        isempty(kw)  && ( kw  = nothing )
-        new(Main, efun, arg, kw)
+        new(f, arg, kw)
     end
 end
-const SF = SimFunction
 
-"""
-    SimExpr = Union{Expr, SimFunction}
-
-A type which is either a `SimFunction` or Julia expression, `Expr`-type.
-"""
-const SimExpr = Union{Expr, SimFunction}
-
-"""
-    sconvert(ex::Union{SimExpr, Tuple, Vector})::Tuple{Vararg{SimExpr}}
-
-convert a SimExpr or an array or a tuple of it to a Tuple{Vararg{SimExpr}}
-"""
-sconvert(ex::Union{SimFunction, Expr, Tuple}) = ex
-sconvert(ex::Vector) = Tuple(ex)
-# function sconvert(ex::Union{SimExpr, Tuple, Vector})::Tuple{Vararg{SimExpr}}
-#     if ex isa SimExpr
-#         return ex
-#     elseif ex isa Tuple
-#         return ex
-#     else
-#         return Tuple(ex)
-#     end
-# end
+"An action is either an `Expr` or a `Fun` or a `Tuple` of them."
+const Action = Union{Expr, Fun, Tuple}
 
 """
 ```
-SimEvent{T<:Union{SimFunction,Expr,Tuple}}
+DiscreteEvent{T<:Action}
 ```
-A simulation event is a `SimFunction` or an expression or a tuple of them to be
+A discrete event is a function or an expression or a tuple of them to be
 executed at an event time.
 
 # Arguments, fields
-- `ex::T`: a `SimFunction` or an expression or a tuple of them,
+- `ex::T`: a function or an expression or a tuple of them,
 - `scope::Module`: evaluation scope,
 - `t::Float64`: event time,
 - `Δt::Float64`: repeat rate with for repeating events.
 """
-struct SimEvent{T<:Union{SimFunction,Expr,Tuple}}
+struct DiscreteEvent{T<:Action}
     ex::T
     scope::Module
-    t::Float64
-    Δt::Float64
+    t::Real
+    Δt::Real
 end
+
 
 """
 ```
-SimCond{S<:Union{SimFunction,Expr,Tuple}, T<:Union{SimFunction,Expr,Tuple}}
+DiscreteCond{S<:Action, T<:Action}
 ```
 A condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
 # Arguments, fields
-- `cond::S`: a `SimFunction` or an expression or a tuple of them,
-- `ex::T`: a `SimFunction` or an expression or a tuple of them,
+- `cond::S`: a conditional function or an expression or a tuple of them
+    (conditions must evaluate to `Bool`),
+- `ex::T`: a function or an expression or a tuple of them to be executed
+    if conditions are met,
 - `scope::Module`: evaluation scope
 """
-struct SimCond{S<:Union{SimFunction,Expr,Tuple}, T<:Union{SimFunction,Expr,Tuple}}
+struct DiscreteCond{S<:Action, T<:Action}
     cond::S
     ex::T
     scope::Module
 end
 
 """
-    Sample{T<:Union{SimFunction,Expr}}
+    Sample{T<:Union{Fun,Expr}}
 
 A sampling function or expression is called at sampling time.
 
 # Arguments, fields
-- `ex::SimExpr`: expression or SimFunction to be called at sample time
-- `scope::Module`: evaluation scope
+- `ex::T`: expression or function to be called at sample time,
+- `scope::Module`: evaluation scope.
 """
-struct Sample{T<:Union{SimFunction,Expr}}
+struct Sample{T<:Union{Fun,Expr}}
     ex::T
     scope::Module
 end
 
 """
-    SimException(ev::SEvent, value=nothing)
+    ClockException(ev::ClockEvent, value=nothing)
 
-Define a SimException, which can be thrown to processes.
+Define a ClockException, which can be thrown to processes.
 
 # Arguments, fields
-- `ev::SEvent`: delivers an event to the interrupted task
+- `ev::ClockEvent`: delivers an event to the interrupted task
 - `value=nothing`: deliver some other value
 """
-struct SimException <: Exception
-  ev::Any
+struct ClockException <: Exception
+  ev::ClockEvent
   value::Any
-  SimException(ev::SEvent, value=nothing) = new(ev, value)
+  ClockException(ev::ClockEvent, value=nothing) = new(ev, value)
 end
 
 """
 ```
-SimProcess( id, func::Function, arg...; kw...)
-alias   SP( id, func::Function, arg...; kw...)
+Prc( id, f::Function, arg...; kw...)
+alias   SP( id, f::Function, arg...; kw...)
 ```
 Prepare a function to run as a process in a simulation.
 
@@ -200,19 +171,19 @@ Prepare a function to run as a process in a simulation.
 - `id`: some unique identification for registration,
 - `task::Union{Task,Nothing}`: a task structure,
 - `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
-- `state::SState`: process state,
-- `func::Function`: a function `f(clk, arg...; kw...)`, must take `clk` as its
+- `state::ClockState`: process state,
+- `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` as its
     first argument,
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
 !!! note
-    A function started as a SimProcess most often runs in a loop. It has to
+    A function started as a Prc most often runs in a loop. It has to
     give back control by e.g. doing a `take!(input)` or by calling
     `delay!` etc., which will `yield` it. Otherwise it will starve everything else!
 
 !!! warn
-    That `func` nust take `clk` as first argument is a breaking change in v0.3!
+    That `f` nust take `clk` as first argument is a breaking change in v0.3!
 
 # Examples
 ```jldoctest
@@ -220,19 +191,17 @@ julia> using Simulate
 
 ```
 """
-mutable struct SimProcess
+mutable struct Prc
     id::Any
     task::Union{Task,Nothing}
     clk::Union{AbstractClock,Nothing}
-    state::SState
-    func::Function
+    f::Function
     arg::Tuple
     kw::Base.Iterators.Pairs
 
-    SimProcess( id, func::Function, arg...; kw...) =
-        new(id, nothing, nothing, Undefined(), func, arg, kw)
+    Prc( id, f::Function, arg...; kw...) =
+        new(id, nothing, nothing, f, arg, kw)
 end
-const SP = SimProcess
 
 """
     Schedule()
@@ -241,16 +210,16 @@ A Schedule contains events, conditional events and sampling functions to be
 executed or evaluated on the clock's time line.
 
 # Fields
-- `events::PriorityQueue{SimEvent,Float64}`: scheduled events,
-- `cevents::Array{SimCond,1}`: conditional events to evaluate at each tick,
+- `events::PriorityQueue{DiscreteEvent,Float64}`: scheduled events,
+- `cevents::Array{DiscreteCond,1}`: conditional events to evaluate at each tick,
 - `samples::Array{Sample,1}`: sampling expressions to evaluate at each tick,
 """
 mutable struct Schedule
-    events::PriorityQueue{SimEvent,Float64}
-    cevents::Array{SimCond,1}
+    events::PriorityQueue{DiscreteEvent,Float64}
+    cevents::Array{DiscreteCond,1}
     samples::Array{Sample,1}
 
-    Schedule() = new(PriorityQueue{SimEvent,Float64}(), SimCond[], Sample[])
+    Schedule() = new(PriorityQueue{DiscreteEvent,Float64}(), DiscreteCond[], Sample[])
 end
 
 """
@@ -264,11 +233,14 @@ master clock (on thread 1) via messages over a channel.
 - `ref::Ref{Task}`: a pointer to an active clock,
 - `ch::Channel`: a communication channel to an active clock,
 - `id::Int`: the thread id of the active clock.
+- `done::Bool`: flag indicating if the active clock has completed its cycle.
 """
-mutable struct AC
+mutable struct AC{T <: ClockEvent}
     ref::Ref{Task}
-    ch::Channel
-    id::Int
+    forth::Channel{T}
+    back::Channel{T}
+    thread::Int
+    done::Bool
 end
 
 """
@@ -286,19 +258,19 @@ Create a new simulation clock.
     t0 to a time, e.g. `t0=60s`.
 
 # Fields
-- `thread::Int`: thread on which the clock is running,
-- `state::SState`: clock state,
+- `id::Int`: thread on which the clock is running,
+- `state::ClockState`: clock state,
 - `time::Float64`: clock time,
 - `unit::FreeUnits`: time unit,
 - `end_time::Float64`: end time for simulation,
 - `Δt::Float64`: sampling time, timestep between ticks,
 - `ac::Vector{AC}`: active clocks running on parallel threads,
 - `sc::Schedule`: the clock schedule (events, cond events and sampling),
-- `processes::Dict{Any, SimProcess}`: registered `SimProcess`es,
+- `processes::Dict{Any, Prc}`: registered `Prc`es,
 - `tn::Float64`: next timestep,
 - `tev::Float64`: next event time,
-- `evcount::Int64`: event counter,
-- `scount::Int64`: sample counter
+- `evcount::Int`: event counter,
+- `scount::Int`: sample counter
 
 # Examples
 
@@ -328,18 +300,18 @@ Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, p
 """
 mutable struct Clock <: AbstractClock
     id::Int
-    state::SState
+    state::ClockState
     time::Float64
     unit::FreeUnits
     Δt::Float64
     ac::Vector{AC}
     sc::Schedule
-    processes::Dict{Any, SimProcess}
+    processes::Dict{Any, Prc}
     tn::Float64
     tev::Float64
     end_time::Float64
-    evcount::Int64
-    scount::Int64
+    evcount::Int
+    scount::Int
 
     function Clock(Δt::Number=0;
                    t0::Number=0, unit::FreeUnits=NoUnits)
@@ -356,8 +328,8 @@ mutable struct Clock <: AbstractClock
         else
             nothing
         end
-        new(threadid(), Undefined(), t0, unit, Δt, AC[], Schedule(),
-            Dict{Any, SimProcess}(), t0 + Δt, t0, t0, 0, 0)
+        new(0, Undefined(), t0, unit, Δt, AC[], Schedule(),
+            Dict{Any, Prc}(), t0 + Δt, t0, t0, 0, 0)
     end
 end
 
@@ -403,17 +375,24 @@ end
 
 """
 ```
-ActiveClock(clock::Clock, master::Ref{Clock}, ch::Channel)
+ActiveClock(clock::Clock, master::Ref{Clock},
+            cmd::Channel{ClockEvent}, ans::Channel{ClockEvent})
 ```
 A thread specific clock which can be operated via a channel.
 
 # Fields
 - `clock::Clock`: the thread specific clock,
 - `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
-- `ch::Channel`: the communication channel between the two.
+- `cmd::Channel{ClockEvent}`: the command channel from master,
+- `ans::Channel{ClockEvent}`: the response channel to master.
+- `id::Int`: the id in master's ac array,
+- `thread::Int`: the thread, the active clock runs on.
 """
-mutable struct ActiveClock <: AbstractClock
+mutable struct ActiveClock{T <: ClockEvent} <: AbstractClock
     clock::Clock
     master::Ref{Clock}
-    ch::Channel
+    forth::Channel{T}
+    back ::Channel{T}
+    id::Int
+    thread::Int
 end

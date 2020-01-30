@@ -112,9 +112,8 @@ const 𝐶 = Clk = Clock()
 """
 ```
 tau(clk::Clock=𝐶)
-τ(clk::Clock=𝐶)
 ```
-Return the current simulation time (τ = \\tau+tab).
+Return the current simulation time.
 
 # Examples
 
@@ -125,12 +124,9 @@ julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> tau() # gives the central time
 0.0
-julia> τ() # alias, gives the central time
-0.0
 ```
 """
 tau(clk::Clock=𝐶) = clk.unit == NoUnits ? clk.time : clk.time*clk.unit
-const τ = tau
 
 """
 ```
@@ -155,7 +151,7 @@ function sync!(clk::Clock, to::Clock=𝐶)
     clk.tev  = clk.tev*fac + Δt
     clk.end_time = clk.end_time*fac + Δt
     clk.Δt = to.Δt
-    evq = PriorityQueue{SimEvent,Float64}()
+    evq = PriorityQueue{DiscreteEvent,Float64}()
     for (ev, t) ∈ pairs(clk.sc.events)
         evq[ev] = t*fac + Δt
     end
@@ -222,9 +218,9 @@ function reset!(clk::Clock, Δt::Number=0;
         clk.evcount = 0
         clk.scount = 0
         clk.Δt = Δt
-        clk.sc.events = PriorityQueue{SimEvent,Float64}()
-        clk.sc.cevents = SimCond[]
-        clk.processes = Dict{Any, SimProcess}()
+        clk.sc.events = PriorityQueue{DiscreteEvent,Float64}()
+        clk.sc.cevents = DiscreteCond[]
+        clk.processes = Dict{Any, Prc}()
         clk.sc.samples = Sample[]
     else
         sync!(clk, Clock(Δt, t0=t0, unit=unit))
@@ -232,38 +228,38 @@ function reset!(clk::Clock, Δt::Number=0;
     "clock reset to t₀=$(float(t0*unit)), sampling rate Δt=$(float(Δt*unit))."
 end
 
-
 """
-    checktime(clk::Clock, t::Number)::Float64
+    tadjust(clk::Clock, t::Unitful.Time) :: Float64
 
-check `t` given according to clock settings and return a Float64 value
+Adjust/convert `t` given according to clock settings and return a Float64 value.
 """
-function checktime(clk::Clock, t::Number)::Float64
-    if isa(t, Real)
-        return t
+function tadjust(clk::Clock, t::Unitful.Time) :: Float64
+    if clk.unit == NoUnits
+        println(stderr, "Warning: clock has no time unit, ignoring units")
+        return t.val
     else
-        if clk.unit == NoUnits
-            println(stderr, "Warning: clock has no time unit, ignoring units")
-            return t.val
-        else
-            return uconvert(clk.unit, t).val
-        end
+        return uconvert(clk.unit, t).val
     end
 end
 
 """
 ```
-event!([clk::Clock], ex::Union{SimExpr, Tuple, Vector}, t::Number;
-       scope::Module=Main, cycle::Number=0.0)::Float64
+event!([clk::Clock], ex::Action, t::Number;
+       scope::Module=Main, cycle::Number=0.0, spawn=false)::Float64
+event!([clk::Clock], ex::Action, T::Timing, t::Number; kw...)
 ```
 Schedule an event for a given simulation time.
 
 # Arguments
 - `clk::Clock`: it not supplied, the event is scheduled to 𝐶,
-- `ex::Union{SimExpr, Tuple, Vector}`: an expression or SimFunction or an array or tuple of them,
+- `ex::Action`: an expression or Fun or a tuple of them,
+- `T::Timing`: a timing, one of `at`, `after` or `every`,
 - `t::Real` or `t::Time`: simulation time, if t < clk.time set t = clk.time,
+
+# Keyword arguments
 - `scope::Module=Main`: scope for expressions to be evaluated in,
-- `cycle::Float64=0.0`: repeat cycle time for an event.
+- `cycle::Float64=0.0`: repeat cycle time for an event,
+- `spawn=false`: it true spawn the event at other available threads.
 
 # returns
 Scheduled internal simulation time (unitless) for that event.
@@ -279,107 +275,51 @@ julia> import Unitful: s, minute, hr
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 
-julia> event!(𝐶, SimFunction(myfunc, 1, 2), 1) # a 1st event to 1
+julia> event!(𝐶, Fun(myfunc, 1, 2), 1) # a 1st event to 1
 1.0
-julia> event!(𝐶, SimFunction(myfunc, 2, 3), 1) #  a 2nd event to the same time
+julia> event!(𝐶, Fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
 1.0000000000000002
 
-julia> event!(𝐶, SimFunction(myfunc, 3, 4), 1s)
+julia> event!(𝐶, Fun(myfunc, 3, 4), 1s)
 Warning: clock has no time unit, ignoring units
 1.0000000000000004
 
 julia> setUnit!(𝐶, s)
 0.0 s
 
-julia> event!(𝐶, SimFunction(myfunc, 4, 5), 1minute)
+julia> event!(𝐶, Fun(myfunc, 4, 5), 1minute)
 60.0
-```
-"""
-function event!(clk::Clock, ex::Union{SimExpr, Tuple, Vector}, t::Number;
-                scope::Module=Main, cycle::Number=0.0)::Float64
-    t = checktime(clk, t)
-    (t < clk.time) && (t = clk.time)
-    cycle = checktime(clk, cycle)
-    while any(i->i==t, values(clk.sc.events)) # in case an event at that time exists
-        t = nextfloat(float(t))                  # increment scheduled time
-    end
-    ev = SimEvent(sconvert(ex), scope, t, cycle)
-    clk.sc.events[ev] = t
-    return t
-end
-event!( ex::Union{SimExpr, Tuple, Vector}, t::Number; scope::Module=Main, cycle::Number=0.0) =
-            event!(𝐶, ex, t, scope=scope, cycle=cycle)
 
-"""
-```
-event!([clk::Clock], ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
-       scope::Module=Main)::Float64
-```
-Schedule a timed event, that is an event with a timing.
-
-# Arguments
-- `clk::Clock`: if not supplied, the event is scheduled to 𝐶,
-- `ex::{SimExpr, Tuple, Vector}`: an expression or SimFunction or an array or tuple of them,
-- `T::Timing`: a timing, `at`, `after` or `every` (`before` behaves like `at`),
-- `t::Float64` or `t::Time`: simulation time,
-- `scope::Module=Main`: scope for the expressions to be evaluated
-
-# returns
-Scheduled internal simulation time (unitless) for that event.
-
-# Examples
-```jldoctest
-julia> using Simulate, Unitful
-
-julia> import Unitful: s, minute, hr
-
-julia> setUnit!(𝐶, s)
-0.0 s
-
-julia> myfunc(a, b) = a+b
-myfunc (generic function with 1 method)
-
-julia> event!(SimFunction(myfunc, 5, 6), after, 1hr)
+julia> event!(Fun(myfunc, 5, 6), after, 1hr)
 3600.0
 ```
 """
-function event!(clk::Clock, ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
-                scope::Module=Main)
-    @assert T in (at, after, every) "bad Timing $T for event!"
-    t = checktime(clk, t)
+function event!(clk::Clock, ex::Action, t::Number;
+                scope::Module=Main, cycle::Number=0.0, spawn=false)::Float64
+    (t isa Unitful.Time) && (t = tadjust(clk, t))
+    (cycle isa Unitful.Time) && (cycle = tadjust(clk, cycle))
+    (t < clk.time) && (t = clk.time)
+
+    assign(clk, DiscreteEvent(ex, scope, t, cycle), spawn ? spawnid(clk) : 0)
+end
+event!(ex::Action, t::Number; kw...) = event!(𝐶, ex, t; kw...)
+function event!(clk::Clock, ex::Action, T::Timing, t::Number;
+                scope::Module=Main, spawn=false) :: Float64
+    (t isa Unitful.Time) && (t = tadjust(clk, t))
     if T == after
-        event!(clk, sconvert(ex), t + clk.time, scope=scope)
+        event!(clk, ex, t+clk.time, scope=scope, spawn=spawn)
     elseif T == every
-        event!(clk, sconvert(ex), clk.time, scope=scope, cycle=t)
+        event!(clk, ex, clk.time, scope=scope, cycle=t, spawn=spawn)
     else
-        event!(clk, sconvert(ex), t, scope=scope)
+        event!(clk, ex, t, scope=scope, spawn=spawn)
     end
 end
-event!( ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number; scope::Module=Main) =
-            event!(𝐶, ex, T, t; scope=scope)
-
-"""
-    scale(n::Number)::Float64
-
-calculate the scale from a given number
-"""
-function scale(n::Number)::Float64
-    if n > 0
-        i = 1.0
-        while !(10^i ≤ n < 10^(i+1))
-            n < 10^i ? i -= 1 : i += 1
-        end
-        return 10^i
-    else
-        return 1
-    end
-end
+event!(ex::Action, T::Timing, t::Number; kw...) = event!(𝐶, ex, T, t; kw...)
 
 
 """
 ```
-event!([clk::Clock], ex::Union{SimExpr, Tuple, Vector},
-       cond::Union{SimExpr, Tuple, Vector}; scope::Module=Main):
+event!([clk::Clock], ex::Action, cond::Action; scope::Module=Main)::Float64
 ```
 Schedule a conditional event.
 
@@ -391,9 +331,9 @@ sampling rate is setup depending on the scale of the remaining simulation time
 
 # Arguments
 - `clk::Clock`: if no clock is supplied, the event is scheduled to 𝐶,
-- `ex::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}`: an expression or SimFunction or an array or tuple of them,
-- `cond::Union{SimExpr, Tuple{SimExpr}, Vector{SimExpr}}`: a condition is an expression or SimFunction
-    or an array or tuple of them. It is true only if all expressions or SimFunctions
+- `ex::Union{SimExpr, Tuple{SimExpr}}`: an expression or Fun or a tuple of them,
+- `cond::Union{SimExpr, Tuple{SimExpr}}`: a condition is an expression or Fun
+    or a tuple of them. It is true only if all expressions or Funs
     therein return true,
 - `scope::Module=Main`: scope for the expressions to be evaluated
 
@@ -421,18 +361,15 @@ julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fi
 After the event is triggered, sampling is again switched off.
 
 """
-function event!(clk::Clock, ex::Union{SimExpr, Tuple, Vector},
-                cond::Union{SimExpr, Tuple, Vector}; scope::Module=Main)
-    if clk.state == Busy() && all(evExec(sconvert(cond)))   # all conditions met
-        evExec(sconvert(ex))                                # execute immediately
+function event!(clk::Clock, ex::Action, cond::Action; scope::Module=Main, spawn=false)
+    if clk.state == Busy() && all(evExec(cond))   # all conditions met
+        evExec(ex)                                # execute immediately
     else
-        (clk.Δt == 0) && (clk.Δt = scale(clk.end_time - clk.time)/100)
-        push!(clk.sc.cevents, SimCond(sconvert(cond), sconvert(ex), scope))
+        assign(clk, DiscreteCond(cond, ex, scope), spawn ? spawnid(clk) : 0)
     end
     return tau(clk)
 end
-event!( ex::Union{SimExpr, Tuple, Vector}, cond::Union{SimExpr, Tuple, Vector};
-        scope::Module=Main) = event!(𝐶, ex, cond, scope=scope)
+event!( ex::Action, cond::Action; kw...) = event!(𝐶, ex, cond; kw...)
 
 """
 ```
@@ -445,31 +382,30 @@ set the clock's sample rate starting from now (`tau(clk)`).
 - `Δt::Number`: sample rate, time interval for sampling
 """
 function sample_time!(clk::Clock, Δt::Number)
-    clk.Δt = checktime(clk, Δt)
+    clk.Δt = Δt isa Unitful.Time ? tadjust(clk, Δt) : Δt
     clk.tn = clk.time + clk.Δt
 end
 sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
-sample!([clk::Clock], ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt; scope::Module=Main)
+sample!([clk::Clock], ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
+        scope::Module=Main, spawn=false)
 ```
 enqueue an expression for sampling.
 # Arguments
 - `clk::Clock`: if not supplied, it samples on 𝐶,
-- `ex::Union{Expr, SimFunction}`: an expression or function,
+- `ex::Union{Expr, Fun}`: an expression or function,
 - `Δt::Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
 - `scope::Module=Main`: optional, an evaluation scope for a given expression.
 """
-function sample!(clk::Clock, ex::Union{Expr, SimFunction}, Δt::Number=clk.Δt;
-                 scope::Module=Main)
+function sample!(clk::Clock, ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
+                 scope::Module=Main, spawn=false)
     clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
-    push!(clk.sc.samples, Sample(ex, scope))
-    return true
+    assign(clk, Sample(ex, scope), spawn ? spawnid(clk) : 0)
 end
-sample!(ex::Union{Expr, SimFunction}, Δt::Number=𝐶.Δt; scope::Module=Main) =
-    sample!(𝐶, ex, Δt, scope=scope)
+sample!(ex::Union{Expr, Fun}, Δt::Number=𝐶.Δt; kw...) = sample!(𝐶, ex, Δt; kw...)
 
 """
     step!(clk::Clock, ::Undefined, ::Init)
@@ -581,11 +517,11 @@ function step!(clk::Clock, ::Halted, ::Resume)
 end
 
 """
-    step!(clk::Clock, q::SState, σ::SEvent)
+    step!(clk::Clock, q::ClockState, σ::ClockEvent)
 
 catch all step!-function.
 """
-function step!(clk::Clock, q::SState, σ::SEvent)
+function step!(clk::Clock, q::ClockState, σ::ClockEvent)
     println(stderr, "Warning: undefined transition ",
             "$(typeof(clk)), ::$(typeof(q)), ::$(typeof(σ)))\n",
             "maybe, you should reset! the clock!")
@@ -597,8 +533,10 @@ end
 Run a simulation for a given duration. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
-run!(clk::Clock, duration::Number) =
-                        step!(clk, clk.state, Run(checktime(clk, duration)))
+function run!(clk::Clock, duration::Number)
+    duration = duration isa Unitful.Time ? tadjust(clk, duration) : duration
+    step!(clk, clk.state, Run(duration))
+end
 
 
 """

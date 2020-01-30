@@ -1,40 +1,47 @@
 println("... testing multithreading  1 ...")
 
-clk = Clock()
-@test clk.id == 1
-println("... fork! ...")
-fork!(clk)
+clk = PClock()
+@test clk.id == 0
 @test length(clk.ac) >= (nthreads() >>> 1)
 # for i in 2:nthreads()
 #     @test clk.ac[i-1].id == i
 #     c = pclock(clk, i)
 #     @test c.clock.id == i
 # end
-t1 = clk.ac[1].id        # get id of first parallel clock
+@test clk.ac[1].thread == 2
+
+println("... parallel clock identification ...")
+c1 = pclock(clk, 1)
+@test c1.thread == 2
+@test c1.clock.id == 1
 
 println("... remote error handling ...")
-@test talk(clk, t1, Simulate.Clear()).x isa ErrorException
-st = talk(clk, t1, Simulate.Diag()).x[1]
-@test occursin(r"^activeClock\(\:\:Channel\{Any\}\) at threads\.jl", string(st))
+put!(clk.ac[1].forth, Simulate.Clear())
+err = diag(clk, 1)
+@test err[1] isa ErrorException
+@test occursin(r"^step\!\(\:\:ActiveClock.+ at threads\.jl", string(err[2][2]))
 
 println("... register parallel events, cevents, samples ...")
 a = 0
-ev = Simulate.SimEvent(SF(()->global a+=1),Main,1.0,0.0)
-@test talk(clk, t1, Simulate.Register(ev)).x == 1.0
-c2 = pclock(clk, t1)
-@test length(c2.clock.sc.events) == 1
-cev = Simulate.SimCond(SF(≥, SF(tau, c2), 5), SF(()->global a+=1), Main)
-@test talk(clk, t1, Simulate.Register(cev)).x == 0.0
-@test length(c2.clock.sc.cevents) == 1
+ev = Simulate.DiscreteEvent(Fun(()->global a+=1),Main,1.0,0.0)
+put!(clk.ac[1].forth, Simulate.Register(ev))
+sleep(0.01)
+@test length(c1.clock.sc.events) == 1
+cev = Simulate.DiscreteCond(Fun(≥, Fun(tau, c1), 5), Fun(()->global a+=1), Main)
+put!(clk.ac[1].forth, Simulate.Register(cev))
+sleep(0.01)
+@test length(c1.clock.sc.cevents) == 1
 b = 0
-sp = Simulate.Sample(SF(()->global b+=1), Main)
-@test talk(clk, t1, Simulate.Register(sp)).x == true
-@test length(c2.clock.sc.samples) == 1
+sp = Simulate.Sample(Fun(()->global b+=1), Main)
+put!(clk.ac[1].forth, Simulate.Register(sp))
+sleep(0.01)
+@test length(c1.clock.sc.samples) == 1
 
-println("... run parallel clock 1 (thread $t1) ...")
-@test talk(clk, t1, Simulate.Run(10.0)).x == 10.0
-@test c2.clock.time ≈ 10
-@test c2.clock.scount == 1000
+println("... run parallel clock 1 (thread 2) ...")
+put!(clk.ac[1].forth, Simulate.Run(10.0))
+sleep(0.1)
+@test c1.clock.time ≈ 10
+@test c1.clock.scount == 1000
 @test a == 2
 @test b == 1000
 

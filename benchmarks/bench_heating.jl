@@ -43,23 +43,23 @@ end
 function switch!(h::House, t1=20, t2=23)                       # simulate the thermostat
     if h.Tr ≥ t2
         h.heating = false
-        event!(SF(switch!, h, t1, t2), SF((h, x)-> h.Tr ≤ x, h, t1))  # setup a conditional event
-        # event!(SF(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
+        event!(Fun(switch!, h, t1, t2), Fun((h, x)-> h.Tr ≤ x, h, t1))  # setup a conditional event
+        # event!(Fun(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
     elseif h.Tr ≤ t1
         h.heating = true
-        event!(SF(switch!, h, t1, t2), SF((h, x)-> h.Tr ≥ x, h, t2))  # setup a conditional event
-        # event!(SF(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
+        event!(Fun(switch!, h, t1, t2), Fun((h, x)-> h.Tr ≥ x, h, t2))  # setup a conditional event
+        # event!(Fun(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
     end
 end
 
-function people!(h::House)
-    delay!(6 + rand(Normal(0, 0.5)))         # sleep until around 6am
+function people!(clk::Clock, h::House)
+    delay!(clk, 6 + rand(Normal(0, 0.5)))         # sleep until around 6am
     sleeptime = 22 + rand(Normal(0, 0.5))    # calculate bed time
-    while tau()%24 < sleeptime
+    while tau(clk)%24 < sleeptime
         h.η = rand()                         # open door or window
-        delay!(0.1 * rand(Normal(1, 0.3)))   # for some time
+        delay!(clk, 0.1 * rand(Normal(1, 0.3)))   # for some time
         h.η = 1.0                            # close it again
-        delay!(rand())
+        delay!(clk, rand())
     end
 end
 
@@ -69,9 +69,9 @@ function setup()
     Random.seed!(1234)
 
     for i in 1:2                              # put 2 people in the house
-        process!(SP(i, people!, house))       # run processes
+        process!(Prc(i, people!, house))       # run processes
     end
-    Simulate.sample!(SF(setTemperatures!, house), Δt)  # set sampling function
+    Simulate.sample!(Fun(setTemperatures!, house), Δt)  # set sampling function
     switch!(house)                                     # start the thermostat
 end
 

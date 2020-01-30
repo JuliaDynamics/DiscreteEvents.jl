@@ -25,7 +25,3 @@ end
 @testset "process.jl" begin
     include("test_process.jl")
 end
-
-@testset "utils.jl" begin
-    include("test_utils.jl")
-end
