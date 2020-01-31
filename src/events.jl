@@ -27,40 +27,40 @@ nextevtime(c::Clock) = peek(c.sc.events)[2]
 "catchall function: forward the value y"
 evaluate(y::Any,  m::Module) = y
 
-"recursive call to `sfExec` for a nested `SimFunction`."
-evaluate(y::SimFunction, m::Module) = sfExec(y, m)
+"recursive call to `sfExec` for a nested `Fun`."
+evaluate(y::Fun, m::Module) = sfExec(y, m)
 
 "evaluate a symbol or expression and give a warning."
 function evaluate(y::Union{Symbol,Expr}, m::Module)
     try
         ret = Core.eval(m, y)
-        @warn "Evaluating expressions is slow, use `SimFunction` instead" maxlog=1
+        @warn "Evaluating expressions is slow, use `Fun` instead" maxlog=1
         return ret
     catch
         return y
     end
 end
 
-"execute a `SimFunction`"
-function sfExec(x::SimFunction, m::Module)
-    if x.efun == event!  # should arguments be maintained?
+"execute a `Fun`"
+function sfExec(x::Fun, m::Module)
+    if x.f == event!  # should arguments be maintained?
         arg = x.arg; kw = x.kw
     else                 # otherwise evaluate them
-        x.arg === nothing || (arg = map(i->evaluate(i, x.emod), x.arg))
-        x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, x.emod), values(x.kw)) )...))
+        x.arg === nothing || (arg = map(i->evaluate(i, m), x.arg))
+        x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...))
     end
     try
         if x.kw === nothing
-            return x.arg === nothing ? x.efun() : x.efun(arg...)
+            return x.arg === nothing ? x.f() : x.f(arg...)
         else
-            return x.arg === nothing ? x.efun(; kw...) : x.efun(arg...; kw...)
+            return x.arg === nothing ? x.f(; kw...) : x.f(arg...; kw...)
         end
     catch exc
         if exc isa MethodError
             if x.kw === nothing
-                return x.arg === nothing ? invokelatest(x.efun) : invokelatest(x.efun, arg...)
+                return x.arg === nothing ? invokelatest(x.f) : invokelatest(x.f, arg...)
             else
-                return x.arg === nothing ? invokelatest(x.efun; kw...) : invokelatest(x.efun, arg...; kw...)
+                return x.arg === nothing ? invokelatest(x.f; kw...) : invokelatest(x.f, arg...; kw...)
             end
         end
     end
@@ -72,12 +72,12 @@ sfExec(x::Expr, m::Module) = evaluate(x, m)
 """
     evExec(ex::Union{SimExpr, Tuple, m::Module=Main)
 
-Forward an event's `SimFunction`s or expressions to further execution or evaluation.
+Forward an event's `Fun`s or expressions to further execution or evaluation.
 
 # Return
 the evaluated value or a tuple of evaluated valuesch.
 """
-evExec(ex::SimFunction, m::Module=Main) = sfExec(ex, m)
+evExec(ex::Fun, m::Module=Main) = sfExec(ex, m)
 evExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
 evExec(ex::Tuple, m::Module=Main) = map(x->evExec(x, m), ex)
 

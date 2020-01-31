@@ -13,11 +13,11 @@
 # end
 
 """
-    register!(clk::Clock, p::SimProcess)
+    register!(clk::Clock, p::Prc)
 
-Register a SimProcess to a clock. Check its id and change it apropriately.
+Register a Prc to a clock. Check its id and change it apropriately.
 """
-function register!(clk::Clock, p::SimProcess)
+function register!(clk::Clock, p::Prc)
     id = p.id
     while haskey(clk.processes, id)
         if isa(id, Float64)
@@ -36,16 +36,16 @@ function register!(clk::Clock, p::SimProcess)
 end
 
 """
-    loop(p::SimProcess, start::Channel, cycles::Number)
+    loop(p::Prc, start::Channel, cycles::Number)
 
-Put a [`SimProcess`](@ref) in a loop which can be broken by a `SimException`.
+Put a [`Prc`](@ref) in a loop which can be broken by a `ClockException`.
 
 # Arguments
-- `p::SimProcess`:
+- `p::Prc`:
 - `start::Channel`: a channel to ensure that a process starts,
 - `cycles=Inf`: determine, how often the loop should be run.
 """
-function loop(p::SimProcess, start::Channel, cycles::Number)
+function loop(p::Prc, start::Channel, cycles::Number)
     take!(start)
     if threadid() > 1
         p.clk = pclock(p.clk, threadid())
@@ -53,9 +53,9 @@ function loop(p::SimProcess, start::Channel, cycles::Number)
 
     while cycles > 0
         try
-            p.func(p.clk, p.arg...; p.kw...)
+            p.f(p.clk, p.arg...; p.kw...)
         catch exc
-            if isa(exc, SimException)
+            if isa(exc, ClockException)
                 exc.ev == Stop() && break
             end
             rethrow(exc)
@@ -66,16 +66,15 @@ function loop(p::SimProcess, start::Channel, cycles::Number)
 end
 
 """
-    startup!(p::SimProcess, cycles::Number, spawn::Bool)
+    startup!(p::Prc, cycles::Number, spawn::Bool)
 
-Start a `SimProcess` as a task in a loop.
+Start a `Prc` as a task in a loop.
 """
-function startup!(c::AbstractClock, p::SimProcess, cycles::Number, spawn::Bool)
+function startup!(c::AbstractClock, p::Prc, cycles::Number, spawn::Bool)
 
     function startit()
         start = Channel{Int}(0)
         p.task = @async loop(p, start, cycles)
-        p.state = Idle()
         put!(start, 1)  # block until the process has started
     end
 
@@ -103,15 +102,15 @@ end
 
 """
 ```
-process!([clk::Clock], p::SimProcess, cycles=Inf; spawn::Bool=false)
+process!([clk::Clock], p::Prc, cycles=Inf; spawn::Bool=false)
 ```
-Register a [`SimProcess`](@ref) to a clock, start it as an asynchronous process and
+Register a [`Prc`](@ref) to a clock, start it as an asynchronous process and
 return the `id` it was registered with. It can then be found under `clk.processes[id]`.
 
 # Arguments
 - `c::AbstractClock`: `Clock` or `ActiveClock`, if not provided, the process runs
     under `𝐶`,
-- `p::SimProcess`: it contains a function and its arguments,
+- `p::Prc`: it contains a function and its arguments,
 - `cycles::Number=Inf`: number of cycles the process should run,
 - `spawn::Bool=false`: if true, the process may be scheduled on another thread
     in parallel and registered to the thread specific clock.
@@ -121,15 +120,15 @@ return the `id` it was registered with. It can then be found under `clk.processe
     [`PClock`](@ref) or [`fork!`](@ref).
 
 """
-function process!(c::AbstractClock, p::SimProcess, cycles::Number=Inf; spawn::Bool=false)
+function process!(c::AbstractClock, p::Prc, cycles::Number=Inf; spawn::Bool=false)
     p.clk = c
     startup!(c, p, cycles, spawn)
     p.id
 end
-process!(p::SimProcess, cycles=Inf) = process!(𝐶, p, cycles)
+process!(p::Prc, cycles=Inf) = process!(𝐶, p, cycles)
 
 "wakeup a process waiting for a `Condition`"
-wakeup(c::Condition) = (notify(c), yield())
+wakeup(c::Condition) = (notify(c); yield())
 
 """
 ```
@@ -144,10 +143,10 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(clk::Clock, t::Number)
     c = Condition()
-    event!(clk, SF(wakeup, c), after, t)
+    event!(clk, Fun(wakeup, c), after, t)
     wait(c)
     # c = Channel{Int}()
-    # event!(clk, SF(wakeup, c), after, t)
+    # event!(clk, Fun(wakeup, c), after, t)
     # take!(c)
 end
 
@@ -167,53 +166,53 @@ function delay!(clk::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
         c = Condition()
-        event!(clk, SF(wakeup, c), t)
+        event!(clk, Fun(wakeup, c), t)
         wait(c)
     else
-        now!(clk, SF(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
+        now!(clk, Fun(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
     end
 end
 
 """
 ```
-wait!(clk::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
+wait!(clk::Clock, cond::Action; scope::Module=Main)
 ```
 Wait on a clock for a condition to become true. Suspend the calling process
 until the given condition is true.
 
 # Arguments
 - `clk::Clock`: if no clock is supplied, the delay goes to `𝐶`,
-- `cond::Union{SimExpr, Array, Tuple}`: a condition is an expression or SimFunction
-    or an array or tuple of them. It is true only if all expressions or SimFunctions
+- `cond::Action`: a condition is an expression or function
+    or an array or tuple of them. It is true only if all expressions or functions
     therein return true,
 - `scope::Module=Main`: evaluation scope for given expressions.
 """
-function wait!(clk::Clock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main)
-    if all(evExec(sconvert(cond)))   # all conditions met
+function wait!(clk::Clock, cond::Action; scope::Module=Main)
+    if all(evExec(cond))   # all conditions met
         return         # return immediately
     else
         c = Condition()
-        event!(clk, SF(wakeup, c), cond, scope=scope)
+        event!(clk, Fun(wakeup, c), cond, scope=scope)
         wait(c)
     end
 end
 
 """
-    interrupt!(p::SimProcess, ev::SEvent, value=nothing)
+    interrupt!(p::Prc, ev::ClockEvent, value=nothing)
 
-Interrupt a `SimProcess` by throwing a `SimException` to it.
+Interrupt a `Prc` by throwing a `ClockException` to it.
 """
-function interrupt!(p::SimProcess, ev::SEvent, value=nothing)
-    schedule(p.task, SimException(ev, value), error=true)
+function interrupt!(p::Prc, ev::ClockEvent, value=nothing)
+    schedule(p.task, ClockException(ev, value), error=true)
     yield()
 end
 
-"Stop a SimProcess"
-stop!(p::SimProcess, value=nothing) = interrupt!(p, Stop(), value)
+"Stop a Prc"
+stop!(p::Prc, value=nothing) = interrupt!(p, Stop(), value)
 
 """
 ```
-now!([clk::Clock], op::Union{SimExpr, Array, Tuple})
+now!(clk::Clock, op::Action)
 ```
 Tell the clock to execute an operation. Thus it cannot proceed before the op is finished.
 
@@ -225,6 +224,6 @@ Tell the clock to execute an operation. Thus it cannot proceed before the op is 
 
 # Arguments
 - `clk::Clock`,
-- `op::Union{SimExpr, Array, Tuple}`: operation to execute.
+- `op::Action`: operation to execute.
 """
-now!(clk::Clock, ex::Union{SimExpr, Array, Tuple}) = event!(clk, ex, clk.time)
+now!(clk::Clock, ex::Action) = event!(clk, ex, clk.time)

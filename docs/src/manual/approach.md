@@ -35,9 +35,9 @@ function take(S::Server)
     if isready(S.input)
         S.token = take!(S.input)
         @printf("%5.2f: %s %d took token %d\n", tau(), S.name, S.id, S.token)
-        event!(SF(put, S), after, rand())         # call put after some time
+        event!(Fun(put, S), after, rand())         # call put after some time
     else
-        event!(SF(take, S), SF(isready, S.input)) # call again if input is ready
+        event!(Fun(take, S), Fun(isready, S.input)) # call again if input is ready
     end
 end
 
@@ -81,7 +81,7 @@ julia> include("docs/examples/channels1.jl")
  9.82: foo 2 took token 130956920
 "run! finished with 20 clock events, simulation time: 10.0"
 ```
-**see:** [`tau`](@ref), [`event!`](@ref), [`SF`](@ref SimFunction), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
+**see:** [`tau`](@ref), [`event!`](@ref), [`Fun`](@ref), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
 
 ## State based modeling
 
@@ -113,13 +113,13 @@ mutable struct Server
     Server(id, name, input, output, op) = new(id, name, input, output, op, Idle(), nothing)
 end
 
-arrive(A) = event!(SF(δ, A, A.state, Arrive()), SF(isready, A.input))
+arrive(A) = event!(Fun(δ, A, A.state, Arrive()), Fun(isready, A.input))
 
 function δ(A::Server, ::Idle, ::Arrive)
     A.token = take!(A.input)
     @printf("%5.2f: %s %d took token %d\n", tau(), A.name, A.id, A.token)
     A.state=Busy()
-    event!(SF(δ, A, A.state, Leave()), after, rand())
+    event!(Fun(δ, A, A.state, Leave()), after, rand())
 end
 
 function δ(A::Server, ::Busy, ::Leave)
@@ -165,7 +165,7 @@ julia> include("docs/examples/channels2.jl")
  9.82: foo 2 took token 130956920
 "run! finished with 20 clock events, simulation time: 10.0"
 ```
-**see:** [`tau`](@ref), [`event!`](@ref), [`SF`](@ref SimFunction), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
+**see:** [`tau`](@ref), [`event!`](@ref), [`Fun`](@ref), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
 
 ## Activity based modeling
 
@@ -191,12 +191,12 @@ mutable struct Server
   Server(id, name, input, output, op) = new(id, name, input, output, op, nothing)
 end
 
-arrive(S::Server) = event!(SF(serve, S), SF(isready, S.input))
+arrive(S::Server) = event!(Fun(serve, S), Fun(isready, S.input))
 
 function serve(S::Server)
     S.token = take!(S.input)
     @printf("%5.2f: %s %d took token %d\n", tau(), S.name, S.id, S.token)
-    event!((SF(put!, S.output, S.op(S.id, S.token)), SF(arrive, S)), after, rand())
+    event!((Fun(put!, S.output, S.op(S.id, S.token)), Fun(arrive, S)), after, rand())
 end
 
 reset!(𝐶)
@@ -233,7 +233,7 @@ julia> include("docs/examples/channels3.jl")
  9.82: foo 2 took token 130956920
 "run! finished with 20 clock events, simulation time: 10.0"
 ```
-**see:** [`tau`](@ref), [`event!`](@ref), [`SF`](@ref SimFunction), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
+**see:** [`tau`](@ref), [`event!`](@ref), [`Fun`](@ref), [`reset!`](@ref), [`𝐶`](@ref), [`run!`](@ref)
 
 ## Process based modeling
 
@@ -242,7 +242,7 @@ Here you combine it all in a simple function of *take!*-*delay!*-*put!* like in 
 ```julia
 function simple(input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something, eventually wait for it
-    now!(SF(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
+    now!(Fun(println, @sprintf("%5.2f: %s %d took token %d", tau(), name, id, token)))
     d = delay!(rand())           # wait for a given time
     put!(output, op(token, id))  # put something else out, eventually wait
 end
@@ -250,9 +250,9 @@ end
 ch1 = Channel(32)  # create two channels
 ch2 = Channel(32)
 
-for i in 1:2:8    # create and register 8 SimProcesses
-    process!(SP(i, simple, ch1, ch2, "foo", i, +))
-    process!(SP(i+1, simple, ch2, ch1, "bar", i+1, *))
+for i in 1:2:8    # create and register 8 Prces
+    process!(Prc(i, simple, ch1, ch2, "foo", i, +))
+    process!(Prc(i+1, simple, ch2, ch1, "bar", i+1, *))
 end
 
 reset!(𝐶)
@@ -277,7 +277,7 @@ julia> include("docs/examples/channels4.jl")
  9.91: bar 8 took token 11103475
 "run! finished with 21 clock events, simulation time: 10.0"
 ```
-**see:** [`now!`](@ref), [`SF`](@ref SimFunction), [`tau`](@ref), [`delay!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`reset!`](@ref), [`run!`](@ref), [`𝐶`](@ref)
+**see:** [`now!`](@ref), [`Fun`](@ref), [`tau`](@ref), [`delay!`](@ref), [`process!`](@ref), [`Prc`](@ref), [`reset!`](@ref), [`run!`](@ref), [`𝐶`](@ref)
 
 
 ## Comparison
@@ -344,14 +344,14 @@ end
 function switch(t1=20, t2=23)           # a function simulating the thermostat
     if Tr ≥ t2
         global heating = false
-        event!(SF(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
+        event!(Fun(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
     elseif Tr ≤ t1
         global heating = true
-        event!(SF(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
+        event!(Fun(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
     end
 end
 
-Simulate.sample!(SF(setTemperatures), Δt)  # setup the sampling function
+Simulate.sample!(Fun(setTemperatures), Δt)  # setup the sampling function
 switch()                                   # start the thermostat
 
 @time run!(𝐶, 24)                          # run the simulation
@@ -398,9 +398,9 @@ Tr = 20
 df = DataFrame(t=Float64[], tr=Float64[], te=Float64[], heating=Int64[])
 
 for i in 1:2                                 # put 2 people in the house
-    process!(SP(i, people), 1)               # run process only once
+    process!(Prc(i, people), 1)               # run process only once
 end
-Simulate.sample!(SF(setTemperatures), Δt)    # setup sampling
+Simulate.sample!(Fun(setTemperatures), Δt)    # setup sampling
 switch()                                     # start the thermostat
 
 @time run!(𝐶, 24)
@@ -429,7 +429,7 @@ title!("House heating with people")
 
 We have now all major schemes: events, continuous sampling and processes combined in one example.
 
-**see:** [`tau`](@ref), [`SF`](@ref SimFunction), [`event!`](@ref event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})), [`@val`](@ref), [`delay!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`process!`](@ref), [`SP`](@ref SimProcess), [`reset!`](@ref), [`𝐶`](@ref)\
+**see:** [`tau`](@ref), [`Fun`](@ref), [`event!`](@ref), [`delay!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`process!`](@ref), [`Prc`](@ref), [`reset!`](@ref), [`𝐶`](@ref)\
 **see also**: the [full house heating example](../examples/house_heating/house_heating.md) for further explanations.
 
 ## Theories

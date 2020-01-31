@@ -12,20 +12,12 @@
 tau(ac::ActiveClock) = tau(ac.clock)
 sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
 
-event!(ac::ActiveClock, ex::Union{SimExpr, Tuple, Vector}, t::Number;
-       scope::Module=Main, cycle::Number=0.0) = event!(ac.clock, ex, t, scope=scope, cycle=cycle)
-event!(ac::ActiveClock, ex::Union{SimExpr, Tuple, Vector}, T::Timing, t::Number;
-       scope::Module=Main) = event!(ac.clock, ex, T, t, scope=scope)
-event!(ac::ActiveClock, ex::Union{SimExpr, Tuple, Vector}, cond::Union{SimExpr, Tuple, Vector};
-       scope::Module=Main) = event!(ac.clock, ex, cond, scope = scope)
-sample!(ac::ActiveClock, ex::Union{Expr, SimFunction}, Δt::Number=ac.clock.Δt;
-       scope::Module=Main) = sample!(ac.clock, ex, Δt, scope=scope)
+event!(ac::ActiveClock, args...; kwargs...) = event!(ac.clock, args...; kwargs...)
+sample!(ac::ActiveClock, args...; kwargs...) = sample!(ac.clock, args...; kwargs...)
 
-delay!(ac::ActiveClock, t::Number) = delay!(ac.clock, t)
-delay!(ac::ActiveClock, T::Timing, t::Number) = delay!(ac.clock, T, t)
-wait!(ac::ActiveClock, cond::Union{SimExpr, Array, Tuple}; scope::Module=Main) =
-      wait!(ac.clock, cond, scope=scope)
-now!(ac::ActiveClock, ex::Union{SimExpr, Array, Tuple}) = now!(ac.clock, ex)
+delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
+wait!(ac::ActiveClock, args...; kwargs...) = wait!(ac.clock, args...; kwargs...)
+now!(ac::ActiveClock, ex::Action) = now!(ac.clock, ex)
 
 
 # ---------------------------------------------------------
@@ -34,57 +26,44 @@ now!(ac::ActiveClock, ex::Union{SimExpr, Array, Tuple}) = now!(ac.clock, ex)
 "Run an active clock for a given duration."
 step!(A::ActiveClock, ::Idle, σ::Run) = do_run!(A.clock, σ.duration)
 
-function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Sync)
-end
+step!(A::ActiveClock, ::Union{Idle, Busy}, ::Sync) = nothing
 
-step!(A::ActiveClock, ::SState, ::Query) = A
+step!(A::ActiveClock, ::ClockState, ::Query) = put!(A.back, Response(A))
 
-function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register)
-    if σ.x isa SimEvent
-        return event!(A, σ.x.ex, σ.x.t, scope=σ.x.scope, cycle=σ.x.Δt)
-    elseif σ.x isa SimCond
-        return event!(A, σ.x.ex, σ.x.cond, scope=σ.x.scope)
-    elseif σ.x isa Sample
-        return sample!(A, σ.x.ex, A.clock.Δt, scope=σ.x.scope)
-    elseif σ.x isa SimProcess
-        return process!(A, σ.x.p, σ.x.cycles)
-    else
-        nothing
-    end
-end
+step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register) = assign(A, σ.x, A.id)
 
-function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Reset)
-end
+step!(A::ActiveClock, ::Union{Idle, Busy}, ::Reset) = nothing
 
-step!(A::ActiveClock, q::SState, σ::SEvent) = error("transition q=$q, σ=$σ not implemented")
+step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, σ=$σ not implemented")
 
 """
     activeClock(ch::Channel)
 
 Operate an active clock on a given channel. This is its event loop.
 """
-function activeClock(ch::Channel)
-    ac = ActiveClock(Clock(),        # create an active clock, for it …
-                     take!(ch), ch)  # get a pointer to the master clock
+function activeClock(cmd::Channel, ans::Channel)
+    info = take!(cmd).x # get a pointer to the master clock and id
+    ac = ActiveClock(Clock(), info[1], cmd, ans, info[2], threadid())
+    ac.clock.id = info[2]
     sf = Array{Base.StackTraces.StackFrame,1}[]
+    exp = nothing
     ac.clock.state = Idle()
     sync!(ac.clock, ac.master[])
 
     while true
         try
-            σ = take!(ch)
+            σ = take!(cmd)
             if σ isa Stop
                 break
             elseif σ isa Diag
-                put!(ch, Response(sf))
+                put!(ans, Response((exp, sf)))
             else
-                put!(ch, Response(step!(ac, ac.clock.state, σ)))
+                step!(ac, ac.clock.state, σ)
             end
         catch exp
-            sf = stacktrace()
-            println("clock $(threadid()) exception: $exp")
-            put!(ch, Response(exp))
-            # throw(exp)
+            sf = stacktrace(catch_backtrace())
+            @warn "clock $(ac.id), thread $(ac.thread) exception: $exp"
+#            throw(exp)
         end
     end
     # stop task
@@ -101,19 +80,20 @@ end
 Start a task on each available thread (other than 1).
 
 # Arguments
-- `f::Function`: function to start, has to take a channel as its only argument,
+- `f::Function`: function to start, has to take two channels as arguments,
 - `mul::Int=3`: startup multiplication factor,
 """
 function start_threads(f::Function) :: Vector{AC}
     ac = AC[]
     @threads for i in 1:nthreads()
         if threadid() > 1
-            ai = AC(Ref{Task}(), Channel(), threadid())
-            ai.ref = Ref(@async f(ai.ch))
+            ai = AC(Ref{Task}(), Channel{ClockEvent}(8), Channel{ClockEvent}(5),
+                    threadid(), false)
+            ai.ref = Ref(@async f(ai.forth, ai.back))
             push!(ac, ai)
         end
     end
-    sort!(ac, by = x->x.id)
+    sort!(ac, by = x->x.thread)
     println("got $(length(ac)) threads parallel to master!")
     return ac
 end
@@ -128,13 +108,13 @@ clocks under control of the master clock.
 - `master::Clock`: the master clock, must be on thread 1
 """
 function fork!(master::Clock)
-    if (master.id == 1) && (threadid() == 1)
+    if (master.id == 0) && (threadid() == 1)
         if VERSION >= v"1.3"
             if nthreads() > 1
                 if isempty(master.ac)
-                    master.ac = start_threads(activeClock) # startup steps
-                    for ac in master.ac                    # to all active clocks …
-                        put!(ac.ch, Ref(master))           # send pointer to master
+                    master.ac = start_threads(activeClock)           # startup steps
+                    for i in eachindex(master.ac)                    # to all active clocks …
+                        put!(master.ac[i].forth, Start(( Ref(master), i) )) # send pointer and id
                     end
                 else
                     println(stderr, "clock already has $(length(clk.ac)) active clocks!")
@@ -161,10 +141,10 @@ Transfer the schedules of the parallel clocks to master and them stop them.
     are not transferred to and cannot be controlled by master.
 """
 function collapse!(master::Clock)
-    if (master.id == 1) && (threadid() == 1)
+    if (master.id == 0) && (threadid() == 1)
         for ac in master.ac
-            put!(ac.ch, Query())
-            c = take!(ac.ch).x.clock
+            put!(ac.forth, Query())
+            c = take!(ac.back).x.clock
             for (ev, t) in pairs(c.sc.events)    # transfer events to master
                 while any(i->i==t, values(master.sc.events)) # in case an event at that time exists
                     t = nextfloat(float(t))                  # increment scheduled time
@@ -173,7 +153,7 @@ function collapse!(master::Clock)
             end
             append!(master.sc.cevents, c.sc.events)
             append!(master.sc.samples, c.sc.samples)
-            put!(ac.ch, Stop())
+            put!(ac.forth, Stop())
         end
         empty!(master.ac)
     else
@@ -186,35 +166,11 @@ end
 # control of active clocks
 # ---------------------------------------------------------
 """
-    talk(master::Clock, id::Int, σ::SEvent) :: Response
-
-Talk with a parallel clock: send an event σ and get the response. This is for
-user interaction with a parallel clock. It blocks until it has finished.
-
-# Arguments
-- `master::Clock`: a master clock,
-- `id::Int`: threadid of the active clock,
-- `σ::SEvent`: the event/command to send to the active clock.
-"""
-function talk(master::Clock, id::Int, σ::SEvent) :: Response
-    @assert master.id == 1 "you can talk only through a master clock"
-    cix = ((i.id for i in master.ac)...,)
-    if id in cix
-        ch = master.ac[findfirst(x->x==id, cix)].ch
-        put!(ch, σ)
-        return take!(ch)
-    else
-        return Response(id == 1 ? "id 1 is master" : "id $id not known")
-    end
-end
-
-"""
 ```
-pclock(clk::Clock, id::Int=threadid() ) :: AbstractClock
-pclock(ac::ActiveClock, id::Int=threadid()) :: AbstractClock
+pclock(clk::Clock, id::Int ) :: AbstractClock
+pclock(ac::ActiveClock, id::Int ) :: AbstractClock
 ```
-Get a parallel clock to a given clock. If id is not provided, it returns
-the clock for the current thread.
+Get a parallel clock to a given clock.
 
 # Arguments
 - `master::Clock`: a master clock or
@@ -222,19 +178,21 @@ the clock for the current thread.
 - `id::Int=threadid()`: thread id, defaults to the caller's current thread.
 
 # Returns
-- the master `Clock` if id==1,
+- the master `Clock` if id==0,
 - a parallel `ActiveClock` else
 """
-function pclock(clk::Clock, id::Int=threadid() ) :: AbstractClock
-    if id == 1
+function pclock(clk::Clock, id::Int) :: AbstractClock
+    if id == 0
+        @assert clk.id == 0 "you cannot get master from a local clock!"
         return clk
-    elseif id in ((i.id for i in clk.ac)...,)
-        return talk(clk, id, Query()).x
+    elseif id in eachindex(clk.ac)
+        put!(clk.ac[id].forth, Query())
+        return take!(clk.ac[id].back).x
     else
-        println(stderr, "parallel clock on thread $id not available!")
+        println(stderr, "parallel clock $id not available!")
     end
 end
-function pclock(ac::ActiveClock, id::Int=threadid()) :: AbstractClock
+function pclock(ac::ActiveClock, id::Int) :: AbstractClock
     if id == ac.clock.id
         return ac
     else
@@ -243,22 +201,23 @@ function pclock(ac::ActiveClock, id::Int=threadid()) :: AbstractClock
 end
 
 """
-    spawnid(clk::Clock) :: Int
+    diag(clk::Clock, id::Int)
 
-Return a random number out of the thread ids of all available parallel clocks.
-This is used for `spawn`ing tasks or events to them.
+Return the stacktrace from a parallel clock.
 
-!!! note
-    This function may be used for workload balancing between threads
-    in the future.
+# Arguments
+- `clk::Clock`: a master clock,
+- `id::Int`: the id of a parallel clock.
 """
-function spawnid(clk::Clock) :: Int
-    if clk.id > 1
-        println(stderr, "spawn works only from a master clock")
-        return clk.id
-    elseif isempty(clk.ac)
-        return 1
+function diag(clk::Clock, id::Int)
+    if id in eachindex(clk.ac)
+        if istaskfailed(clk.ac[id].ref[])
+            return clk.ac[id].ref[]
+        else
+            put!(clk.ac[id].forth, Diag())
+            return take!(clk.ac[id].back).x
+        end
     else
-        return rand(rng, (1, (i.id for i in clk.ac)...))
+        println(stderr, "parallel clock $id not available!")
     end
 end

@@ -13,19 +13,18 @@ import Dates.now
 
 mutable struct Worker
     nr::Int64              # worker number
-    clk::Clock
     input::Channel
     output::Channel
     dist::Distribution     # distribution of processing time
     retard::Float64        # worker retard factor, 1: no retardation, >1: retardation
     done::Int64            # number of finished items
 
-    Worker(nr, clk, input, output, dist, perform) = new(nr, clk, input, output, dist, 1/perform, 0)
+    Worker(nr, input, output, dist, perform) = new(nr, input, output, dist, 1/perform, 0)
 end
 
-function work(w::Worker)
+function work(clk::Clock, w::Worker)
     job = take!(w.input)
-    delay!(w.clk, rand(w.dist) * w.retard)
+    delay!(clk, rand(w.dist) * w.retard)
     put!(w.output, job)
     w.done += 1
 end
@@ -48,9 +47,9 @@ function setup( n::Int64, mw::Int64,
     end
 
     wp = rand(vw, n)                    # calculate worker performance
-    global W = [Worker(i, clk, C[i], C[i+1], vp, wp[i]) for i in 1:n]
+    global W = [Worker(i, C[i], C[i+1], vp, wp[i]) for i in 1:n]
     for i in 1:n
-        process!(clk, SP(i, work, W[i]))
+        process!(clk, Prc(i, work, W[i]))
     end
 end
 
