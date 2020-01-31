@@ -41,26 +41,58 @@ function evaluate(y::Union{Symbol,Expr}, m::Module)
     end
 end
 
-"execute a `Fun`"
+"Execute a Fun."
 function sfExec(x::Fun, m::Module)
-    if x.f == event!  # should arguments be maintained?
-        arg = x.arg; kw = x.kw
-    else                 # otherwise evaluate them
-        x.arg === nothing || (arg = map(i->evaluate(i, m), x.arg))
-        x.kw === nothing  || (kw = (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...))
-    end
-    try
+    if x.arg === nothing
         if x.kw === nothing
-            return x.arg === nothing ? x.f() : x.f(arg...)
-        else
-            return x.arg === nothing ? x.f(; kw...) : x.f(arg...; kw...)
+            try
+                x.f()
+            catch exc
+                if exc isa MethodError
+                    invokelatest(x.f)
+                else
+                    rethrow(exc)
+                end
+            end
+        else   # only kws
+            kw = x.f isa typeof(event!) ? x.kw : (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
+            try
+                x.f(; kw...)
+            catch exc
+                if exc isa MethodError
+                    invokelatest(x.f; kw...)
+                else
+                    rethrow(exc)
+                end
+            end
         end
-    catch exc
-        if exc isa MethodError
-            if x.kw === nothing
-                return x.arg === nothing ? invokelatest(x.f) : invokelatest(x.f, arg...)
-            else
-                return x.arg === nothing ? invokelatest(x.f; kw...) : invokelatest(x.f, arg...; kw...)
+    else
+        if x.kw === nothing    # only args
+            arg = x.f isa typeof(event!) ? x.arg : map(i->evaluate(i, m), x.arg)
+            try
+                x.f(arg...)
+            catch exc
+                if exc isa MethodError
+                    invokelatest(x.f, arg...)
+                else
+                    rethrow(exc)
+                end
+            end
+        else    # full args and kws
+            if x.f isa typeof(event!)  # should arguments be maintained?
+                arg = x.arg; kw = x.kw
+            else                 # otherwise evaluate them
+                arg = map(i->evaluate(i, m), x.arg)
+                kw = (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
+            end
+            try
+                x.f(arg...; kw...)
+            catch exc
+                if exc isa MethodError
+                    invokelatest(x.f, arg...; kw...)
+                else
+                    rethrow(exc)
+                end
             end
         end
     end
@@ -70,12 +102,16 @@ end
 sfExec(x::Expr, m::Module) = evaluate(x, m)
 
 """
-    evExec(ex::Union{SimExpr, Tuple, m::Module=Main)
+```
+evExec(ex::Fun, m::Module=Main)
+evExec(ex::Expr, m::Module=Main)
+evExec(ex::Tuple, m::Module=Main)
+```
 
 Forward an event's `Fun`s or expressions to further execution or evaluation.
 
 # Return
-the evaluated value or a tuple of evaluated valuesch.
+the evaluated value or a tuple of evaluated values.
 """
 evExec(ex::Fun, m::Module=Main) = sfExec(ex, m)
 evExec(ex::Expr, m::Module=Main) = evaluate(ex, m)

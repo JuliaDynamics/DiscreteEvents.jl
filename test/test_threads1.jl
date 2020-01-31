@@ -39,7 +39,7 @@ sleep(0.1)
 
 println("... run parallel clock 1 (thread 2) ...")
 put!(clk.ac[1].forth, Simulate.Run(10.0))
-sleep(0.1)
+sleep(0.5)
 @test c1.clock.time ≈ 10
 @test c1.clock.scount == 1000
 @test a == 2
