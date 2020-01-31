@@ -19,7 +19,7 @@ AbstractClock
 Defined clock states.
 
 ```@docs
-SState
+ClockState
 Undefined
 Idle
 Empty
@@ -32,11 +32,9 @@ Halted
 Defined events.
 
 ```@docs
-SEvent
+ClockEvent
 Init
 Setup
-Switch
-Log
 Step
 Run
 Reset
@@ -44,6 +42,8 @@ Query
 Diag
 Response
 Register
+Forward
+Done
 Sync
 Start
 Stop
@@ -71,13 +71,8 @@ step!
 
 ## Other internal types and functions
 ```@docs
-SimEvent
-SimCond
-Sample
-sconvert
 nextevent
 nextevtime
-checktime
 evaluate
 evExec
 sfExec

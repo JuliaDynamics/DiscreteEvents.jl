@@ -1,5 +1,8 @@
 # News in v0.3.0
 
+```@meta
+CurrentModule = Simulate
+```
 v0.3.0 is a significant improvement over 0.2.0 with a name change,
 multithreading, resource handling and a streamlined documentation.
 
@@ -12,8 +15,6 @@ multithreading, resource handling and a streamlined documentation.
   - `SimProcess` → [`Prc`](@ref), `SP` is no longer defined,
   - `SimEvent` → [`DiscreteEvent`](@ref),
   - `SimCond` → [`DiscreteCond`](@ref),  
-  - `` → [``](@ref)
-  - `` → [``](@ref)
 
 ## New functionality in v0.3.0
 - [`Action`](@ref) is introduced as synonym for `Union{Expr,Fun,Tuple}`,

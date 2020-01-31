@@ -20,62 +20,61 @@ registering function calls or expressions as events, scheduling them for executi
 or evaluation at a given time or under a given condition and executing them at
 their time or if conditions are met.
 
-Some preliminary definitions:
+A clock can be created. It is operated as a state machine. It can control
+active clocks on other threads.
+
+```@docs
+Clock
+PClock
+ActiveClock
+pclock
+```
+Clocks have the following substructures:
 
 ```@docs
 Schedule
 AC
 ```
 
-A clock can be created. It is operated as a state machine. It can control
-active clocks as slaves on other threads.
-
-```@docs
-Clock
-```
-
-The central clock  is 𝐶. You can set time units and query the current simulation time.
+There is a default central clock 𝐶. You can set time units and query the current simulation time.
 
 ```@docs
 𝐶
 setUnit!
 tau(::Clock)
-@tau(::Clock)
 ```
 
-You can start clocks on multiple threads to parallelize simulations.
+You can fork single clocks to multiple threads or collapse them if no longer needed and diagnose parallel clocks.
 
 ```@docs
-ActiveClock
-PClock
 fork!
 collapse!
-talk
-pclock
+diag
 ```
 
 ## Events
 
-Events are scheduled on the clock's timeline and are triggered at a given simulation time or under conditions which may become true during simulation.
+Julia expressions and functions can be scheduled as events on the clock's timeline and are triggered at a given simulation time or under conditions which may become true during simulation.
 
-### Expressions and functions as events and conditions
-
-Julia expressions and functions can be scheduled as events.
+Functions and expressions can be scheduled for execution
+1. at given clock times and
+2. under specified conditions.
 
 ```@docs
+DiscreteEvent
+DiscreteCond
 Timing
-SimFunction
-@SF
-SimExpr
+Fun
+Action
+event!
 ```
-
-SimFunctions and expressions can be given to events on their own or in arrays or tuples, even mixed:
+Functions and expressions can be given to events on their own or in tuples, even mixed:
 
 ```julia
 function events()
     event!(:(i += 1), after, 10)  # one expression
-    event!(SF(f, 1, 2, 3, diff=pi), every, 1)  # one SimFunction
-    event!((:(i += 1), SF(g, j)), [:(tau() ≥ 50), SF(isready, input), :(a ≤ 10)]) # two SimExpr under three conditions
+    event!(Fun(f, 1, 2, 3, diff=pi), every, 1)  # one Fun
+    event!((:(i += 1), Fun(g, j)), [:(tau() ≥ 50), Fun(isready, input), :(a ≤ 10)]) # two Fun under three conditions
 end
 ```
 
@@ -83,57 +82,23 @@ All given functions or expressions are then called or evaluated at a given simul
 
 !!! warning
     Evaluating expressions or symbols at global scope is much slower than using
-    `SimFunction`s and gives a one time warning. See [Performance](../performance/performance.md).
+    `Fun`s and gives a one time warning. See [Performance](../performance/performance.md).
     This functionality may be removed entirely in a future version. (Please write
     an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
 
-### Timed events
-
-SimFunctions and expressions can be scheduled for execution at given clock times.
-
-```@docs
-event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Number)
-```
-
-As a convenience the `Timing` can be also choosen using `at`, `after` or `every` `t`.
-
-```@docs
-event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Timing, ::Number)
-```
-
-### Conditional events
-
-They are evaluated at each clock tick (like sampling functions) and are fired when all conditions are met.
-
-```@docs
-event!(::Clock, ::Union{SimExpr, Tuple, Vector}, ::Union{SimExpr, Tuple, Vector})
-```
-
 !!! note
     Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `:(tau() ≥ 100)` is preferable to `:(tau() == 100)`.
-
-There are some helper functions and macros for defining conditions. It is usually
-more convenient to use the macros since the generate the necessary SimFunctions
-directly:
-
-```@docs
-tau(::Clock, ::Function, ::Union{Number,Symbol})
-@tau(::Any, ::QuoteNode, ::Union{Number, QuoteNode})
-val
-@val
-```
 
 ## Processes
 
 Julia functions can be registered and run as processes. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
 
 ```@docs
-SimProcess
-@SP
-SimException
+Prc
+ClockException
 process!
 interrupt!
-stop!(::SimProcess, ::SEvent)
+stop!(::Prc, ::ClockEvent)
 ```
 
 ### Delay and wait …
@@ -158,6 +123,7 @@ now!
 Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt.
 
 ```@docs
+Sample
 sample_time!
 sample!
 ```
