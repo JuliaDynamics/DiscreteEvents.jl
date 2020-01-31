@@ -75,16 +75,29 @@ julia> ff.f(ff.arg...)                   # calling ff then gives a different res
 12
 ```
 """
+# struct Fun{S,T}
+#     f::Function
+#     arg::S
+#     kw::T
+#
+#     function Fun(f::Function, arg...; kw...)
+#         isempty(arg) && ( arg = nothing )
+#         isempty(kw)  && ( kw  = nothing )
+#         new{typeof(arg),typeof(kw)}(f, arg, kw)
+#     end
+# end
 struct Fun
     f::Function
     arg::Union{Nothing, Tuple}
     kw::Union{Nothing, Base.Iterators.Pairs}
 
-    function Fun(f::Function, arg...; kw...)
-        isempty(arg) && ( arg = nothing )
-        isempty(kw)  && ( kw  = nothing )
-        new(f, arg, kw)
-    end
+    Fun(f::Function, arg...; kw...) =
+        new(f, isempty(arg) ? nothing : arg, isempty(kw) ? nothing : kw)
+    # function Fun(f::Function, arg...; kw...)
+    #     isempty(arg) && ( arg = nothing )
+    #     isempty(kw)  && ( kw  = nothing )
+    #     new(f, arg, kw)
+    # end
 end
 
 "An action is either an `Expr` or a `Fun` or a `Tuple` of them."
