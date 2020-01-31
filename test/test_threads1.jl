@@ -25,16 +25,16 @@ println("... register parallel events, cevents, samples ...")
 a = 0
 ev = Simulate.DiscreteEvent(Fun(()->global a+=1),Main,1.0,0.0)
 put!(clk.ac[1].forth, Simulate.Register(ev))
-sleep(0.01)
+sleep(0.1)
 @test length(c1.clock.sc.events) == 1
 cev = Simulate.DiscreteCond(Fun(≥, Fun(tau, c1), 5), Fun(()->global a+=1), Main)
 put!(clk.ac[1].forth, Simulate.Register(cev))
-sleep(0.01)
+sleep(0.1)
 @test length(c1.clock.sc.cevents) == 1
 b = 0
 sp = Simulate.Sample(Fun(()->global b+=1), Main)
 put!(clk.ac[1].forth, Simulate.Register(sp))
-sleep(0.01)
+sleep(0.1)
 @test length(c1.clock.sc.samples) == 1
 
 println("... run parallel clock 1 (thread 2) ...")
