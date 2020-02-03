@@ -125,7 +125,7 @@ Functions or expressions can register for sampling and are then executed "contin
 ```@docs
 Sample
 sample_time!
-sample!
+periodic!
 ```
 
 ## Running simulations

@@ -40,7 +40,6 @@ const version = v"0.3.0"
 
 using Unitful, Random, DataStructures, Logging, .Threads
 import Unitful: FreeUnits, Time
-import Base.show
 
 include("types.jl")
 include("components.jl")
@@ -52,7 +51,7 @@ include("threads.jl")
 
 export  Clock, PClock, ActiveClock, setUnit!, Action, Fun,
         𝐶, Clk, Timing, at, after, every, before, until,
-        tau, sample_time!, event!, sample!,
+        tau, sample_time!, event!, periodic!,
         incr!, run!, stop!, resume!, reset!, sync!,
         Prc, process!, interrupt!, delay!, wait!, now!,
         fork!, collapse!, pclock, diag

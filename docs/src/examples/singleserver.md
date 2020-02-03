@@ -96,7 +96,7 @@ We want to collect `stats()` at a sample rate of 0.1:
 
 ```julia
 sample_time!(𝐶, 0.1)  # we determine the sample rate
-Sim.sample!(𝐶, Fun(stats));  # we register stats() as sampling function
+periodic!(𝐶, Fun(stats));  # we register stats() as sampling function
 ```
 
 We assume now that the capacity equals the arrivals and provide no overcapacity.  Therefore  we start with one arrival and ``\mu = 5``, ``\sigma = 1/5`` and ``c = 1`` and let our system run for 30 minutes (let's assume our time unit be minutes):
@@ -202,7 +202,7 @@ for c ∈ collect(0.97:0.01:1.7)
 
     reset!(𝐶)                            # reset 𝐶
     sample_time!(𝐶, 1)                   # set sample rate to 1
-    Sim.sample!(𝐶, Fun(stats))   # register the stats() function for sampling
+    periodic!(𝐶, Fun(stats))   # register the stats() function for sampling
 
     Random.seed!(2019)
     arrive(5, 1/5, c)

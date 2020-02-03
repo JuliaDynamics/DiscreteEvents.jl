@@ -24,14 +24,15 @@ Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(c::Clock) = peek(c.sc.events)[2]
 
-"catchall function: forward the value y"
-evaluate(y::Any,  m::Module) = y
+"""
+    evaluate(y,  m::Module)
 
-"recursive call to `sfExec` for a nested `Fun`."
-evaluate(y::Fun, m::Module) = sfExec(y, m)
-
-"evaluate a symbol or expression and give a warning."
-function evaluate(y::Union{Symbol,Expr}, m::Module)
+Function barrier for arguments and keywords of a Fun. This allows Expr, Symbol
+and Fun as arguments and keyword values.
+"""
+evaluate(y,  m::Module) = y    # catchall, gives back the argument
+evaluate(y::Fun, m::Module) = sfExec(y, m)   # Fun: recursively call sfexec
+function evaluate(y::Union{Symbol,Expr}, m::Module)  # Symbol,Expr: eval
     try
         ret = Core.eval(m, y)
         @warn "Evaluating expressions is slow, use `Fun` instead" maxlog=1
@@ -41,74 +42,51 @@ function evaluate(y::Union{Symbol,Expr}, m::Module)
     end
 end
 
-"Execute a Fun."
+"""
+    sfExec(x::Fun, m::Module)
+
+Execute a Fun x.
+
+- if x.f is an event!, its args and kws must be maintained for later evaluation,
+    otherwise evaluate them now before passing them to x.f,
+- branch to different invocation methods depending on args or kws,
+- if x.f is not from Main and we are not on thread 1, call it with invokelatest
+    to avoid a world age situation (it may be too new).
+"""
 function sfExec(x::Fun, m::Module)
+    f_std = (parentmodule(x.f) != Main) || (threadid() == 1)
     if x.arg === nothing
         if x.kw === nothing
-            try
-                x.f()
-            catch exc
-                if exc isa MethodError
-                    invokelatest(x.f)
-                else
-                    rethrow(exc)
-                end
-            end
-        else   # only kws
-            kw = x.f isa typeof(event!) ? x.kw : (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
-            try
-                x.f(; kw...)
-            catch exc
-                if exc isa MethodError
-                    invokelatest(x.f; kw...)
-                else
-                    rethrow(exc)
-                end
-            end
+            f_std ? x.f() : invokelatest(x.f)  # 1. no args and kws
+        else
+            kw = x.f === event! ? x.kw : (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
+            f_std ? x.f(; kw...) : invokelatest(x.f; kw...)    # 2. only kws
         end
     else
-        if x.kw === nothing    # only args
-            arg = x.f isa typeof(event!) ? x.arg : map(i->evaluate(i, m), x.arg)
-            try
-                x.f(arg...)
-            catch exc
-                if exc isa MethodError
-                    invokelatest(x.f, arg...)
-                else
-                    rethrow(exc)
-                end
-            end
-        else    # full args and kws
-            if x.f isa typeof(event!)  # should arguments be maintained?
+        if x.kw === nothing
+            arg = x.f === event! ? x.arg : map(i->evaluate(i, m), x.arg)
+            f_std ? x.f(arg...) : invokelatest(x.f, arg...)    # 3. only args
+        else
+            if x.f === event!
                 arg = x.arg; kw = x.kw
-            else                 # otherwise evaluate them
+            else
                 arg = map(i->evaluate(i, m), x.arg)
                 kw = (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
             end
-            try
-                x.f(arg...; kw...)
-            catch exc
-                if exc isa MethodError
-                    invokelatest(x.f, arg...; kw...)
-                else
-                    rethrow(exc)
-                end
-            end
+            f_std ? x.f(arg...; kw...) : invokelatest(x.f, arg...; kw...) # 4. args and kws
         end
     end
 end
 
-"Forward an expression to `evaluate`."
-sfExec(x::Expr, m::Module) = evaluate(x, m)
+
+# "Forward an expression to `evaluate`."
+# sfExec(x::Expr, m::Module) = evaluate(x, m)
 
 """
-```
-evExec(ex::Fun, m::Module=Main)
-evExec(ex::Expr, m::Module=Main)
-evExec(ex::Tuple, m::Module=Main)
-```
+    evExec(ex, m::Module=Main)
 
-Forward an event's `Fun`s or expressions to further execution or evaluation.
+Function barrier for different ex: forward an event's `Fun`s or expressions
+to further execution or evaluation.
 
 # Return
 the evaluated value or a tuple of evaluated values.
