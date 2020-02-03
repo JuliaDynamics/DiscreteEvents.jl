@@ -392,7 +392,7 @@ sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 periodic!([clk::Clock], ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
         scope::Module=Main, spawn=false)
 ```
-Register a function or expression for periodic execution.
+Register a function or expression for periodic execution at the clock`s sample rate.
 
 # Arguments
 - `clk::Clock`: if not supplied, it samples on 𝐶,
