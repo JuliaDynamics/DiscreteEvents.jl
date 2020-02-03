@@ -125,12 +125,12 @@ Functions or expressions can register for sampling and are then executed "contin
 ```@docs
 Sample
 sample_time!
-sample!
+periodic!
 ```
 
 ## Running simulations
 
-If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are executed … Thus we run a simulation. We can also step through a simulation or stop and resume a clock, reset ist and so on.
+If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are executed … We can also step through a simulation, stop, resume or reset it.
 
 ```@docs
 reset!

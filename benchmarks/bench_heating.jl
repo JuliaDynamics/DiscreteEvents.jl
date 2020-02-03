@@ -71,7 +71,7 @@ function setup()
     for i in 1:2                              # put 2 people in the house
         process!(Prc(i, people!, house))       # run processes
     end
-    Simulate.sample!(Fun(setTemperatures!, house), Δt)  # set sampling function
+    periodic!(Fun(setTemperatures!, house), Δt)  # set sampling function
     switch!(house)                                     # start the thermostat
 end
 

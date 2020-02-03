@@ -14,7 +14,8 @@ multithreading, resource handling and a streamlined documentation.
   - `Simfunction` → [`Fun`](@ref), `SF` is no longer defined,
   - `SimProcess` → [`Prc`](@ref), `SP` is no longer defined,
   - `SimEvent` → [`DiscreteEvent`](@ref),
-  - `SimCond` → [`DiscreteCond`](@ref),  
+  - `SimCond` → [`DiscreteCond`](@ref),
+  - `sample!` → [`periodic!`](@ref), was a name collision with `Distributions.jl`.
 
 ## New functionality in v0.3.0
 - [`Action`](@ref) is introduced as synonym for `Union{Expr,Fun,Tuple}`,
@@ -32,7 +33,7 @@ multithreading, resource handling and a streamlined documentation.
 - with [`pclock`](@ref) all parallel clocks can be accessed and referenced,
 - [`process!`](@ref) can now start tasks on parallel threads,
 - [`event!`](@ref) can now schedule events for execution on parallel threads,
-- [`sample!`](@ref) can now register sampling functions or expressions to
+- [`periodic!`](@ref) can now register sampling functions or expressions to
   parallel clocks,
 - if setup with parallel clocks, [`Clock`](@ref) becomes the master to drive
   them and synchronize with them at each `Δt` timestep,

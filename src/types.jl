@@ -81,7 +81,7 @@ struct Fun
     kw::Union{Nothing, Base.Iterators.Pairs}
 
     Fun(f::Function, arg...; kw...) =
-        new(f, isempty(arg) ? nothing : arg, isempty(kw) ? nothing : kw)
+        new(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
 end
 
 "An action is either an `Expr` or a `Fun` or a `Tuple` of them."
@@ -103,10 +103,11 @@ executed at an event time.
 struct DiscreteEvent{T<:Action}
     ex::T
     scope::Module
-    t::Real
-    Δt::Real
+    t::Float64
+    Δt::Float64
 end
-
+DiscreteEvent(ex::T, scope::Module, t::Real, Δt::Real) where {T<:Action} =
+    DiscreteEvent(ex, scope, float(t), float(Δt))
 
 """
 ```
@@ -196,8 +197,7 @@ mutable struct Prc
     arg::Tuple
     kw::Base.Iterators.Pairs
 
-    Prc( id, f::Function, arg...; kw...) =
-        new(id, nothing, nothing, f, arg, kw)
+    Prc( id, f::Function, arg...; kw...) = new(id, nothing, nothing, f, arg, kw)
 end
 
 """
@@ -355,7 +355,7 @@ function PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
     return clk
 end
 
-# function show(io::IO, c::Clock)
+# function Base.show(io::IO, c::Clock)
 #     s1::String = "Clockid=$(c.id)"
 #     s2::String = "state=$(c.state), "
 #     s3::String = "t=$(c.time), "

@@ -389,10 +389,11 @@ sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
 """
 ```
-sample!([clk::Clock], ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
+periodic!([clk::Clock], ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
         scope::Module=Main, spawn=false)
 ```
-enqueue an expression for sampling.
+Register a function or expression for periodic execution at the clock`s sample rate.
+
 # Arguments
 - `clk::Clock`: if not supplied, it samples on 𝐶,
 - `ex::Union{Expr, Fun}`: an expression or function,
@@ -400,12 +401,12 @@ enqueue an expression for sampling.
     the current sampling rate, if that is 0, it calculates one,
 - `scope::Module=Main`: optional, an evaluation scope for a given expression.
 """
-function sample!(clk::Clock, ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
+function periodic!(clk::Clock, ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
                  scope::Module=Main, spawn=false)
     clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
     assign(clk, Sample(ex, scope), spawn ? spawnid(clk) : 0)
 end
-sample!(ex::Union{Expr, Fun}, Δt::Number=𝐶.Δt; kw...) = sample!(𝐶, ex, Δt; kw...)
+periodic!(ex::Union{Expr, Fun}, Δt::Number=𝐶.Δt; kw...) = periodic!(𝐶, ex, Δt; kw...)
 
 """
     step!(clk::Clock, ::Undefined, ::Init)

@@ -13,7 +13,7 @@ tau(ac::ActiveClock) = tau(ac.clock)
 sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
 
 event!(ac::ActiveClock, args...; kwargs...) = event!(ac.clock, args...; kwargs...)
-sample!(ac::ActiveClock, args...; kwargs...) = sample!(ac.clock, args...; kwargs...)
+periodic!(ac::ActiveClock, args...; kwargs...) = periodic!(ac.clock, args...; kwargs...)
 
 delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
 wait!(ac::ActiveClock, args...; kwargs...) = wait!(ac.clock, args...; kwargs...)

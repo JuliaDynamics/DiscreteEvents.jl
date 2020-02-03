@@ -91,7 +91,7 @@ function testwait(clk::Clock, c1::Channel, c2::Channel)
     push!(res, (tau(), 1, a, b))
     wait!(clk, Fun(isa, a, Int)) # must return immediately
     push!(res, (tau(), 2, a, b))
-    sample!(clk, Fun(incb))
+    periodic!(clk, Fun(incb))
     wait!(clk, Fun(checkb, 201))
     push!(res, (tau(), 3, a, b))
     take!(c1)

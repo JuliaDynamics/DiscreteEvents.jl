@@ -109,7 +109,7 @@ tick (generic function with 1 method)
 julia> sample_time!(1)                            # set the sampling rate on the central clock to 1
 1.0
 
-julia> sample!( Fun(tick) );                       # set tick as a sampling function
+julia> periodic!( Fun(tick) );                       # set tick as a sampling function
 
 julia> 𝐶                                          # 𝐶 now has one sampling entry and the sample rate set
 Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 1, sample rate Δt=1.0
@@ -146,7 +146,7 @@ If Δt = 0, the clock doesn't tick with a fixed interval, but jumps from event t
 
 #### Types and functions
 
-[`Clock`](@ref), [`𝐶`](@ref), [`tau`](@ref), [`sample_time!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`incr!`](@ref), [`sync!`](@ref), [`stop!`](@ref stop!(::Clock)), [`resume!`](@ref),  
+[`Clock`](@ref), [`𝐶`](@ref), [`tau`](@ref), [`sample_time!`](@ref), [`periodic!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`incr!`](@ref), [`sync!`](@ref), [`stop!`](@ref stop!(::Clock)), [`resume!`](@ref),  
 
 ## [Events](@id event_scheme)
 
@@ -213,7 +213,7 @@ julia> run!(𝐶, 5)                              # run
 ```julia
 reset!(𝐶)                                       # reset the clock
 y = 0                                           # create a variable y
-sample!( Fun(() -> global y = tau()/2) );        # a sampling function
+periodic!( Fun(() -> global y = tau()/2) );        # a sampling function
 event!( Fun(()->println(tau(),": now y ≥ π") ), (@val :y :≥ π) ) # a conditional event
 ```
 ```julia
@@ -226,7 +226,7 @@ julia> 2π                                       # exact value
 ```
 ```julia
 reset!(𝐶)
-sample!( Fun(()-> global y=sin(@tau)) );         # sample a sine function on y
+periodic!( Fun(()-> global y=sin(@tau)) );         # sample a sine function on y
 event!(Fun(()->println(tau(),": now y ≥ 1/2")), ((@val :y :≥ 1/2),(@tau :≥ 5))) # two conditions
 ```
 ```julia
@@ -241,7 +241,7 @@ julia> asin(0.5) + 2π                           # exact value
 It can be seen: (1) the sample rate has some uncertainty in detecting events and (2) conditional events are triggered only once. If there is no sample rate set, a conditional event sets one up and deletes it again after it becomes true.
 
 #### Types and functions
-[`tau`](@ref), [`Fun`](@ref), [`event!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`sample!`](@ref)
+[`tau`](@ref), [`Fun`](@ref), [`event!`](@ref), [`run!`](@ref), [`reset!`](@ref), [`periodic!`](@ref)
 
 ## [Processes](@id process_scheme)
 
@@ -319,7 +319,7 @@ scuff = false
 reset!(𝐶)
 Random.seed!(1122)
 
-sample!(Fun(()-> global hunger += rand()), 0.5)   # a sampling function: increasing hunger
+periodic!(Fun(()-> global hunger += rand()), 0.5)   # a sampling function: increasing hunger
 event!(Fun(()-> global scuff = true ), 7+rand())  # an event: scuff after 7 am
 process!(Prc(1, watchdog, "Snoopy"), 1)           # create, register and run Snoopy
 ```
@@ -373,7 +373,7 @@ julia> run!(𝐶, 10)                               # it runs all 5 cycles
 "run! finished with 10 clock events, 0 sample steps, simulation time: 10.0"
 ```
 #### Types and functions
-[`Prc`](@ref), [`process!`](@ref), [`delay!`](@ref), [`wait!`](@ref), [`now!`](@ref), [`Fun`](@ref Fun), [`run!`](@ref), [`𝐶`](@ref), [`reset!`](@ref), [`sample!`](@ref), [`event!`](@ref)
+[`Prc`](@ref), [`process!`](@ref), [`delay!`](@ref), [`wait!`](@ref), [`now!`](@ref), [`Fun`](@ref Fun), [`run!`](@ref), [`𝐶`](@ref), [`reset!`](@ref), [`periodic!`](@ref), [`event!`](@ref)
 
 ## [Continuous sampling](@id continuous_sampling)
 
@@ -382,7 +382,7 @@ Continuous sampling allows to bring continuous processes or real world data into
 If you provide the clock with a time interval `Δt`, it ticks with a fixed sample rate. At each tick it will call registered functions or expressions:
 
 - [`sample_time!(Δt)`](@ref sample_time!): set the clock's sample rate starting from now.
-- [`sample!(expr)`](@ref sample!): register a function or expression for sampling. If no sample rate is set, set it implicitly.
+- [`periodic!(expr)`](@ref periodic!): register a function or expression for sampling. If no sample rate is set, set it implicitly.
 
 Sampling functions or expressions are called at clock ticks in the sequence they were registered. They are called before any events scheduled for the same time.
 

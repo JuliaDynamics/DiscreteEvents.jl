@@ -351,7 +351,7 @@ function switch(t1=20, t2=23)           # a function simulating the thermostat
     end
 end
 
-Simulate.sample!(Fun(setTemperatures), Δt)  # setup the sampling function
+periodic!(Fun(setTemperatures), Δt)        # setup the sampling function
 switch()                                   # start the thermostat
 
 @time run!(𝐶, 24)                          # run the simulation
@@ -400,7 +400,7 @@ df = DataFrame(t=Float64[], tr=Float64[], te=Float64[], heating=Int64[])
 for i in 1:2                                 # put 2 people in the house
     process!(Prc(i, people), 1)               # run process only once
 end
-Simulate.sample!(Fun(setTemperatures), Δt)    # setup sampling
+periodic!(Fun(setTemperatures), Δt)    # setup sampling
 switch()                                     # start the thermostat
 
 @time run!(𝐶, 24)
@@ -429,7 +429,7 @@ title!("House heating with people")
 
 We have now all major schemes: events, continuous sampling and processes combined in one example.
 
-**see:** [`tau`](@ref), [`Fun`](@ref), [`event!`](@ref), [`delay!`](@ref), [`sample!`](@ref), [`run!`](@ref), [`process!`](@ref), [`Prc`](@ref), [`reset!`](@ref), [`𝐶`](@ref)\
+**see:** [`tau`](@ref), [`Fun`](@ref), [`event!`](@ref), [`delay!`](@ref), [`periodic!`](@ref), [`run!`](@ref), [`process!`](@ref), [`Prc`](@ref), [`reset!`](@ref), [`𝐶`](@ref)\
 **see also**: the [full house heating example](../examples/house_heating/house_heating.md) for further explanations.
 
 ## Theories

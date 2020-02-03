@@ -151,7 +151,7 @@ sim = Clock(1)  # clock with sample rate 1
 @test sim.Δt == 1
 
 b = 0
-sample!(sim, :(b += 1))
+periodic!(sim, :(b += 1))
 @test length(sim.sc.samples) == 1
 incr!(sim)
 @test sim.time == 1
@@ -179,7 +179,7 @@ b = 0
 sim = Clock(0.5)
 event!(sim, :(foo()), at, 0.5)
 event!(sim, :(foo()), at, 1)
-sample!(sim, :(bar()))
+periodic!(sim, :(bar()))
 run!(sim, 10000)
 @test a == sim.evcount
 @test b == 20000
@@ -278,6 +278,6 @@ reset!(𝐶, unit=s)
 @test event!(𝐶, Fun(myfunc, 4, 5), 1minute, cycle=1minute) == 60
 @test event!(𝐶, Fun(myfunc, 5, 6), after, 1hr) == 3600
 @test sample_time!(𝐶, 30s) == 30
-sample!(𝐶, Fun(myfunc, 1, 2))
+periodic!(𝐶, Fun(myfunc, 1, 2))
 run!(𝐶, 1hr)
 @test 𝐶.evcount == 61
