@@ -61,7 +61,7 @@ function unload()
         load()
     end
 end</code></pre><p>We want to collect <code>stats()</code> at a sample rate of 0.1:</p><pre><code class="language-julia">sample_time!(𝐶, 0.1)  # we determine the sample rate
-Sim.sample!(𝐶, Fun(stats));  # we register stats() as sampling function</code></pre><p>We assume now that the capacity equals the arrivals and provide no overcapacity.  Therefore  we start with one arrival and <span>$\mu = 5$</span>, <span>$\sigma = 1/5$</span> and <span>$c = 1$</span> and let our system run for 30 minutes (let&#39;s assume our time unit be minutes):</p><pre><code class="language-julia">Random.seed!(2019)
+periodic!(𝐶, Fun(stats));  # we register stats() as sampling function</code></pre><p>We assume now that the capacity equals the arrivals and provide no overcapacity.  Therefore  we start with one arrival and <span>$\mu = 5$</span>, <span>$\sigma = 1/5$</span> and <span>$c = 1$</span> and let our system run for 30 minutes (let&#39;s assume our time unit be minutes):</p><pre><code class="language-julia">Random.seed!(2019)
 arrive(5, 1/5, 1)  # we schedule the first event
 run!(𝐶, 30)        # and run the simulation</code></pre><p>This will give us as output:</p><pre><code class="language-julia">0: job 1 has arrived
 0: job 1 has been loaded
@@ -119,7 +119,7 @@ for c ∈ collect(0.97:0.01:1.7)
 
     reset!(𝐶)                            # reset 𝐶
     sample_time!(𝐶, 1)                   # set sample rate to 1
-    Sim.sample!(𝐶, Fun(stats))   # register the stats() function for sampling
+    periodic!(𝐶, Fun(stats))   # register the stats() function for sampling
 
     Random.seed!(2019)
     arrive(5, 1/5, c)
