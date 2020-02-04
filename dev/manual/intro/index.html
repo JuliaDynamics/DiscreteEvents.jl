@@ -35,7 +35,8 @@ run!(clk, 10)   # and run for 10 time units</code></pre><p>We then run it:</p><p
  9.20: foo 5 took token 5048148
  9.91: bar 6 took token 5048153
 &quot;run! finished with 43 clock events, 0 sample steps, simulation time: 10.0&quot;</code></pre><h4><a class="nav-anchor" id="Types-and-functions-1" href="#Types-and-functions-1">Types and functions</a></h4><p><a href="../usage/#Simulate.𝐶"><code>𝐶</code></a>, <a href="../usage/#Simulate.reset!"><code>reset!</code></a>, <a href="../usage/#Simulate.now!"><code>now!</code></a>, <a href="../usage/#Simulate.delay!"><code>delay!</code></a>, <a href="../usage/#Simulate.process!"><code>process!</code></a>, <a href="../usage/#Simulate.Prc"><code>Prc</code></a>, <a href="../usage/#Simulate.run!"><code>run!</code></a></p><h2><a class="nav-anchor" id="Four-building-blocks-1" href="#Four-building-blocks-1">Four building blocks</a></h2><p><code>Simulate.jl</code> provides 4 major building blocks for modeling and simulation of discrete event systems:</p><ol><li>the logical <a href="#the_clock-1"><strong>clock</strong></a> gives the simulation time,</li><li><a href="#event_scheme-1"><strong>events</strong></a> are Julia expressions or functions executing at given simulation times or under given conditions,</li><li><a href="#process_scheme-1"><strong>processes</strong></a> are functions running as <a href="https://docs.julialang.org/en/v1/manual/control-flow/#man-tasks-1">tasks</a> and synchronizing with the clock by delaying for a time or waiting for conditions,</li><li><a href="#continuous_sampling-1"><strong>continuous sampling</strong></a> is done by invoking given expressions or functions at a given rate on the time line.</li></ol><h2><a class="nav-anchor" id="the_clock-1" href="#the_clock-1">The clock</a></h2><p>The clock is central to any model and simulation, since it establishes the timeline. It does not only provide the time, but contains also the time unit, all scheduled events, conditional events, processes, sampling expressions or functions and the sample rate Δt. Each simulation can have its own clock.</p><pre><code class="language-julia">julia&gt; c = Clock()                           # create a new clock
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia&gt; tick() = println(tau(c), &quot;: tick!&quot;)   # define a function printing the clock&#39;s time
 tick (generic function with 1 method)
@@ -64,7 +65,8 @@ julia&gt; sample_time!(1)                            # set the sampling rate on 
 julia&gt; periodic!( Fun(tick) );                       # set tick as a sampling function
 
 julia&gt; 𝐶                                          # 𝐶 now has one sampling entry and the sample rate set
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 1, sample rate Δt=1.0
+Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=1.0 , prc:0
+  scheduled ev:0, cev:0, sampl:1
 
 julia&gt; run!(𝐶, 5)                                 # run 𝐶 for 5 time units
 1.0: tick!
