@@ -54,7 +54,7 @@ julia> using Simulate
 julia> f(a,b,c; d=4, e=5) = a+b+c+d+e       # if you define a function and ...
 f (generic function with 1 method)
 
-julia> sf = SF(f, 10, 20, 30, d=14, e=15);  # store it as Fun
+julia> sf = Fun(f, 10, 20, 30, d=14, e=15);  # store it as Fun
 
 julia> sf.f(sf.arg...; sf.kw...)         # it can be executed later
 89
@@ -277,22 +277,24 @@ julia> using Simulate, Unitful
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()                 # create a unitless clock (standard)
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
-
-julia> Simulate.init!(c)           # initialize it explicitly (normally done implicitly)
-Simulate.Idle()
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(1s, unit=minute)  # create a clock with units, does conversions automatically
-Clock: state=Simulate.Undefined(), time=0.0, unit=minute, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.016666666666666666
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(1s)               # create a clock with implicit unit setting
-Clock: state=Simulate.Undefined(), time=0.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(t0=60s)           # another example of implicit unit setting
-Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=60.0 s, Δt=0.0 s, prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt takes precedence
-Clock: state=Simulate.Undefined(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
+  scheduled ev:0, cev:0, sampl:0
 ```
 """
 mutable struct Clock <: AbstractClock
@@ -354,21 +356,6 @@ function PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
     fork!(clk)
     return clk
 end
-
-# function Base.show(io::IO, c::Clock)
-#     s1::String = "Clockid=$(c.id)"
-#     s2::String = "state=$(c.state), "
-#     s3::String = "t=$(c.time), "
-#     s4::String = "u=$(c.unit), "
-#     s5::String = "Δt=$(c.Δt)"
-#     s6::String = "ac: $(length(s.ac))"
-#     s7::String = "procs: $(length(c.processes)), "
-#     sc1::String = "ev: $(length(c.sc.events)), "
-#     sc2::String = "cev: $(length(c.sc.cevents)), "
-#     sc3::String = "sampl: $(length(c.sc.sexpr)), "
-#     println(io, s1 * s2 * s3 * s4 * s5 * s6 * s7)
-#     println(io, "  schedule: " * sc1 * sc2 * sc3)
-# end
 
 """
 ```

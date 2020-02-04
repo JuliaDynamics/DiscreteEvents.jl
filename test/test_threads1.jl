@@ -2,18 +2,17 @@ println("... testing multithreading  1 ...")
 
 clk = PClock()
 @test clk.id == 0
+m = match(r"Clock thread 1 \(\+ (\d+) ac\)", repr(clk))
+@test parse(Int, m.captures[1]) > 0
 @test length(clk.ac) >= (nthreads() >>> 1)
-# for i in 2:nthreads()
-#     @test clk.ac[i-1].id == i
-#     c = pclock(clk, i)
-#     @test c.clock.id == i
-# end
 @test clk.ac[1].thread == 2
 
 println("... parallel clock identification ...")
 c1 = pclock(clk, 1)
 @test c1.thread == 2
 @test c1.clock.id == 1
+m = match(r"Active clock 1 on thrd (\d+)\:", repr(c1))
+@test parse(Int, m.captures[1]) > 1
 
 println("... remote error handling ...")
 put!(clk.ac[1].forth, Simulate.Clear())
