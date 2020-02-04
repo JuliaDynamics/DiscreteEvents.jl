@@ -8,8 +8,6 @@
 # this implements the event handling
 #
 
-import Base.invokelatest
-
 """
     nextevent(c::Clock)
 
@@ -57,15 +55,15 @@ function sfExec(x::Fun, m::Module)
     f_std = (parentmodule(x.f) != Main) || (threadid() == 1)
     if x.arg === nothing
         if x.kw === nothing
-            f_std ? x.f() : invokelatest(x.f)  # 1. no args and kws
+            f_std ? x.f() : Base.invokelatest(x.f)  # 1. no args and kws
         else
             kw = x.f === event! ? x.kw : (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
-            f_std ? x.f(; kw...) : invokelatest(x.f; kw...)    # 2. only kws
+            f_std ? x.f(; kw...) : Base.invokelatest(x.f; kw...)    # 2. only kws
         end
     else
         if x.kw === nothing
             arg = x.f === event! ? x.arg : map(i->evaluate(i, m), x.arg)
-            f_std ? x.f(arg...) : invokelatest(x.f, arg...)    # 3. only args
+            f_std ? x.f(arg...) : Base.invokelatest(x.f, arg...)    # 3. only args
         else
             if x.f === event!
                 arg = x.arg; kw = x.kw
@@ -73,7 +71,7 @@ function sfExec(x::Fun, m::Module)
                 arg = map(i->evaluate(i, m), x.arg)
                 kw = (; zip(keys(x.kw), map(i->evaluate(i, m), values(x.kw)) )...)
             end
-            f_std ? x.f(arg...; kw...) : invokelatest(x.f, arg...; kw...) # 4. args and kws
+            f_std ? x.f(arg...; kw...) : Base.invokelatest(x.f, arg...; kw...) # 4. args and kws
         end
     end
 end

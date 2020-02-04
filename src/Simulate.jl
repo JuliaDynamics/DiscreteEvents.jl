@@ -48,6 +48,7 @@ include("schedule.jl")
 include("clock.jl")
 include("process.jl")
 include("threads.jl")
+include("printing.jl")
 
 export  Clock, PClock, ActiveClock, setUnit!, Action, Fun,
         𝐶, Clk, Timing, at, after, every, before, until,

@@ -74,7 +74,8 @@ The clock is central to any model and simulation, since it establishes the timel
 
 ```julia
 julia> c = Clock()                           # create a new clock
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> tick() = println(tau(c), ": tick!")   # define a function printing the clock's time
 tick (generic function with 1 method)
@@ -112,7 +113,8 @@ julia> sample_time!(1)                            # set the sampling rate on the
 julia> periodic!( Fun(tick) );                       # set tick as a sampling function
 
 julia> 𝐶                                          # 𝐶 now has one sampling entry and the sample rate set
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 1, sample rate Δt=1.0
+Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=1.0 , prc:0
+  scheduled ev:0, cev:0, sampl:1
 
 julia> run!(𝐶, 5)                                 # run 𝐶 for 5 time units
 1.0: tick!

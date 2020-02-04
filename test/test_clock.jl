@@ -1,15 +1,22 @@
 #
 # This file is part of the Simulate.jl Julia package, MIT license
 #
-# Paul Bayer, 2019
+# Paul Bayer, 2020
 #
 # This is a Julia package for discrete event simulation
 #
 
-println("... basic tests: only events  ...")
+println("... basic tests: printing  ...")
+str = "Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 reset!(𝐶)
+@test repr(𝐶) == str
+Simulate._show_default[1] = true
+str = "Clock(0, Simulate.Idle(), 0.0, , 0.0, Simulate.AC[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+@test repr(𝐶) == str
+Simulate._show_default[1] = false
 @test tau() == 0
 
+println("... basic tests: only events  ...")
 ex1 = :(1+1)
 ex2 = :(1+2)
 e() = 123

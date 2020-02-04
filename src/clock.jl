@@ -25,7 +25,8 @@ julia> using Simulate, Unitful
 julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60)     # setup a new clock with t0=60
-Clock: state=Simulate.Undefined(), time=60.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=60.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> tau(c) # current time is 60.0 NoUnits
 60.0
@@ -41,9 +42,6 @@ julia> setUnit!(c, minute)  # set clock unit to Unitful.minute
 
 julia> tau(c)               # current time is now 1.0 minute
 1.0 minute
-
-julia> typeof(tau(c))       # tau(c) now returns a time Quantity ...
-Quantity{Float64,𝐓,Unitful.FreeUnits{(minute,),𝐓,nothing}}
 
 julia> isa(tau(c), Time)
 true
@@ -100,7 +98,8 @@ julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
 julia> 𝐶  # central clock
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> 𝐶 === Clk
 true
@@ -184,13 +183,15 @@ julia> using Simulate, Unitful
 julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
-Clock: state=Simulate.Undefined(), time=60.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=60.0 s, Δt=1.0 s, prc:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> reset!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
 julia> c
-Clock: state=Simulate.Idle(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 ```
 """
 function reset!(clk::Clock, Δt::Number=0;
@@ -345,21 +346,24 @@ current simulation time `tau(clk)`.
 julia> using Simulate
 
 julia> c = Clock()   # create a new clock
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=0.0
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 
-julia> event!(c, SF((x)->println(tau(x), ": now I'm triggered"), c), (@tau c :>= 5))
+julia> event!(c, Fun((x)->println(tau(x), ": now I'm triggered"), c), Fun(>=, Fun(tau, c), 5))
 0.0
 
-julia> c             # a conditional event turns sampling on
-Clock: state=Simulate.Undefined(), time=0.0, unit=, events: 0, cevents: 1, processes: 0, sampling: 0, sample rate Δt=0.01
+# julia> c              # a conditional event turns sampling on  ⬇
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0
+  scheduled ev:0, cev:1, sampl:0
 
 julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fire the event
 5.009999999999938: now I'm triggered
 "run! finished with 0 clock events, 501 sample steps, simulation time: 10.0"
+
+julia> c   # after the event sampling is again switched off ⬇
+Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=10.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 ```
-
-After the event is triggered, sampling is again switched off.
-
 """
 function event!(clk::Clock, ex::Action, cond::Action; scope::Module=Main, spawn=false)
     if clk.state == Busy() && all(evExec(cond))   # all conditions met
