@@ -15,17 +15,20 @@ to parameter variation. Basically you write a function, accepting parameters and
 
 ## Multithreading of events and processes  
 
-!!! note
+!!! compat "Julia 1.3"
+
+    Multithreading requires Julia ≥ 1.3.
+
+!!! warning "Not user-ready !!!"
 
     Multithreading is still experimental and in active development.
-    It requires Julia ≥ 1.3.
 
 Simulations consist of multiple events, sampling functions and asynchronous
 processes. The clock executes them sequentially on one thread. But modern computers have multiple cores, each being able to execute at least one distinct thread of operations. In order to speed things up, you may want to use the other cores (threads) as well:
 
-1. With  [`PClock`](@ref) you can create a clock with copies on each available thread  or you can [`fork!`](@ref) an existing single clock to other threads. Then there are parallel [`ActiveClock`](@ref)s [^1] for scheduling and execution of  parallel events,  processes and samples.  
-2. Parallel clocks are accessible with [`pclock`](@ref). By  registering events ([`event!`](@ref)), samples ([`periodic!`](@ref)) or processes ([`process!`](@ref)) to them you get parallel clock schedules.
-3. You can also schedule events or processes randomly on parallel clocks by calling [`event!`](@ref), [`process!`](@ref) or [`periodic!`](@ref) with `spawn=true`. This allows to balance the load between threads.
+1. [`PClock`](@ref) creates a clock with corresponding [`ActiveClock`](@ref)s [^1] on each available thread. An existing single clock can be [`fork!`](@ref)ed to other threads. `ActiveClock`s can then schedule and execute parallel events,  processes and samples.  
+2. The parallel clocks are accessible with [`pclock`](@ref). By  registering events ([`event!`](@ref)), samples ([`periodic!`](@ref)) or processes ([`process!`](@ref)) to them you get parallel clock schedules.
+3. You can also schedule events or processes randomly on parallel clocks by calling `event!`, `process!` or `periodic!` with `spawn=true`. This allows to balance the load between threads.
 4. If you [`run!`](@ref) a parallelized clock, the clock on thread 1 becomes the "master", tells the clocks on the other threads to run for a time step Δt and synchronizes with them after each such step.
 
 ```julia

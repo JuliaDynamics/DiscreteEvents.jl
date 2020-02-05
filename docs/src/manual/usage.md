@@ -6,51 +6,59 @@
 CurrentModule = Simulate
 ```
 
-`Simulate.jl` runs on Julia versions ≥ v"1.0".
+`Simulate.jl` runs on Julia versions ≥ v"1.0". Multithreading requires Julia ≥ v"1.3".
 
 ```@docs
 Simulate
 version
 ```
 
-## The clock
+## Clocks
 
-A clock in `Simulate.jl` is an active object residing in a thread and continuously
-registering function calls or expressions as events, scheduling them for execution
-or evaluation at a given time or under a given condition and executing them at
-their time or if conditions are met.
+A clock in `Simulate.jl` is an active object residing in a thread and
+registers function calls or expressions as events, schedules them at a given time or under a given condition and executes them at their time or if conditions are met.
 
-A clock can be created. It is operated as a state machine. It can control
-active clocks on other threads.
+- `Clock` and `ActiveClock`s have virtual (simulation) time. A `Clock` can
+  control and synchronizes with `ActiveClock`s on other threads. It can be
+  started and run for a given time.
+- `RTClock`s have real (system) time and operate independently from each other
+  and other clocks. They run continuously at given clock ticks and execute
+  scheduled events if their time becomes due.
 
 ```@docs
 Clock
-PClock
 ActiveClock
-pclock
+RTClock
 ```
 Clocks have the following substructures:
 
 ```@docs
 Schedule
-AC
+ClockChannel
 ```
 
-There is a default central clock 𝐶. You can set time units and query the current simulation time.
+You can set time units and query the current clock time. There is a default clock `𝐶`, which can be used for experimental work. `RTC` can be used to setup and
+control real time Clocks.
 
 ```@docs
-𝐶
 setUnit!
-tau(::Clock)
+tau
+𝐶
+RTC
 ```
 
-You can fork single clocks to multiple threads or collapse them if no longer needed and diagnose parallel clocks.
+You can create a clock with parallel active clocks on all available threads or fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel clocks and diagnose them.
 
 ```@docs
+PClock
 fork!
+pclock
 collapse!
 diag
 ```
+
+!!! note
+Directly accessing the `clock` substructure of parallel `ActiveClock`s is possible but not recommended since it breaks parallel operation. The right way is to pass `event!`s to the `ActiveClock`-variable. The communication then happens over the channel to the `ActiveClock` as it should be.
 
 ## Events
 

@@ -220,11 +220,9 @@ mutable struct Schedule
 end
 
 """
-    AC
+    ClockChannel
 
-AC is a channel to an active clock. An active clock is a task running on a
-parallel thread and operating a (parallel) clock. It is controlled by the
-master clock (on thread 1) via messages over a channel.
+Provide a channel to an active clock or a real time clock.
 
 # Fields
 - `ref::Ref{Task}`: a pointer to an active clock,
@@ -232,7 +230,7 @@ master clock (on thread 1) via messages over a channel.
 - `id::Int`: the thread id of the active clock.
 - `done::Bool`: flag indicating if the active clock has completed its cycle.
 """
-mutable struct AC{T <: ClockEvent}
+mutable struct ClockChannel{T <: ClockEvent}
     ref::Ref{Task}
     forth::Channel{T}
     back::Channel{T}
@@ -261,7 +259,7 @@ Create a new simulation clock.
 - `unit::FreeUnits`: time unit,
 - `end_time::Float64`: end time for simulation,
 - `Δt::Float64`: sampling time, timestep between ticks,
-- `ac::Vector{AC}`: active clocks running on parallel threads,
+- `ac::Vector{ClockChannel}`: active clocks running on parallel threads,
 - `sc::Schedule`: the clock schedule (events, cond events and sampling),
 - `processes::Dict{Any, Prc}`: registered `Prc`es,
 - `tn::Float64`: next timestep,
@@ -303,7 +301,7 @@ mutable struct Clock <: AbstractClock
     time::Float64
     unit::FreeUnits
     Δt::Float64
-    ac::Vector{AC}
+    ac::Vector{ClockChannel}
     sc::Schedule
     processes::Dict{Any, Prc}
     tn::Float64
@@ -327,34 +325,9 @@ mutable struct Clock <: AbstractClock
         else
             nothing
         end
-        new(0, Undefined(), t0, unit, Δt, AC[], Schedule(),
+        new(0, Undefined(), t0, unit, Δt, ClockChannel[], Schedule(),
             Dict{Any, Prc}(), t0 + Δt, t0, t0, 0, 0)
     end
-end
-
-"""
-    PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
-
-Setup a clock with parallel clocks on all available threads.
-
-# Arguments
-
-- `Δt::Number=0.01`: time increment. For parallel clocks Δt has to be > 0.
-    If given Δt ≤ 0 it is set to 0.01.
-- `t0::Number=0`: start time for simulation
-- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
-    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
-    t0 to a time, e.g. `t0=60s`.
-
-!!! note
-    Processes on multiple threads are possible in Julia ≥ 1.3 and with
-    [`JULIA_NUM_THREADS > 1`](https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_NUM_THREADS-1).
-"""
-function PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
-    Δt = Δt > 0 ? Δt : 0.01
-    clk = Clock(Δt, t0=t0, unit=unit)
-    fork!(clk)
-    return clk
 end
 
 """
@@ -371,6 +344,37 @@ A thread specific clock which can be operated via a channel.
 - `ans::Channel{ClockEvent}`: the response channel to master.
 - `id::Int`: the id in master's ac array,
 - `thread::Int`: the thread, the active clock runs on.
+
+!!! note
+You should not setup an `ActiveClock` explicitly. Rather this is done
+implicitly by [`fork!`](@ref)ing a [`Clock`](@ref) to other available threads
+or directly with [`PClock`](@ref).
+It then can be accessed via [`pclock`](@ref) as in the following example.
+
+# Example
+```jldoctest
+julia> using Simulate
+
+julia> clk = Clock()
+Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
+
+
+julia> fork!(clk)
+
+julia> clk    #  ⬇ you got 3 parallel active clocks
+Clock thread 1 (+ 3 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
+
+
+julia> clk = PClock()
+Clock thread 1 (+ 3 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0
+scheduled ev:0, cev:0, sampl:0
+
+julia> pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
+Active clock 1 on thrd 2: state=Simulate.Idle(), t=0.0 , Δt=0.01 , prc:0
+   scheduled ev:0, cev:0, sampl:0
+```
 """
 mutable struct ActiveClock{T <: ClockEvent} <: AbstractClock
     clock::Clock
@@ -379,4 +383,30 @@ mutable struct ActiveClock{T <: ClockEvent} <: AbstractClock
     back ::Channel{T}
     id::Int
     thread::Int
+end
+
+"""
+```
+RTClock
+```
+Real time clocks use system time for time keeping and are controlled over
+a channel. They are independent from each other and other clocks and run
+asynchronously as tasks on arbitrary threads. Multiple real time clocks
+can be setup with arbitrary frequencies to do different things.
+
+# Fields
+- `clock::Clock`:
+- `cmd::Channel{T}`:
+- `back::Channel{T}`:
+- `id::Int`:
+- `thread::Int`:
+- `t0::Float64`:
+"""
+mutable struct RTClock{T <: ClockEvent} <: AbstractClock
+    clock::Clock
+    cmd::Channel{T}
+    back::Channel{T}
+    id::Int
+    thread::Int
+    t0::Float64
 end
