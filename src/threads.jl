@@ -10,10 +10,8 @@
 # methods for active clocks
 # ---------------------------------------------------------
 tau(ac::ActiveClock) = tau(ac.clock)
+busy(ac::ActiveClock) = ac.clock.state == Busy()
 sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
-
-event!(ac::ActiveClock, args...; kwargs...) = event!(ac.clock, args...; kwargs...)
-periodic!(ac::ActiveClock, args...; kwargs...) = periodic!(ac.clock, args...; kwargs...)
 
 delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
 wait!(ac::ActiveClock, args...; kwargs...) = wait!(ac.clock, args...; kwargs...)
@@ -83,18 +81,17 @@ Start a task on each available thread (other than 1).
 - `f::Function`: function to start, has to take two channels as arguments,
 - `mul::Int=3`: startup multiplication factor,
 """
-function start_threads(f::Function) :: Vector{AC}
-    ac = AC[]
+function start_threads(f::Function) :: Vector{ClockChannel}
+    ac = ClockChannel[]
     @threads for i in 1:nthreads()
         if threadid() > 1
-            ai = AC(Ref{Task}(), Channel{ClockEvent}(8), Channel{ClockEvent}(5),
+            ai = ClockChannel(Ref{Task}(), Channel{ClockEvent}(8), Channel{ClockEvent}(5),
                     threadid(), false)
             ai.ref = Ref(@async f(ai.forth, ai.back))
             push!(ac, ai)
         end
     end
     sort!(ac, by = x->x.thread)
-    println("got $(length(ac)) threads parallel to master!")
     return ac
 end
 
@@ -161,6 +158,30 @@ function collapse!(master::Clock)
     end
 end
 
+"""
+    PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
+
+Setup a clock with parallel clocks on all available threads.
+
+# Arguments
+
+- `Δt::Number=0.01`: time increment. For parallel clocks Δt has to be > 0.
+    If given Δt ≤ 0 it is set to 0.01.
+- `t0::Number=0`: start time for simulation
+- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
+    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
+    t0 to a time, e.g. `t0=60s`.
+
+!!! note
+    Processes on multiple threads are possible in Julia ≥ 1.3 and with
+    [`JULIA_NUM_THREADS > 1`](https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_NUM_THREADS-1).
+"""
+function PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
+    Δt = Δt > 0 ? Δt : 0.01
+    clk = Clock(Δt, t0=t0, unit=unit)
+    fork!(clk)
+    return clk
+end
 
 # ---------------------------------------------------------
 # control of active clocks

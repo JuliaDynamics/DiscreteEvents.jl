@@ -48,14 +48,15 @@ include("schedule.jl")
 include("clock.jl")
 include("process.jl")
 include("threads.jl")
+include("timer.jl")
 include("printing.jl")
 
-export  Clock, PClock, ActiveClock, setUnit!, Action, Fun,
-        𝐶, Clk, Timing, at, after, every, before, until,
-        tau, sample_time!, event!, periodic!,
+export  Clock, ActiveClock, RTClock, RTC, setUnit!, 𝐶, Clk,
+        Timing, at, after, every, before, until, tau, sample_time!, 
+        Action, Fun, event!, periodic!,
         incr!, run!, stop!, resume!, reset!, sync!,
         Prc, process!, interrupt!, delay!, wait!, now!,
-        fork!, collapse!, pclock, diag
+        PClock, fork!, collapse!, pclock, diag
 
 
 Random.seed!(123)

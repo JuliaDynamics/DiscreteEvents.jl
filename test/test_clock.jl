@@ -11,7 +11,7 @@ str = "Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0\n
 reset!(𝐶)
 @test repr(𝐶) == str
 Simulate._show_default[1] = true
-str = "Clock(0, Simulate.Idle(), 0.0, , 0.0, Simulate.AC[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+str = "Clock(0, Simulate.Idle(), 0.0, , 0.0, Simulate.ClockChannel[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
 @test repr(𝐶) == str
 Simulate._show_default[1] = false
 @test tau() == 0

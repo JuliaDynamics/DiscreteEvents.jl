@@ -12,6 +12,7 @@ makedocs(
             "manual/intro.md",
             "manual/approach.md",
             "manual/parallel.md",
+            "manual/timer.md",
             "manual/usage.md",
             "Performance" => [
                 "performance/performance.md",

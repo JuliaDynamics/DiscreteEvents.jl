@@ -6,6 +6,36 @@
 # This is a Julia package for discrete event simulation
 #
 
+"""
+```
+𝐶
+Clk
+```
+`𝐶` (𝐶 = \\itC+[tab]) or `Clk` is the central simulation clock. If you do one
+simulation at a time, you can use 𝐶 or Clk for time keeping.
+
+# Examples
+
+```jldoctest
+julia> using Simulate
+
+julia> reset!(𝐶)
+"clock reset to t₀=0.0, sampling rate Δt=0.0."
+
+julia> 𝐶  # central clock
+Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
+  scheduled ev:0, cev:0, sampl:0
+
+julia> 𝐶 === Clk
+true
+
+```
+"""
+const 𝐶 = Clk = Clock()
+
+# ----------------------------------------------------
+# setting and getting clock parameters
+# ----------------------------------------------------
 
 """
     setUnit!(clk::Clock, new::FreeUnits)
@@ -81,32 +111,6 @@ function setUnit!(clk::Clock, new::FreeUnits)
     tau(clk)
 end
 
-"""
-```
-𝐶
-Clk
-```
-`𝐶` (𝐶 = \\itC+[tab]) or `Clk` is the central simulation clock. If you do one
-simulation at a time, you can use 𝐶 or Clk for time keeping.
-
-# Examples
-
-```jldoctest
-julia> using Simulate
-
-julia> reset!(𝐶)
-"clock reset to t₀=0.0, sampling rate Δt=0.0."
-
-julia> 𝐶  # central clock
-Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> 𝐶 === Clk
-true
-
-```
-"""
-const 𝐶 = Clk = Clock()
 
 """
 ```
@@ -243,137 +247,6 @@ function tadjust(clk::Clock, t::Unitful.Time) :: Float64
     end
 end
 
-"""
-```
-event!([clk::Clock], ex::Action, t::Number;
-       scope::Module=Main, cycle::Number=0.0, spawn=false)::Float64
-event!([clk::Clock], ex::Action, T::Timing, t::Number; kw...)
-```
-Schedule an event for a given simulation time.
-
-# Arguments
-- `clk::Clock`: it not supplied, the event is scheduled to 𝐶,
-- `ex::Action`: an expression or Fun or a tuple of them,
-- `T::Timing`: a timing, one of `at`, `after` or `every`,
-- `t::Real` or `t::Time`: simulation time, if t < clk.time set t = clk.time,
-
-# Keyword arguments
-- `scope::Module=Main`: scope for expressions to be evaluated in,
-- `cycle::Float64=0.0`: repeat cycle time for an event,
-- `spawn=false`: it true spawn the event at other available threads.
-
-# returns
-Scheduled internal simulation time (unitless) for that event.
-May return a time `> t` from repeated applications of `nextfloat(t)`
-if there are events scheduled for `t`.
-
-# Examples
-```jldoctest
-julia> using Simulate, Unitful
-
-julia> import Unitful: s, minute, hr
-
-julia> myfunc(a, b) = a+b
-myfunc (generic function with 1 method)
-
-julia> event!(𝐶, Fun(myfunc, 1, 2), 1) # a 1st event to 1
-1.0
-julia> event!(𝐶, Fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
-1.0000000000000002
-
-julia> event!(𝐶, Fun(myfunc, 3, 4), 1s)
-Warning: clock has no time unit, ignoring units
-1.0000000000000004
-
-julia> setUnit!(𝐶, s)
-0.0 s
-
-julia> event!(𝐶, Fun(myfunc, 4, 5), 1minute)
-60.0
-
-julia> event!(Fun(myfunc, 5, 6), after, 1hr)
-3600.0
-```
-"""
-function event!(clk::Clock, ex::Action, t::Number;
-                scope::Module=Main, cycle::Number=0.0, spawn=false)::Float64
-    (t isa Unitful.Time) && (t = tadjust(clk, t))
-    (cycle isa Unitful.Time) && (cycle = tadjust(clk, cycle))
-    (t < clk.time) && (t = clk.time)
-
-    assign(clk, DiscreteEvent(ex, scope, t, cycle), spawn ? spawnid(clk) : 0)
-end
-event!(ex::Action, t::Number; kw...) = event!(𝐶, ex, t; kw...)
-function event!(clk::Clock, ex::Action, T::Timing, t::Number;
-                scope::Module=Main, spawn=false) :: Float64
-    (t isa Unitful.Time) && (t = tadjust(clk, t))
-    if T == after
-        event!(clk, ex, t+clk.time, scope=scope, spawn=spawn)
-    elseif T == every
-        event!(clk, ex, clk.time, scope=scope, cycle=t, spawn=spawn)
-    else
-        event!(clk, ex, t, scope=scope, spawn=spawn)
-    end
-end
-event!(ex::Action, T::Timing, t::Number; kw...) = event!(𝐶, ex, T, t; kw...)
-
-
-"""
-```
-event!([clk::Clock], ex::Action, cond::Action; scope::Module=Main)::Float64
-```
-Schedule a conditional event.
-
-It is executed immediately if the conditions are met, else the condition is
-checked at each clock tick Δt. A conditional event is triggered only once. After
-that it is removed from the clock. If no sampling rate Δt is setup, a default
-sampling rate is setup depending on the scale of the remaining simulation time
-``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
-
-# Arguments
-- `clk::Clock`: if no clock is supplied, the event is scheduled to 𝐶,
-- `ex::Union{SimExpr, Tuple{SimExpr}}`: an expression or Fun or a tuple of them,
-- `cond::Union{SimExpr, Tuple{SimExpr}}`: a condition is an expression or Fun
-    or a tuple of them. It is true only if all expressions or Funs
-    therein return true,
-- `scope::Module=Main`: scope for the expressions to be evaluated
-
-# returns
-current simulation time `tau(clk)`.
-
-# Examples
-```jldoctest
-julia> using Simulate
-
-julia> c = Clock()   # create a new clock
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> event!(c, Fun((x)->println(tau(x), ": now I'm triggered"), c), Fun(>=, Fun(tau, c), 5))
-0.0
-
-# julia> c              # a conditional event turns sampling on  ⬇
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:1, sampl:0
-
-julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fire the event
-5.009999999999938: now I'm triggered
-"run! finished with 0 clock events, 501 sample steps, simulation time: 10.0"
-
-julia> c   # after the event sampling is again switched off ⬇
-Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=10.0 , Δt=0.0 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-```
-"""
-function event!(clk::Clock, ex::Action, cond::Action; scope::Module=Main, spawn=false)
-    if clk.state == Busy() && all(evExec(cond))   # all conditions met
-        evExec(ex)                                # execute immediately
-    else
-        assign(clk, DiscreteCond(cond, ex, scope), spawn ? spawnid(clk) : 0)
-    end
-    return tau(clk)
-end
-event!( ex::Action, cond::Action; kw...) = event!(𝐶, ex, cond; kw...)
 
 """
 ```
@@ -411,6 +284,14 @@ function periodic!(clk::Clock, ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
     assign(clk, Sample(ex, scope), spawn ? spawnid(clk) : 0)
 end
 periodic!(ex::Union{Expr, Fun}, Δt::Number=𝐶.Δt; kw...) = periodic!(𝐶, ex, Δt; kw...)
+
+"Is a Clock busy?"
+busy(clk::Clock) = clk.state == Busy()
+
+
+# ----------------------------------------------------
+# step! transition functions for Clocks
+# ----------------------------------------------------
 
 """
     step!(clk::Clock, ::Undefined, ::Init)
@@ -531,6 +412,10 @@ function step!(clk::Clock, q::ClockState, σ::ClockEvent)
             "$(typeof(clk)), ::$(typeof(q)), ::$(typeof(σ)))\n",
             "maybe, you should reset! the clock!")
 end
+
+# --------------------------------------------------------
+# Clock user interface functions
+# --------------------------------------------------------
 
 """
     run!(clk::Clock, duration::Number)
