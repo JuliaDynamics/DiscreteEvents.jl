@@ -60,11 +60,11 @@ Simulate.register(c1, ev2, 1)               # 3. register ev2 directly to 1st pa
 Simulate.register(c1, ev2, 0)               # 4. register ev2 back to master
 @test length(clk.sc.events) == 2
 
-# - This fails on CI (only 2 threads) ---------------
-# Simulate.register(c1, ev2, 2)               # 5. register ev2 to another parallel clock
-# c2 = pclock(clk, 2)
-# @test Simulate.nextevent(c2.clock) == ev2
-# ---------------------------------------------------
+if nthreads() > 2                           # This fails on CI (only 2 threads)
+    Simulate.register(c1, ev2, 2)           # 5. register ev2 to another parallel clock
+    c2 = pclock(clk, 2)
+    @test Simulate.nextevent(c2.clock) == ev2
+end
 
 println("... collapse! ...")
 ac = clk.ac
