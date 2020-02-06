@@ -98,7 +98,7 @@ julia> run!(c, 10)                           # run the clock for 10 time units
 "run! finished with 11 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-If you work with only one simulation at a time, you normally use the *central clock* [`𝐶`](@ref) (\it𝐶+tab), alias [`Clk`](@ref 𝐶):
+If you work with only one simulation at a time, you normally use the *central clock* [`𝐶`](@ref) (`\\it𝐶`+`tab`):
 
 !!! note
     You definitely need different clock variables if you run multiple simulations on parallel threads. In such cases each simulation should have its own clock. Please look at the [dicegame](../examples/dicegame/dicegame.md) example for that.

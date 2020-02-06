@@ -38,17 +38,18 @@ multithreading, resource handling and a streamlined documentation.
 - if setup with parallel clocks, [`Clock`](@ref) becomes the master to drive
   them and synchronize with them at each `Δt` timestep,
 
-## Breaking changes in v0.3.0
-- `τ` as an alias for [`tau`](@ref) is no longer defined,
-- the macros `@tau`, `@val`, `@SF`, `@SP` are no longer defined
-- Logging functions have been removed (they were not useful enough),
+## Further breaking changes in v0.3.0
+- `τ` as an alias for [`tau`](@ref) is no longer defined.
+- The macros `@tau`, `@val`, `@SF`, `@SP` are no longer defined.
+- Logging functions have been removed (they were not useful enough).
 - A function `f` given to [`Prc`](@ref) must now take a
-  [`Clock`](@ref)-variable as its first argument,
+  [`Clock`](@ref)-variable as its first argument.
 - The first `::Clock`-argument to [`delay!`](@ref) and [`wait!`](@ref) and
   [`now!`](@ref) can no  longer be omitted. Since the task function has now a
   `Clock`-variable available (see above), it must provide it to `delay!`,
   `wait!` and `now`.
 - [`event!`](@ref) no longer accepts a `Vector` as argument.
+- `Clk` as alias of [`𝐶`](@ref) is no longer provided.
 
 ## Deprecated functionality in v0.3.0
 - Evaluating expressions or symbols at global scope is much slower than using

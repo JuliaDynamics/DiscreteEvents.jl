@@ -180,62 +180,81 @@ function scale(n::Number)::Float64
     end
 end
 
-#
-# There are 5 paths for assigning a schedule to a clock
-# 1: Clock to itself
-# 2: ActiveClock to itself
-# 3: Clock to ActiveClock
-# 4: ActiveClock to Clock
-# 5: ActiveClock to another ActiveClock (this is 4 -> 3)
-#
+# ---------------------------------------------------------------
+# assign and register events and samples to a clock
+# ---------------------------------------------------------------
 
-function assign(clk::Clock, ev::DiscreteEvent, id::Int=0)
-    if id == 0     # path 1
-        t = ev.t
-        while any(i->i==t, values(clk.sc.events)) # in case an event at that time exists
-            t = nextfloat(float(t))                  # increment scheduled time
-        end
-        return clk.sc.events[ev] = t
-    else                 # path 3
-        put!(clk.ac[id].forth, Register(ev))
-        return ev.t
-    end
-end
-function assign(ac::ActiveClock, ev::DiscreteEvent, id::Int=ac.id)
-    if id == ac.id     # path 2
-        return assign(ac.clock, ev, 0)
-    else                 # path 4
-        put!(ac.back, Forward(ev, id))
+"""
+    assign(c::AbstractClock, ev::AbstractEvent, id::Int=c.id)
+
+Assign an abstract event to a clock.
+
+There are several ways to do it:
+1. assign it directly to a clock or an active clock or
+2. assign it via a clock via a clock to another one, if given a different id.
+    In this case the event is sent over the channel to the target clock.
+    - The master clock (id=0) can directly send to an active clock.
+    - An active clock can send directly to master.
+    - An active clock can only send via master to another active clock.
+"""
+function assign(c::AbstractClock, ev::AbstractEvent, id::Int=c.id)
+    if id == c.id
+        register!(c, ev)       # 1: register it yourself
+    else
+        register(c, ev, id)    # 2: register it to another clock
     end
 end
 
-function assign(clk::Clock, cond::DiscreteCond, id::Int=0)
-    if id == 0
-        (clk.Δt == 0) && (clk.Δt = scale(clk.end_time - clk.time)/100)
-        push!(clk.sc.cevents, cond)
-    else
-        put!(clk.ac[id].forth, Register(cond))
+"""
+```
+register!(c::Clock, ev::DiscreteEvent)
+register!(c::Clock, cond::DiscreteCond)
+register!(c::Clock, sp::Sample)
+register!(ac::ActiveClock, ev::AbstractEvent)
+```
+Register a concrete event directly to a clock.
+"""
+function register!(c::Clock, ev::DiscreteEvent)
+    t = ev.t
+    while any(i->i==t, values(c.sc.events)) # in case an event at that time exists
+        t = nextfloat(float(t))                  # increment scheduled time
     end
+    return c.sc.events[ev] = t
 end
-function assign(ac::ActiveClock, cond::DiscreteCond, id::Int=ac.id)
-    if id == ac.id
-        assign(ac.clock, cond, 0)
-    else
-        put!(ac.back, Forward(cond, id))
-    end
+function register!(c::Clock, cond::DiscreteCond)
+    (c.Δt == 0) && (c.Δt = scale(c.end_time - c.time)/100)
+    push!(c.sc.cevents, cond)
 end
+register!(c::Clock, sp::Sample) = push!(c.sc.samples, sp)
+register!(ac::ActiveClock, ev::AbstractEvent) = register!(ac.clock, ev)
 
-function assign(clk::Clock, sp::Sample, id::Int=0)
-    if id == 0
-        push!(clk.sc.samples, sp)
+"""
+```
+register(c::Clock, ev::AbstractEvent, id::Int)
+register(ac::ActiveClock, ev::AbstractEvent, id::Int)
+```
+Register an event to another clock via a channel.
+
+# Arguments
+- `c::Clock`: a master clock can forward events to active clocks,
+- `ac::ActiveClock`: active clocks can forward events only through master, he then
+    does the distribution for them,
+- `ev::AbstractEvent`: the event to register,
+- `id::Int`: the id of the clock it should get registered to.
+"""
+function register(c::Clock, ev::AbstractEvent, id::Int)
+    if id > 0 && threadid() == 1       # only master can forward events
+        put!(c.ac[id].forth, Register(ev))
     else
-        put!(clk.ac[id].forth, Register(sp))
+        register!(c, ev)               # otherwise take it yourself
     end
 end
-function assign(ac::ActiveClock, sp::Sample, id::Int=ac.id)
-    if id == ac.id
-        assign(ac.clock, sp, 0)
+function register(ac::ActiveClock, ev::AbstractEvent, id::Int)
+    if ac.id == id                     # if id is your id
+        register!(ac.clock, ev)        # take it yourself
+    elseif ac.master[].state == Busy() # if master handles its channels ↯↯↯↯↯ this has yet to be changed
+        put!(ac.back, Forward(ev, id)) # put it over the channel
     else
-        put!(ac.back, Forward(sp, id))
+        register(ac.master[], ev, id)  # otherwise call him directly
     end
 end

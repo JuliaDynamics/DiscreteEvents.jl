@@ -148,7 +148,7 @@ function collapse!(master::Clock)
                 end
                 master.sc.events[ev] = t
             end
-            append!(master.sc.cevents, c.sc.events)
+            append!(master.sc.cevents, c.sc.cevents)
             append!(master.sc.samples, c.sc.samples)
             put!(ac.forth, Stop())
         end

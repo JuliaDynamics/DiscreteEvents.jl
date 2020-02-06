@@ -6,15 +6,13 @@ CurrentModule = Simulate
 
 ## Clocks
 
-`Simulate.jl` contains two clock types: [`Clock`](@ref) and [`ActiveClock`](@ref). Both are implemented as state machines. The implementation functions and types are not exported.
-
-We have some definitions for them to work.
-
 ```@docs
 AbstractClock
 ```
 
-### States
+`Simulate.jl` contains several clock types: [`Clock`](@ref), [`ActiveClock`](@ref) and [`RTClock`](@ref). They are implemented as state machines. Their implementation are internal and not exported.
+
+### Clock states
 
 Defined clock states.
 
@@ -27,9 +25,9 @@ Busy
 Halted
 ```
 
-### Events
+### Clock events
 
-Defined events.
+Defined clock events.
 
 ```@docs
 ClockEvent
@@ -69,6 +67,13 @@ The internal clock transition function has several methods for different combina
 step!
 ```
 
+## Assigning and registering events.
+```@docs
+assign
+register
+register!
+```
+
 ## Other internal types and functions
 ```@docs
 nextevent
@@ -82,7 +87,6 @@ do_tick!
 do_step!
 do_run!
 startup!
-register!
 wakeup
 init!
 loop
