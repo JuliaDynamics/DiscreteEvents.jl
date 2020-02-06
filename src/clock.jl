@@ -7,12 +7,10 @@
 #
 
 """
-```
-𝐶
-Clk
-```
-`𝐶` (𝐶 = \\itC+[tab]) or `Clk` is the central simulation clock. If you do one
-simulation at a time, you can use 𝐶 or Clk for time keeping.
+    𝐶
+
+`𝐶` (𝐶 = `\\itC`+`tab`) is the default simulation clock. If you do one
+simulation at a time, you can use it for time keeping.
 
 # Examples
 
@@ -22,16 +20,12 @@ julia> using Simulate
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
-julia> 𝐶  # central clock
+julia> 𝐶  # default clock
 Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
-
-julia> 𝐶 === Clk
-true
-
 ```
 """
-const 𝐶 = Clk = Clock()
+const 𝐶 = Clock()
 
 # ----------------------------------------------------
 # setting and getting clock parameters
@@ -319,7 +313,7 @@ set clock times for next event or sampling action. The internal clock times
 `clk.tev` and `clk.tn` must always be set to be at least `clk.time`.
 """
 function setTimes(clk::Clock)
-    if length(clk.sc.events) ≥ 1
+    if !isempty(clk.sc.events)
         clk.tev = nextevtime(clk)
         clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : clk.time
     else

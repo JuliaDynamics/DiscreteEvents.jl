@@ -9,6 +9,9 @@
 "supertype for clocks in `Simulate.jl`"
 abstract type AbstractClock end
 
+"supertype for events"
+abstract type AbstractEvent end
+
 "supertype for clock states"
 abstract type ClockState end
 
@@ -100,7 +103,7 @@ executed at an event time.
 - `t::Float64`: event time,
 - `Δt::Float64`: repeat rate with for repeating events.
 """
-struct DiscreteEvent{T<:Action}
+struct DiscreteEvent{T<:Action} <: AbstractEvent
     ex::T
     scope::Module
     t::Float64
@@ -123,7 +126,7 @@ to be executed if conditions are met.
     if conditions are met,
 - `scope::Module`: evaluation scope
 """
-struct DiscreteCond{S<:Action, T<:Action}
+struct DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
     cond::S
     ex::T
     scope::Module
@@ -138,7 +141,7 @@ A sampling function or expression is called at sampling time.
 - `ex::T`: expression or function to be called at sample time,
 - `scope::Module`: evaluation scope.
 """
-struct Sample{T<:Union{Fun,Expr}}
+struct Sample{T<:Union{Fun,Expr}} <: AbstractEvent
     ex::T
     scope::Module
 end
@@ -369,7 +372,7 @@ Clock thread 1 (+ 3 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
 
 julia> clk = PClock()
 Clock thread 1 (+ 3 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0
-scheduled ev:0, cev:0, sampl:0
+  scheduled ev:0, cev:0, sampl:0
 
 julia> pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
 Active clock 1 on thrd 2: state=Simulate.Idle(), t=0.0 , Δt=0.01 , prc:0

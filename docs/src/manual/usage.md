@@ -69,6 +69,7 @@ Functions and expressions can be scheduled for execution
 2. under specified conditions.
 
 ```@docs
+AbstractEvent
 DiscreteEvent
 DiscreteCond
 Timing
@@ -97,6 +98,16 @@ All given functions or expressions are then called or evaluated at a given simul
 !!! note
     Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `:(tau() ≥ 100)` is preferable to `:(tau() == 100)`.
 
+## Continuous sampling
+
+Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt.
+
+```@docs
+Sample
+sample_time!
+periodic!
+```
+
 ## Processes
 
 Julia functions can be registered and run as processes. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
@@ -124,16 +135,6 @@ Processes in a simulation want their IO-operations to finish before the clock pr
 
 ```@docs
 now!
-```
-
-## Continuous sampling
-
-Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt.
-
-```@docs
-Sample
-sample_time!
-periodic!
 ```
 
 ## Running simulations
