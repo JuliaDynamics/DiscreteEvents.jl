@@ -89,24 +89,24 @@ b = 0
 
 for i ∈ 1:4
     t = i + tau(sim)
-    @test event!(sim, :(a += 1), t) == t
+    event!(sim, :(a += 1), t)
 end
 
 for i ∈ 5:7
     t = i + tau(sim)
-    @test event!(sim, :(a += 1), at, t) == t
+    event!(sim, :(a += 1), at, t)
 end
 
 for i ∈ 8:10
-    @test event!(sim, :(a += 1), after, i) == 100+i
+    event!(sim, :(a += 1), after, i)
 end
 
-@test event!(sim, :(a += 1), every, 1) == 100
+event!(sim, :(a += 1), every, 1)
 
 # conditional events
 @test sim.Δt == 0
-@test event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20))) == 100
-@test event!(sim, :(b +=1), (:(a==0), :(b==0))) == 100  # execute immediately
+event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20)))
+event!(sim, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
 event!(sim, Fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
 @test length(sim.sc.cevents) == 2
 @test Simulate.evExec(sim.sc.cevents[1].cond) == (false, false)
@@ -126,12 +126,11 @@ run!(sim, 5)
 @test a == 11
 @test b == 11
 @test length(sim.sc.events) == 6
-stop = event!(sim, :(stop!(sim)), 108)
+event!(sim, :(stop!(sim)), 108)
 run!(sim, 6)
 @test a == 16
 @test sim.state == Simulate.Halted()
 @test length(sim.sc.cevents) == 1
-@test tau(sim) == stop
 resume!(sim)
 @test tau(sim) == 111
 @test length(sim.sc.cevents) == 0
@@ -140,9 +139,7 @@ resume!(sim)
 
 t = 121.0
 for i ∈ 1:10
-    _t = event!(sim, :(a += 1), 10 + tau(sim))
-    @test t == _t
-    global t = nextfloat(_t)
+    event!(sim, :(a += 1), 10 + tau(sim))
 end
 run!(sim,14)
 @test tau(sim) == 125
@@ -282,8 +279,8 @@ reset!(𝐶)
 @test_warn "clock has no time unit" event!(𝐶, Fun(myfunc, 1, 2), 1s)
 
 reset!(𝐶, unit=s)
-@test event!(𝐶, Fun(myfunc, 4, 5), 1minute, cycle=1minute) == 60
-@test event!(𝐶, Fun(myfunc, 5, 6), after, 1hr) == 3600
+event!(𝐶, Fun(myfunc, 4, 5), 1minute, cycle=1minute)
+event!(𝐶, Fun(myfunc, 5, 6), after, 1hr)
 @test sample_time!(𝐶, 30s) == 30
 periodic!(𝐶, Fun(myfunc, 1, 2))
 run!(𝐶, 1hr)

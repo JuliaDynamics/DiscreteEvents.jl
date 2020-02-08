@@ -240,7 +240,7 @@ function tadjust(clk::Clock, t::Unitful.Time) :: Float64
         return uconvert(clk.unit, t).val
     end
 end
-
+tadjust(clk::Clock, t::Number) = t
 
 """
 ```
@@ -257,27 +257,6 @@ function sample_time!(clk::Clock, Δt::Number)
     clk.tn = clk.time + clk.Δt
 end
 sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
-
-"""
-```
-periodic!([clk::Clock], ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
-        scope::Module=Main, spawn=false)
-```
-Register a function or expression for periodic execution at the clock`s sample rate.
-
-# Arguments
-- `clk::Clock`: if not supplied, it samples on 𝐶,
-- `ex::Union{Expr, Fun}`: an expression or function,
-- `Δt::Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
-    the current sampling rate, if that is 0, it calculates one,
-- `scope::Module=Main`: optional, an evaluation scope for a given expression.
-"""
-function periodic!(clk::Clock, ex::Union{Expr, Fun}, Δt::Number=clk.Δt;
-                 scope::Module=Main, spawn=false)
-    clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
-    assign(clk, Sample(ex, scope), spawn ? spawnid(clk) : 0)
-end
-periodic!(ex::Union{Expr, Fun}, Δt::Number=𝐶.Δt; kw...) = periodic!(𝐶, ex, Δt; kw...)
 
 "Is a Clock busy?"
 busy(clk::Clock) = clk.state == Busy()

@@ -80,8 +80,8 @@ julia> ff.f(ff.arg...)                   # calling ff then gives a different res
 """
 struct Fun
     f::Function
-    arg::Union{Nothing, Tuple}
-    kw::Union{Nothing, Base.Iterators.Pairs}
+    arg
+    kw
 
     Fun(f::Function, arg...; kw...) =
         new(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
@@ -91,9 +91,8 @@ end
 const Action = Union{Expr, Fun, Tuple}
 
 """
-```
-DiscreteEvent{T<:Action}
-```
+    DiscreteEvent{T<:Action} <: AbstractEvent
+
 A discrete event is a function or an expression or a tuple of them to be
 executed at an event time.
 
@@ -113,9 +112,8 @@ DiscreteEvent(ex::T, scope::Module, t::Real, Δt::Real) where {T<:Action} =
     DiscreteEvent(ex, scope, float(t), float(Δt))
 
 """
-```
-DiscreteCond{S<:Action, T<:Action}
-```
+    DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
+
 A condition to be evaluated repeatedly with expressions or functions
 to be executed if conditions are met.
 
@@ -133,15 +131,16 @@ struct DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
 end
 
 """
-    Sample{T<:Union{Fun,Expr}}
+    Sample{T<:Action} <: AbstractEvent
 
-A sampling function or expression is called at sampling time.
+Sampling functions or expressions are called at sampling time.
 
 # Arguments, fields
-- `ex::T`: expression or function to be called at sample time,
+- `ex<:Action`: expression or function or a tuple of them to be called
+    at sample time,
 - `scope::Module`: evaluation scope.
 """
-struct Sample{T<:Union{Fun,Expr}} <: AbstractEvent
+struct Sample{T<:Action} <: AbstractEvent
     ex::T
     scope::Module
 end
@@ -162,10 +161,8 @@ struct ClockException <: Exception
 end
 
 """
-```
-Prc( id, f::Function, arg...; kw...)
-alias   SP( id, f::Function, arg...; kw...)
-```
+    Prc( id, f::Function, arg...; kw...)
+
 Prepare a function to run as a process in a simulation.
 
 # Arguments, fields
@@ -185,12 +182,6 @@ Prepare a function to run as a process in a simulation.
 
 !!! warn
     That `f` nust take `clk` as first argument is a breaking change in v0.3!
-
-# Examples
-```jldoctest
-julia> using Simulate
-
-```
 """
 mutable struct Prc
     id::Any
@@ -389,9 +380,8 @@ mutable struct ActiveClock{T <: ClockEvent} <: AbstractClock
 end
 
 """
-```
-RTClock
-```
+    RTClock{T <: ClockEvent} <: AbstractClock
+
 Real time clocks use system time for time keeping and are controlled over
 a channel. They are independent from each other and other clocks and run
 asynchronously as tasks on arbitrary threads. Multiple real time clocks
