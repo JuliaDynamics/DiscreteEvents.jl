@@ -19,6 +19,7 @@ multithreading, resource handling and a streamlined documentation.
 
 ## New functionality in v0.3.0
 - [`Action`](@ref) is introduced as synonym for `Union{Expr,Fun,Tuple}`,
+- [`periodic!`](@ref) takes now an `Action` as argument, 
 - Arguments to [`Fun`](@ref) can now be given also as symbols, expressions or as
   other `Fun`s. They get evaluated at event time before being
   passed to the event function,
@@ -38,7 +39,7 @@ multithreading, resource handling and a streamlined documentation.
 - if setup with parallel clocks, [`Clock`](@ref) becomes the master to drive
   them and synchronize with them at each `Δt` timestep,
 
-## Further breaking changes in v0.3.0
+## Other breaking changes in v0.3.0
 - `τ` as an alias for [`tau`](@ref) is no longer defined.
 - The macros `@tau`, `@val`, `@SF`, `@SP` are no longer defined.
 - Logging functions have been removed (they were not useful enough).
@@ -50,6 +51,7 @@ multithreading, resource handling and a streamlined documentation.
   `wait!` and `now`.
 - [`event!`](@ref) no longer accepts a `Vector` as argument.
 - `Clk` as alias of [`𝐶`](@ref) is no longer provided.
+- [`event!`](@ref) now returns nothing.
 
 ## Deprecated functionality in v0.3.0
 - Evaluating expressions or symbols at global scope is much slower than using

@@ -51,7 +51,7 @@ reset!(c1.clock)
 @test c1.clock.time == 0
 ev1 = Simulate.DiscreteEvent(Fun(()->global a+=1),Main,1.0,0.0)
 ev2 = Simulate.DiscreteEvent(Fun(()->global a+=1),Main,2.0,0.0)
-@test Simulate.register(clk, ev1, 0) == 1.0 # 1. register ev1 to clk
+Simulate.register(clk, ev1, 0)              # 1. register ev1 to clk
 @test Simulate.nextevent(clk) == ev1
 Simulate.register(clk, ev1, 1)              # 2. register ev1 to 1st parallel clock
 @test Simulate.nextevent(c1.clock) == ev1
