@@ -74,7 +74,7 @@ end
 #     end
 # end
 
-"Function barrier for executing Funs."
+"Function barrier for executing `Fun`s."
 _invoke(@nospecialize(f), ::Nothing, ::Nothing, m) = f()
 _invoke(@nospecialize(f), arg, ::Nothing, m) = f(evaluate(arg,m)...)
 _invoke(@nospecialize(f), ::Nothing, kw, m) = f(; evaluate(kw,m)...)
@@ -83,11 +83,11 @@ _invoke(f::typeof(event!), arg, ::Nothing, m) = f(arg...)
 _invoke(f::typeof(event!), ::Nothing, kw, m) = f(; kw...)
 _invoke(f::typeof(event!), arg, kw, m) = f(arg..., kw...)
 
-"Function barrier for executing Funs with invokelatest."
-_invokelt(f, ::Nothing, ::Nothing, m) = invokelatest(f)
-_invokelt(f, arg, ::Nothing, m) = invokelatest(f, evaluate(arg,m)...)
-_invokelt(f, ::Nothing, kw, m) = invokelatest(f; evaluate(kw,m)...)
-_invokelt(f, arg, kw, m) = invokelatest(f, evaluate(arg,m)...; evaluate(kw,m)...)
+"Function barrier for executing `Fun`s with invokelatest."
+_invokelt(@nospecialize(f), ::Nothing, ::Nothing, m) = invokelatest(f)
+_invokelt(@nospecialize(f), arg, ::Nothing, m) = invokelatest(f, evaluate(arg,m)...)
+_invokelt(@nospecialize(f), ::Nothing, kw, m) = invokelatest(f; evaluate(kw,m)...)
+_invokelt(@nospecialize(f), arg, kw, m) = invokelatest(f, evaluate(arg,m)...; evaluate(kw,m)...)
 
 """
     evExec(ex, m::Module=Main)

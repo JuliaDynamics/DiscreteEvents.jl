@@ -78,14 +78,22 @@ julia> ff.f(ff.arg...)                   # calling ff then gives a different res
 12
 ```
 """
-struct Fun
+struct Fun  ### this is the fastest version
     f::Function
-    arg
-    kw
+    arg  #::Union{Nothing,Tuple}
+    kw   #::Union{Nothing,Iterators.Pairs}
 
     Fun(f::Function, arg...; kw...) =
         new(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
 end
+### the "book" version is 10% slower (overall benchmark)
+# struct Fun{S<:Union{Nothing,Tuple},T<:Union{Nothing,Iterators.Pairs}}
+#     f::Function
+#     arg::S
+#     kw::T
+# end
+# Fun(f::Function, arg...; kw...) =
+#     Fun(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
 
 "An action is either an `Expr` or a `Fun` or a `Tuple` of them."
 const Action = Union{Expr, Fun, Tuple}
