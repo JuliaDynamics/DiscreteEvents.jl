@@ -32,7 +32,7 @@ stats() = push!(df, (tau(), length(Q), M.state == Busy() ? 1 : 0, length(S)))</c
     global count += 1
     push!(Q, job)
     ta = rand(Erlang())*μ
-    event!(𝐶, Fun(arrive, μ, σ, c), after, ta)  # we schedule the next arrival
+    event!(𝐶, fun(arrive, μ, σ, c), after, ta)  # we schedule the next arrival
     printing ? println(tau(), &quot;: job $(job.no) has arrived&quot;) : nothing # tau() is the current time
     if M.state == Idle()
         load()
@@ -45,7 +45,7 @@ function load()
     M.state = Busy()
     M.job = popfirst!(Q)
     M.job.t2 = tau()
-    event!(𝐶, Fun(unload), after, M.job.ts)  # we schedule the unload
+    event!(𝐶, fun(unload), after, M.job.ts)  # we schedule the unload
     printing ? println(tau(), &quot;: job $(M.job.no) has been loaded&quot;) : nothing
     stats()
 end
@@ -61,7 +61,7 @@ function unload()
         load()
     end
 end</code></pre><p>We want to collect <code>stats()</code> at a sample rate of 0.1:</p><pre><code class="language-julia">sample_time!(𝐶, 0.1)  # we determine the sample rate
-periodic!(𝐶, Fun(stats));  # we register stats() as sampling function</code></pre><p>We assume now that the capacity equals the arrivals and provide no overcapacity.  Therefore  we start with one arrival and <span>$\mu = 5$</span>, <span>$\sigma = 1/5$</span> and <span>$c = 1$</span> and let our system run for 30 minutes (let&#39;s assume our time unit be minutes):</p><pre><code class="language-julia">Random.seed!(2019)
+periodic!(𝐶, fun(stats));  # we register stats() as sampling function</code></pre><p>We assume now that the capacity equals the arrivals and provide no overcapacity.  Therefore  we start with one arrival and <span>$\mu = 5$</span>, <span>$\sigma = 1/5$</span> and <span>$c = 1$</span> and let our system run for 30 minutes (let&#39;s assume our time unit be minutes):</p><pre><code class="language-julia">Random.seed!(2019)
 arrive(5, 1/5, 1)  # we schedule the first event
 run!(𝐶, 30)        # and run the simulation</code></pre><p>This will give us as output:</p><pre><code class="language-julia">0: job 1 has arrived
 0: job 1 has been loaded
@@ -119,7 +119,7 @@ for c ∈ collect(0.97:0.01:1.7)
 
     reset!(𝐶)                            # reset 𝐶
     sample_time!(𝐶, 1)                   # set sample rate to 1
-    periodic!(𝐶, Fun(stats))   # register the stats() function for sampling
+    periodic!(𝐶, fun(stats))   # register the stats() function for sampling
 
     Random.seed!(2019)
     arrive(5, 1/5, c)
@@ -133,4 +133,4 @@ scatter!(df1.c, df1.Lm, marker = (:x, 4), label=L&quot;\overline{L}&quot;*&quot;
 L = \lambda\times W
 \end{equation}\]</div><p>for stationary systems with <span>$\lambda$</span> = arrival rate. In our case <span>$\lambda = t_a = 5$</span>. Let&#39;s look at it:</p><pre><code class="language-julia">scatter(df1.Lm, df1.Wm, xlabel=L&quot;\overline{L}&quot;*&quot; [jobs]&quot;, ylabel=L&quot;\overline{W}&quot;*&quot; [min]&quot;,
     marker = (:o, 4, 0.4, :blue), label=&quot;data&quot;, title=&quot;Little&#39;s law&quot;, legend=:topleft)
-plot!(df1.Lm, df1.Lm*5, label=&quot;theory &quot;*L&quot;(\overline{L}\times 5)&quot;)</code></pre><p><img src="../../images/sserver5.png" alt="Little&#39;s law"/></p><p>Data seems not quite to fit theory. Reason is that the system is not stationary. But for a first approach, Little&#39;s law seems not to be a bad one. In order to analyze stability and <a href="https://en.wikipedia.org/wiki/Stationary_process">stationarity</a> and to improve, we could refine our analysis by taking only the second half of the simulation data or by doing more simulation runs and having some more fun with <code>Simulate.jl</code> ...</p><p><strong>See also:</strong> <a href="../../manual/usage/#Simulate.tau"><code>tau</code></a>, <a href="../../manual/usage/#Simulate.𝐶"><code>𝐶</code></a>, <a href="../../manual/usage/#Simulate.Fun"><code>Fun</code></a>, <a href="../../manual/usage/#Simulate.event!"><code>event!</code></a>, <a href="../../manual/usage/#Simulate.run!"><code>run!</code></a>, <a href="../../manual/usage/#Simulate.reset!"><code>reset!</code></a></p><footer><hr/><a class="previous" href="../tabletennis/"><span class="direction">Previous</span><span class="title">Table tennis</span></a><a class="next" href="../postoffice/postoffice/"><span class="direction">Next</span><span class="title">Post Office</span></a></footer></article></body></html>
+plot!(df1.Lm, df1.Lm*5, label=&quot;theory &quot;*L&quot;(\overline{L}\times 5)&quot;)</code></pre><p><img src="../../images/sserver5.png" alt="Little&#39;s law"/></p><p>Data seems not quite to fit theory. Reason is that the system is not stationary. But for a first approach, Little&#39;s law seems not to be a bad one. In order to analyze stability and <a href="https://en.wikipedia.org/wiki/Stationary_process">stationarity</a> and to improve, we could refine our analysis by taking only the second half of the simulation data or by doing more simulation runs and having some more fun with <code>Simulate.jl</code> ...</p><p><strong>See also:</strong> <a href="../../manual/usage/#Simulate.tau"><code>tau</code></a>, <a href="../../manual/usage/#Simulate.𝐶"><code>𝐶</code></a>, <a href="../../manual/usage/#Simulate.fun"><code>fun</code></a>, <a href="../../manual/usage/#Simulate.event!"><code>event!</code></a>, <a href="../../manual/usage/#Simulate.run!"><code>run!</code></a>, <a href="../../manual/usage/#Simulate.reset!"><code>reset!</code></a></p><footer><hr/><a class="previous" href="../tabletennis/"><span class="direction">Previous</span><span class="title">Table tennis</span></a><a class="next" href="../postoffice/postoffice/"><span class="direction">Next</span><span class="title">Post Office</span></a></footer></article></body></html>
