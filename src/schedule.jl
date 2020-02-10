@@ -45,22 +45,19 @@ julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 
 julia> event!(𝐶, fun(myfunc, 1, 2), 1) # a 1st event to 1
-1.0
+
 julia> event!(𝐶, fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
-1.0000000000000002
 
 julia> event!(𝐶, fun(myfunc, 3, 4), 1s)
 Warning: clock has no time unit, ignoring units
-1.0000000000000004
 
 julia> setUnit!(𝐶, s)
 0.0 s
 
 julia> event!(𝐶, fun(myfunc, 4, 5), 1minute)
-60.0
 
 julia> event!(fun(myfunc, 5, 6), after, 1hr)
-3600.0
+
 ```
 """
 function event!(clk::CL, ex::Action, t::Number; scope::Module=Main, cycle::Number=0.0,
@@ -122,7 +119,6 @@ Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
-0.0
 
 # julia> c              # a conditional event turns sampling on  ⬇
 Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0

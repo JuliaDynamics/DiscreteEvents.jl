@@ -57,13 +57,23 @@ _invokelt(@nospecialize(f), arg, kw, m) = invokelatest(f, evaluate(arg,m)...; ev
 Saves a function and its arguments for later execution.
 
 # Arguments
-`fun` can take any arguments, even symbols, expressions or other `fun`s. With one
-exception the latter arguments are evaluated before giving them to f. If f is an
-`event!`, its arguments are not evaluated before execution.
+`fun` can take any arguments. If you want `f` at execution time to have current
+arguments you can give symbols, expressions or other `fun`s. They are
+then evaluated just before being passed to f. There is one exception: if f
+is an `event!`, its arguments are not evaluated before execution.
+
+!!! warn "Evaluating symbols and expressions is slow"
+It should be avoided in time critical parts of applications. You will get a one
+time warning if you use that feature. See the Performance section in the
+documentation.
 
 # Returns
 It returns a closure of f(args..., kwargs...) which has to be called with a
-module name argument.
+`Module` argument (for evaluation scope of symbols and expressions).
+
+# Examples
+```jldoctest
+```
 """
 @inline function fun(@nospecialize(f), @nospecialize args...; kwargs...)
     args = ifelse(isempty(args), nothing, args)

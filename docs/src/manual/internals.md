@@ -76,12 +76,15 @@ register!
 
 ## Other internal types and functions
 ```@docs
+evaluate
+_invoke
+_invokelt
+evExec
 nextevent
 nextevtime
-evaluate
-evExec
-sfExec
 setTimes
+tadjust
+busy
 do_event!
 do_tick!
 do_step!

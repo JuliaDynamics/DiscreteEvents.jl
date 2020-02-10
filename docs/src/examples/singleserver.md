@@ -61,7 +61,7 @@ function arrive(μ, σ, c)
     global count += 1
     push!(Q, job)
     ta = rand(Erlang())*μ
-    event!(𝐶, Fun(arrive, μ, σ, c), after, ta)  # we schedule the next arrival
+    event!(𝐶, fun(arrive, μ, σ, c), after, ta)  # we schedule the next arrival
     printing ? println(tau(), ": job $(job.no) has arrived") : nothing # tau() is the current time
     if M.state == Idle()
         load()
@@ -74,7 +74,7 @@ function load()
     M.state = Busy()
     M.job = popfirst!(Q)
     M.job.t2 = tau()
-    event!(𝐶, Fun(unload), after, M.job.ts)  # we schedule the unload
+    event!(𝐶, fun(unload), after, M.job.ts)  # we schedule the unload
     printing ? println(tau(), ": job $(M.job.no) has been loaded") : nothing
     stats()
 end
@@ -96,7 +96,7 @@ We want to collect `stats()` at a sample rate of 0.1:
 
 ```julia
 sample_time!(𝐶, 0.1)  # we determine the sample rate
-periodic!(𝐶, Fun(stats));  # we register stats() as sampling function
+periodic!(𝐶, fun(stats));  # we register stats() as sampling function
 ```
 
 We assume now that the capacity equals the arrivals and provide no overcapacity.  Therefore  we start with one arrival and ``\mu = 5``, ``\sigma = 1/5`` and ``c = 1`` and let our system run for 30 minutes (let's assume our time unit be minutes):
@@ -202,7 +202,7 @@ for c ∈ collect(0.97:0.01:1.7)
 
     reset!(𝐶)                            # reset 𝐶
     sample_time!(𝐶, 1)                   # set sample rate to 1
-    periodic!(𝐶, Fun(stats))   # register the stats() function for sampling
+    periodic!(𝐶, fun(stats))   # register the stats() function for sampling
 
     Random.seed!(2019)
     arrive(5, 1/5, c)
@@ -246,4 +246,4 @@ plot!(df1.Lm, df1.Lm*5, label="theory "*L"(\overline{L}\times 5)")
 
 Data seems not quite to fit theory. Reason is that the system is not stationary. But for a first approach, Little's law seems not to be a bad one. In order to analyze stability and [stationarity](https://en.wikipedia.org/wiki/Stationary_process) and to improve, we could refine our analysis by taking only the second half of the simulation data or by doing more simulation runs and having some more fun with `Simulate.jl` ...
 
-**See also:** [`tau`](@ref), [`𝐶`](@ref), [`Fun`](@ref), [`event!`](@ref), [`run!`](@ref), [`reset!`](@ref)
+**See also:** [`tau`](@ref), [`𝐶`](@ref), [`fun`](@ref), [`event!`](@ref), [`run!`](@ref), [`reset!`](@ref)
