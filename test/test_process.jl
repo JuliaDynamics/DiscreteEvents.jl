@@ -87,12 +87,12 @@ checka(x) = a == x
 checkb(x) = b ≥ x
 
 function testwait(clk::Clock, c1::Channel, c2::Channel)
-    wait!(clk, (Fun(checktime, 2), Fun(checka, 1)))
+    wait!(clk, (fun(checktime, 2), fun(checka, 1)))
     push!(res, (tau(), 1, a, b))
-    wait!(clk, Fun(isa, a, Int)) # must return immediately
+    wait!(clk, fun(isa, a, Int)) # must return immediately
     push!(res, (tau(), 2, a, b))
-    periodic!(clk, Fun(incb))
-    wait!(clk, Fun(checkb, 201))
+    periodic!(clk, fun(incb))
+    wait!(clk, fun(checkb, 201))
     push!(res, (tau(), 3, a, b))
     take!(c1)
 end
@@ -127,7 +127,7 @@ run!(𝐶, 10)
 @test 𝐶.processes[1].task.state == :failed
 @test a == 4
 
-testnow(c) = (delay!(c, 1); global a += 1; now!(c, Fun(println, "$(tau(c)): a is $a")))
+testnow(c) = (delay!(c, 1); global a += 1; now!(c, fun(println, "$(tau(c)): a is $a")))
 reset!(𝐶)
 process!(Prc(1, testnow), 3)
 run!(𝐶, 5)

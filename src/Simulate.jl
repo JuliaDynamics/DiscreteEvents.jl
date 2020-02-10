@@ -43,6 +43,7 @@ import Unitful: FreeUnits, Time
 
 include("types.jl")
 include("components.jl")
+include("fclosure.jl")
 include("schedule.jl")
 include("events.jl")
 include("clock.jl")
@@ -53,7 +54,7 @@ include("printing.jl")
 
 export  Clock, ActiveClock, RTClock, RTC, setUnit!, 𝐶,
         Timing, at, after, every, before, until, tau, sample_time!,
-        Action, Fun, event!, periodic!,
+        Action, fun, event!, periodic!,
         incr!, run!, stop!, resume!, reset!, sync!,
         Prc, process!, interrupt!, delay!, wait!, now!,
         PClock, fork!, collapse!, pclock, diag

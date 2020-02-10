@@ -26,15 +26,15 @@ h(a, b; c = 1, d = 2) = a + b + c + d
 i(; a = 1, b = 2) = a + b
 j(x) = x == :unknown
 
-@test Simulate.evExec(Fun(e)) == 123
-@test Simulate.evExec(Fun(f, 1)) == 4
-@test Simulate.evExec(Fun(h, 1, 2, c=3, d=4)) == 10
+@test Simulate.evExec(fun(e)) == 123
+@test Simulate.evExec(fun(f, 1)) == 4
+@test Simulate.evExec(fun(h, 1, 2, c=3, d=4)) == 10
 
 a = 11; b = 12; c = 13; d = 14;
-sf1 = Fun(h, a, b, c=c, d=d)
-sf2 = Fun(h, :a, :b, c=:c, d=:d)
-sf3 = Fun(h, a, b, c=c, d=d)
-sf4 = Fun(h, :a, :b, c=:c, d=:d)
+sf1 = fun(h, a, b, c=c, d=d)
+sf2 = fun(h, :a, :b, c=:c, d=:d)
+sf3 = fun(h, a, b, c=c, d=d)
+sf4 = fun(h, :a, :b, c=:c, d=:d)
 @test Simulate.evExec(sf1) == 50
 @test Simulate.evExec(sf2) == 50
 @test Simulate.evExec(sf3) == 50
@@ -42,11 +42,11 @@ sf4 = Fun(h, :a, :b, c=:c, d=:d)
 a = 21; b = 22; c = 23; d = 24;
 @test Simulate.evExec(sf1) == 50
 @test Simulate.evExec(sf2) == 90
-@test Simulate.evExec(Fun(h, :a, 2, c=:c, d=4)) == 50
-@test Simulate.evExec(Fun(j, :unknown))
-@test Simulate.evExec(Fun(<=, Fun(tau), 1))
+@test Simulate.evExec(fun(h, :a, 2, c=:c, d=4)) == 50
+@test Simulate.evExec(fun(j, :unknown))
+@test Simulate.evExec(fun(<=, fun(tau), 1))
 
-@test Simulate.evExec((Fun(i, a=10, b=20))) == 30
+@test Simulate.evExec((fun(i, a=10, b=20))) == 30
 
 # one expression
 ev = Simulate.DiscreteEvent(:(1+1), Main, 10.0, 0.0)
@@ -58,17 +58,17 @@ ev = Simulate.DiscreteEvent((:(1+1), :(1+2)), Main, 15.0, 0.0)
 @test Simulate.evExec(ev.ex) == (2, 3)
 @test ev.t == 15
 
-# one Fun
-ev = Simulate.DiscreteEvent(Fun(f, 1), Main, 10.0, 0.0)
+# one fun
+ev = Simulate.DiscreteEvent(fun(f, 1), Main, 10.0, 0.0)
 @test Simulate.evExec(ev.ex) == 4
 
-# two Funs
-ev = Simulate.DiscreteEvent((Fun(f, 1), Fun(g, 1)), Main, 10.0, 0.0)
+# two funs
+ev = Simulate.DiscreteEvent((fun(f, 1), fun(g, 1)), Main, 10.0, 0.0)
 @test Simulate.evExec(ev.ex) == (4, 5)
 
-# expressions and Funs mixed in a tuple
-ev = Simulate.DiscreteEvent((:(1+1), Fun(g,2), :(1+2), Fun(f, 1)), Main, 10.0, 0.0)
-@test sum([Simulate.evExec(ex) for ex in ev.ex if isa(ex, Fun)]) == 10
+# expressions and funs mixed in a tuple
+ev = Simulate.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), Main, 10.0, 0.0)
+@test sum([Simulate.evExec(ex) for ex in ev.ex if ex isa Function]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test Simulate.evExec(ev.ex) == (2, 6, 3, 4)
 
@@ -107,7 +107,7 @@ event!(sim, :(a += 1), every, 1)
 @test sim.Δt == 0
 event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20)))
 event!(sim, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
-event!(sim, Fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
+event!(sim, fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
 @test length(sim.sc.cevents) == 2
 @test Simulate.evExec(sim.sc.cevents[1].cond) == (false, false)
 @test sim.Δt == 0.01
@@ -191,7 +191,7 @@ run!(sim, 10000)
 sync!(sim, 𝐶)
 @test sim.time == 𝐶.time
 
-println("... basic tests with Fun, now with 𝐶 ...")
+println("... basic tests with fun, now with 𝐶 ...")
 D = Dict(:a=>0, :b=>0, :c=>0)
 function f!(D, i)
     D[:a] += 1
@@ -200,9 +200,9 @@ function f!(D, i)
 end
 a = 0
 b = 0
-event!(Fun(() -> global a += 1), 1)
-event!(Fun(() -> global b += 1), 9.5, cycle=1)
-event!(𝐶, Fun(f!, D, 1), every, 1)
+event!(fun(() -> global a += 1), 1)
+event!(fun(() -> global b += 1), 9.5, cycle=1)
+event!(𝐶, fun(f!, D, 1), every, 1)
 run!(𝐶, 20)
 @test tau() == 20
 @test D[:a] == 21
@@ -276,12 +276,12 @@ reset!(𝐶, t0=1minute)
 
 myfunc(a, b) = a+b
 reset!(𝐶)
-@test_warn "clock has no time unit" event!(𝐶, Fun(myfunc, 1, 2), 1s)
+@test_warn "clock has no time unit" event!(𝐶, fun(myfunc, 1, 2), 1s)
 
 reset!(𝐶, unit=s)
-event!(𝐶, Fun(myfunc, 4, 5), 1minute, cycle=1minute)
-event!(𝐶, Fun(myfunc, 5, 6), after, 1hr)
+event!(𝐶, fun(myfunc, 4, 5), 1minute, cycle=1minute)
+event!(𝐶, fun(myfunc, 5, 6), after, 1hr)
 @test sample_time!(𝐶, 30s) == 30
-periodic!(𝐶, Fun(myfunc, 1, 2))
+periodic!(𝐶, fun(myfunc, 1, 2))
 run!(𝐶, 1hr)
 @test 𝐶.evcount == 61

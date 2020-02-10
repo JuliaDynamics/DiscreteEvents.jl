@@ -8,8 +8,6 @@
 # this implements the event handling
 #
 
-import Base.invokelatest
-
 """
     nextevent(c::Clock)
 
@@ -24,81 +22,17 @@ Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(c::Clock) = peek(c.sc.events)[2]
 
-"""
-    evaluate(y,  m::Module)
-
-Function barrier for arguments and keywords of a Fun. This allows Expr, Symbol
-and Fun as arguments and keyword values.
-"""
-evaluate(y,  m) = y    # catchall, gives back the argument
-evaluate(y::Fun, m) = sfExec(y, m)   # Fun: recursively call sfexec
-evaluate(arg::Tuple, m) = map(i->evaluate(i, m), arg)
-evaluate(kw::Iterators.Pairs, m) = (; zip(keys(kw), map(i->evaluate(i, m), values(kw)) )...)
-function evaluate(y::T, m) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
-    try
-        ret = Core.eval(m, y)
-        @warn "Evaluating expressions is slow, use `Fun` instead" maxlog=1
-        return ret
-    catch
-        return y
-    end
-end
-
-"""
-    sfExec(x::Fun, m::Module)
-
-Execute a Fun x.
-
-- if x.f is an event!, its args and kws must be maintained for later evaluation,
-    otherwise evaluate them now before passing them to x.f,
-- branch to different invocation methods depending on args or kws,
-- if x.f is not from Main and we are not on thread 1, call it with invokelatest
-    to avoid a world age situation (it may be too new).
-"""
-function sfExec(x, m)
-    try
-        _invoke(x.f, x.arg, x.kw, m)
-    catch exc
-        if exc isa MethodError
-            _invokelt(x.f, x.arg, x.kw, m)
-        else
-            rethrow(exc)
-        end
-    end
-end
-# function sfExec(x::Fun, m::Module)
-#     if (threadid() == 1) !! (parentmodule(x.f) != Main)
-#         _invoke(x.f, x.arg, x.kw, m)
-#     else
-#         _invokelt(x.f, x.arg, x.kw, m)
-#     end
-# end
-
-"Function barrier for executing Funs."
-_invoke(@nospecialize(f), ::Nothing, ::Nothing, m) = f()
-_invoke(@nospecialize(f), arg, ::Nothing, m) = f(evaluate(arg,m)...)
-_invoke(@nospecialize(f), ::Nothing, kw, m) = f(; evaluate(kw,m)...)
-_invoke(@nospecialize(f), arg, kw, m) = f(evaluate(arg,m)..., evaluate(kw,m)...)
-_invoke(f::typeof(event!), arg, ::Nothing, m) = f(arg...)
-_invoke(f::typeof(event!), ::Nothing, kw, m) = f(; kw...)
-_invoke(f::typeof(event!), arg, kw, m) = f(arg..., kw...)
-
-"Function barrier for executing Funs with invokelatest."
-_invokelt(f, ::Nothing, ::Nothing, m) = invokelatest(f)
-_invokelt(f, arg, ::Nothing, m) = invokelatest(f, evaluate(arg,m)...)
-_invokelt(f, ::Nothing, kw, m) = invokelatest(f; evaluate(kw,m)...)
-_invokelt(f, arg, kw, m) = invokelatest(f, evaluate(arg,m)...; evaluate(kw,m)...)
 
 """
     evExec(ex, m::Module=Main)
 
-Function barrier for different ex: forward an event's `Fun`s or expressions
+Function barrier for different ex: forward an event's functions or expressions
 to further execution or evaluation.
 
 # Return
 the evaluated value or a tuple of evaluated values.
 """
-evExec(ex::Fun, m::Module=Main) = sfExec(ex, m)
+evExec(ex::Function, m::Module=Main) = ex(m)
 evExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
 evExec(ex::Tuple, m::Module=Main) = map(x->evExec(x, m), ex)
 
