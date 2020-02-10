@@ -31,72 +31,13 @@ Enumeration type for scheduling events and timed conditions:
 """
 @enum Timing at after every before until
 
+
 """
-```
-Fun(f::Function, arg...; kw...)
-```
-Store a function and its arguments for being called later as an event.
+    Action
 
-# Arguments, fields
-- `f::Function`:  event function to be executed at event time,
-- `arg...`: arguments to the event function,
-- `kw...`: keyword arguments to the event function.
-
-Arguments and keyword arguments can be 1) values or variables mixed with 2) symbols,
-expressions or even other functions. In the 2nd cases they are evaluated at
-event time before they are passed to the event function.
-
-!!! note
-    Composite types or variables given symbolically can change until they
-    are evaluated later at event time.
-
-# Examples
-```jldoctest
-julia> using Simulate
-
-julia> f(a,b,c; d=4, e=5) = a+b+c+d+e       # if you define a function and ...
-f (generic function with 1 method)
-
-julia> sf = Fun(f, 10, 20, 30, d=14, e=15);  # store it as Fun
-
-julia> sf.f(sf.arg...; sf.kw...)         # it can be executed later
-89
-
-julia> d = Dict(:a => 1, :b => 2);          # we set up a dictionary
-
-julia> g(t) = t[:a] + t[:b]                 # and a function adding :a and :b
-g (generic function with 1 method)
-
-julia> g(d)                                 # our add function gives 3
-3
-
-julia> ff = Fun(g, d);              # we set up a Fun
-
-julia> d[:a] = 10;                          # later somehow we change d
-
-julia> ff.f(ff.arg...)                   # calling ff then gives a different result
-12
-```
+An action is either an `Expr` or a `Function` or a `Tuple` of them.
 """
-struct Fun  ### this is the fastest version
-    f::Function
-    arg  #::Union{Nothing,Tuple}
-    kw   #::Union{Nothing,Iterators.Pairs}
-
-    Fun(f::Function, arg...; kw...) =
-        new(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
-end
-### the "book" version is 10% slower (overall benchmark)
-# struct Fun{S<:Union{Nothing,Tuple},T<:Union{Nothing,Iterators.Pairs}}
-#     f::Function
-#     arg::S
-#     kw::T
-# end
-# Fun(f::Function, arg...; kw...) =
-#     Fun(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
-
-"An action is either an `Expr` or a `Fun` or a `Tuple` of them."
-const Action = Union{Expr, Fun, Tuple}
+const Action = Union{Expr, Function, Tuple}
 
 """
     DiscreteEvent{T<:Action} <: AbstractEvent

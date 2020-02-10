@@ -17,7 +17,7 @@ Schedule an event for a given simulation time.
 
 # Arguments
 - `clk::AbstractClock`: it not supplied, the event is scheduled to 𝐶,
-- `ex::Action`: an expression or Fun or a tuple of them,
+- `ex::Action`: an expression or function or a tuple of them,
 - `T::Timing`: a timing, one of `at`, `after` or `every`,
 - `t::Real` or `t::Time`: simulation time, if t < clk.time set t = clk.time,
 
@@ -44,22 +44,22 @@ julia> import Unitful: s, minute, hr
 julia> myfunc(a, b) = a+b
 myfunc (generic function with 1 method)
 
-julia> event!(𝐶, Fun(myfunc, 1, 2), 1) # a 1st event to 1
+julia> event!(𝐶, fun(myfunc, 1, 2), 1) # a 1st event to 1
 1.0
-julia> event!(𝐶, Fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
+julia> event!(𝐶, fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
 1.0000000000000002
 
-julia> event!(𝐶, Fun(myfunc, 3, 4), 1s)
+julia> event!(𝐶, fun(myfunc, 3, 4), 1s)
 Warning: clock has no time unit, ignoring units
 1.0000000000000004
 
 julia> setUnit!(𝐶, s)
 0.0 s
 
-julia> event!(𝐶, Fun(myfunc, 4, 5), 1minute)
+julia> event!(𝐶, fun(myfunc, 4, 5), 1minute)
 60.0
 
-julia> event!(Fun(myfunc, 5, 6), after, 1hr)
+julia> event!(fun(myfunc, 5, 6), after, 1hr)
 3600.0
 ```
 """
@@ -104,9 +104,9 @@ sampling rate is setup depending on the scale of the remaining simulation time
 
 # Arguments
 - `clk::AbstractClock`: if no clock is supplied, the event is scheduled to 𝐶,
-- `ex::Union{SimExpr, Tuple{SimExpr}}`: an expression or Fun or a tuple of them,
-- `cond::Union{SimExpr, Tuple{SimExpr}}`: a condition is an expression or Fun
-    or a tuple of them. It is true only if all expressions or Funs
+- `ex::Union{SimExpr, Tuple{SimExpr}}`: an expression or function or a tuple of them,
+- `cond::Union{SimExpr, Tuple{SimExpr}}`: a condition is an expression or function
+    or a tuple of them. It is true only if all expressions or `fun`s
     therein return true,
 - `scope::Module=Main`: scope for the expressions to be evaluated
 - `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
@@ -121,7 +121,7 @@ julia> c = Clock()   # create a new clock
 Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> event!(c, Fun((x)->println(tau(x), ": now I'm triggered"), c), Fun(>=, Fun(tau, c), 5))
+julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
 0.0
 
 # julia> c              # a conditional event turns sampling on  ⬇

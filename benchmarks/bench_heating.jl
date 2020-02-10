@@ -43,12 +43,12 @@ end
 function switch!(h::House, t1=20, t2=23)                       # simulate the thermostat
     if h.Tr ≥ t2
         h.heating = false
-        event!(Fun(switch!, h, t1, t2), Fun((h, x)-> h.Tr ≤ x, h, t1))  # setup a conditional event
-        # event!(Fun(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
+        event!(fun(switch!, h, t1, t2), fun((h, x)-> h.Tr ≤ x, h, t1))  # setup a conditional event
+        # event!(fun(switch, t1, t2), @val :Tr :≤ t1)  # setup a conditional event
     elseif h.Tr ≤ t1
         h.heating = true
-        event!(Fun(switch!, h, t1, t2), Fun((h, x)-> h.Tr ≥ x, h, t2))  # setup a conditional event
-        # event!(Fun(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
+        event!(fun(switch!, h, t1, t2), fun((h, x)-> h.Tr ≥ x, h, t2))  # setup a conditional event
+        # event!(fun(switch, t1, t2), @val :Tr :≥ t2)  # setup a conditional event
     end
 end
 
@@ -71,7 +71,7 @@ function setup()
     for i in 1:2                              # put 2 people in the house
         process!(Prc(i, people!, house))       # run processes
     end
-    periodic!(Fun(setTemperatures!, house), Δt)  # set sampling function
+    periodic!(fun(setTemperatures!, house), Δt)  # set sampling function
     switch!(house)                                     # start the thermostat
 end
 
