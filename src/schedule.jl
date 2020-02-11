@@ -135,8 +135,8 @@ Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=10.0 , Δt=0.0 , prc:0
 """
 function event!(clk::T, ex::Action, cond::Action; scope::Module=Main,
                 cid::Int=clk.id, spawn=false) where {T<:AbstractClock}
-    if busy(clk) && all(evExec(cond))   # all conditions met
-        evExec(ex)                      # execute immediately
+    if busy(clk) && all(evaluate(cond))   # all conditions met
+        evaluate(ex)                      # execute immediately
     else
         if cid == clk.id && spawn  # evaluate spawn only if cid == clk.id
             cid = spawnid(clk)

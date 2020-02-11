@@ -17,18 +17,33 @@ a given event time or under given conditions.
 function event! end
 
 """
-    evaluate(y,  m::Module)
+    evaluate(y)
 
-Function barrier for arguments and keywords of a `fun`. This allows Expr, Symbol
-and `fun` as arguments and keyword values.
+Function barrier for functions and expressions as well for arguments and
+keywords of a `fun`. It allows Expr, Symbol and `fun` as arguments for `fun`.
 """
-evaluate(y,  m) = y    # catchall, gives back the argument
-evaluate(y::Function, m) = y(m)   # Function: recursively call fun
-evaluate(arg::Tuple, m) = map(i->evaluate(i, m), arg)
-evaluate(kw::Iterators.Pairs, m) = (; zip(keys(kw), map(i->evaluate(i, m), values(kw)) )...)
-function evaluate(y::T, m) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
+evaluate(y) = y    # catchall, gives back the argument
+function evaluate(y::Function)
+    # try
+    #     y()
+    # catch exc
+    #     if exc isa MethodError
+    #         invokelatest(y)
+    #     else
+    #         rethrow(exc)
+    #     end
+    # end
+    if (threadid() == 1) # || (parentmodule(y) != Main)
+        y()
+    else
+        invokelatest(y)
+    end
+end
+evaluate(y::Tuple) = evaluate.(y)
+evaluate(kw::Iterators.Pairs) = (; zip(keys(kw), map(i->evaluate(i), values(kw)) )...)
+function evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
     try
-        ret = Core.eval(m, y)
+        ret = Core.eval(Main,y)
         @warn "Evaluating expressions is slow, use functions instead" maxlog=1
         return ret
     catch
@@ -37,19 +52,13 @@ function evaluate(y::T, m) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
 end
 
 "Function barrier for executing `fun`s."
-_invoke(@nospecialize(f), ::Nothing, ::Nothing, m) = f()
-_invoke(@nospecialize(f), arg, ::Nothing, m) = f(evaluate(arg,m)...)
-_invoke(@nospecialize(f), ::Nothing, kw, m) = f(; evaluate(kw,m)...)
-_invoke(@nospecialize(f), arg, kw, m) = f(evaluate(arg,m)...; evaluate(kw,m)...)
-_invoke(f::typeof(event!), arg, ::Nothing, m) = f(arg...)
-_invoke(f::typeof(event!), ::Nothing, kw, m) = f(; kw...)
-_invoke(f::typeof(event!), arg, kw, m) = f(arg..., kw...)
-
-"Function barrier for executing `fun`s with invokelatest."
-_invokelt(@nospecialize(f), ::Nothing, ::Nothing, m) = invokelatest(f)
-_invokelt(@nospecialize(f), arg, ::Nothing, m) = invokelatest(f, evaluate(arg,m)...)
-_invokelt(@nospecialize(f), ::Nothing, kw, m) = invokelatest(f; evaluate(kw,m)...)
-_invokelt(@nospecialize(f), arg, kw, m) = invokelatest(f, evaluate(arg,m)...; evaluate(kw,m)...)
+_invoke(@nospecialize(f), ::Nothing, ::Nothing) = f()
+_invoke(@nospecialize(f), arg, ::Nothing) = f(evaluate.(arg)...)
+_invoke(@nospecialize(f), ::Nothing, kw) = f(; evaluate(kw)...)
+_invoke(@nospecialize(f), arg, kw) = f(evaluate.(arg)...; evaluate(kw)...)
+_invoke(f::typeof(event!), arg, ::Nothing) = f(arg...)
+_invoke(f::typeof(event!), ::Nothing, kw) = f(; kw...)
+_invoke(f::typeof(event!), arg, kw) = f(arg..., kw...)
 
 """
     fun(f::Function, args..., kwargs...)
@@ -61,8 +70,9 @@ Return a closure of a function `f` and its arguments for later execution.
 beeing captured in `fun` and `f`s later execution. If `f` must evaluate their
 current values at execution time there are two possibilities:
 1. `fun` can take symbols, expressions or other `fun`s as arguments. They
-    are evaluated just before being passed to f. There is one exception:
-    if `f` is an `event!`, its arguments are passed on unevaluated.
+    are evaluated in global scope (Main) just before being passed to f.
+    There is one exception: if `f` is an `event!`, its arguments are passed
+    on unevaluated.
 2.  Composite variables (Arrays, structs ...) are always current.
 
 !!! warning "Evaluating symbols and expressions is slow"
@@ -71,8 +81,8 @@ current values at execution time there are two possibilities:
     documentation.
 
 # Returns
-It returns a function closure of f(args..., kwargs...) which has to be called
-with a `Module` argument (for evaluation scope of symbols and expressions).
+A function closure of f(args..., kwargs...), which can be evaluated without
+arguments.
 
 # Examples
 ```jldoctest
@@ -87,41 +97,35 @@ julia> a = 1
 julia> gg = fun(g, :a, y=2)   # we pass a as a symbol to fun
 #12 (generic function with 1 method)
 
-julia> a += 1                 # a gets 2
+julia> a += 1   # a becomes 2
 2
 
-julia> gg(Main)               # at execution g gets the current value of a
+julia> gg()     # at execution g gets the current value of a
 ┌ Warning: Evaluating expressions is slow, use functions instead
-└ @ Simulate ~/.julia/dev/Simulate/src/fclosure.jl:32
+└ @ Simulate ~/.julia/dev/Simulate/src/fclosure.jl:38
 4
 
-julia> hh = fun(g, fun(()->a), y=3)   # reference a with an anonymous function
+julia> hh = fun(g, fun(()->a), y=3)   # reference to a with an anonymous fun
 #12 (generic function with 1 method)
 
-julia> a += 1                 # a gets 3
+julia> a += 1   # a becomes 3
 3
 
-julia> hh(Main)               # at execution g gets again a current a
+julia> hh()     # at execution g gets again a current a
 6
 
-julia> ii = fun(g, (m)->a, y=4)  # reference a with a mock fun, taking a module m
+julia> ii = fun(g, ()->a, y=4)  # reference to a with an anonymous function
 #12 (generic function with 1 method)
 
-julia> a += 1                 # a gets 4
+julia> a += 1   # a becomes 4
 4
 
-julia> ii(Main)
+julia> ii()
 8
 ```
 """
 @inline function fun(@nospecialize(f), @nospecialize args...; kwargs...)
     args = ifelse(isempty(args), nothing, args)
     kwargs = ifelse(isempty(kwargs), nothing, kwargs)
-    m -> begin
-        if (parentmodule(f) != Main) || (threadid() == 1)
-            _invoke(f, args, kwargs, m)
-        else
-            _invokelt(f, args, kwargs, m)
-        end
-    end
+    () -> _invoke(f, args, kwargs)
 end

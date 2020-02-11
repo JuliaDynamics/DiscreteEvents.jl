@@ -22,20 +22,6 @@ Return the internal time (unitless) of next scheduled event.
 """
 nextevtime(c::Clock) = peek(c.sc.events)[2]
 
-
-"""
-    evExec(ex, m::Module=Main)
-
-Function barrier for different ex: forward an event's functions or expressions
-to further execution or evaluation.
-
-# Return
-the evaluated value or a tuple of evaluated values.
-"""
-evExec(ex::Function, m::Module=Main) = ex(m)
-evExec(ex::Expr, m::Module=Main) = evaluate(ex, m)
-evExec(ex::Tuple, m::Module=Main) = map(x->evExec(x, m), ex)
-
 """
     do_event!(c::Clock)
 
@@ -44,7 +30,7 @@ Execute or evaluate the next timed event on a clock c.
 function do_event!(c::Clock)
     c.time = c.tev
     ev = dequeue!(c.sc.events)
-    evExec(ev.ex, ev.scope)
+    evaluate(ev.ex)
     c.evcount += 1
     if ev.Δt > 0.0  # schedule repeat event
         event!(c, ev.ex, c.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
@@ -60,18 +46,18 @@ conditional events and if conditions are met, execute them.
 """
 function do_tick!(c::Clock)
     c.time = c.tn
-    foreach(x -> evExec(x.ex, x.scope), c.sc.samples)  # exec sampling
+    foreach(x -> evaluate(x.ex), c.sc.samples)  # exec sampling
     # then lookup conditional events
-    ix = findfirst(x->all(evExec(x.cond, x.scope)), c.sc.cevents)
+    ix = findfirst(x->all(evaluate(x.cond)), c.sc.cevents)
     while ix !== nothing
-        evExec(splice!(c.sc.cevents, ix).ex)
+        evaluate(splice!(c.sc.cevents, ix).ex)
         if isempty(c.sc.cevents)
             if isempty(c.sc.samples) && isempty(c.ac) # no sampling and active clocks
                 c.Δt = 0.0 # delete sample rate
             end
             break
         end
-        ix = findfirst(x->all(evExec(x.cond, x.scope)), c.sc.cevents)
+        ix = findfirst(x->all(evaluate(x.cond)), c.sc.cevents)
     end
     c.scount +=1
 end

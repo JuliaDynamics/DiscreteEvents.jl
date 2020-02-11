@@ -143,11 +143,8 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(clk::Clock, t::Number)
     c = Condition()
-    event!(clk, fun(wakeup, c), after, t)
+    event!(clk, ()->wakeup(c), after, t)
     wait(c)
-    # c = Channel{Int}()
-    # event!(clk, fun(wakeup, c), after, t)
-    # take!(c)
 end
 
 """
@@ -166,7 +163,7 @@ function delay!(clk::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
         c = Condition()
-        event!(clk, fun(wakeup, c), t)
+        event!(clk, ()->wakeup(c), t)
         wait(c)
     else
         now!(clk, fun(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
@@ -188,11 +185,11 @@ until the given condition is true.
 - `scope::Module=Main`: evaluation scope for given expressions.
 """
 function wait!(clk::Clock, cond::Action; scope::Module=Main)
-    if all(evExec(cond))   # all conditions met
+    if all(evaluate(cond))   # all conditions met
         return         # return immediately
     else
         c = Condition()
-        event!(clk, fun(wakeup, c), cond, scope=scope)
+        event!(clk, ()->wakeup(c), cond, scope=scope)
         wait(c)
     end
 end

@@ -26,51 +26,51 @@ h(a, b; c = 1, d = 2) = a + b + c + d
 i(; a = 1, b = 2) = a + b
 j(x) = x == :unknown
 
-@test Simulate.evExec(fun(e)) == 123
-@test Simulate.evExec(fun(f, 1)) == 4
-@test Simulate.evExec(fun(h, 1, 2, c=3, d=4)) == 10
+@test Simulate.evaluate(fun(e)) == 123
+@test Simulate.evaluate(fun(f, 1)) == 4
+@test Simulate.evaluate(fun(h, 1, 2, c=3, d=4)) == 10
 
 a = 11; b = 12; c = 13; d = 14;
 sf1 = fun(h, a, b, c=c, d=d)
 sf2 = fun(h, :a, :b, c=:c, d=:d)
 sf3 = fun(h, a, b, c=c, d=d)
 sf4 = fun(h, :a, :b, c=:c, d=:d)
-@test Simulate.evExec(sf1) == 50
-@test Simulate.evExec(sf2) == 50
-@test Simulate.evExec(sf3) == 50
-@test Simulate.evExec(sf4) == 50
+@test Simulate.evaluate(sf1) == 50
+@test Simulate.evaluate(sf2) == 50
+@test Simulate.evaluate(sf3) == 50
+@test Simulate.evaluate(sf4) == 50
 a = 21; b = 22; c = 23; d = 24;
-@test Simulate.evExec(sf1) == 50
-@test Simulate.evExec(sf2) == 90
-@test Simulate.evExec(fun(h, :a, 2, c=:c, d=4)) == 50
-@test Simulate.evExec(fun(j, :unknown))
-@test Simulate.evExec(fun(<=, fun(tau), 1))
+@test Simulate.evaluate(sf1) == 50
+@test Simulate.evaluate(sf2) == 90
+@test Simulate.evaluate(fun(h, :a, 2, c=:c, d=4)) == 50
+@test Simulate.evaluate(fun(j, :unknown))
+@test Simulate.evaluate(fun(<=, fun(tau), 1))
 
-@test Simulate.evExec((fun(i, a=10, b=20))) == 30
+@test Simulate.evaluate((fun(i, a=10, b=20))) == 30
 
 # one expression
 ev = Simulate.DiscreteEvent(:(1+1), Main, 10.0, 0.0)
-@test Simulate.evExec(ev.ex) == 2
+@test Simulate.evaluate(ev.ex) == 2
 @test ev.t == 10
 
 # two expressions
 ev = Simulate.DiscreteEvent((:(1+1), :(1+2)), Main, 15.0, 0.0)
-@test Simulate.evExec(ev.ex) == (2, 3)
+@test Simulate.evaluate(ev.ex) == (2, 3)
 @test ev.t == 15
 
 # one fun
 ev = Simulate.DiscreteEvent(fun(f, 1), Main, 10.0, 0.0)
-@test Simulate.evExec(ev.ex) == 4
+@test Simulate.evaluate(ev.ex) == 4
 
 # two funs
 ev = Simulate.DiscreteEvent((fun(f, 1), fun(g, 1)), Main, 10.0, 0.0)
-@test Simulate.evExec(ev.ex) == (4, 5)
+@test Simulate.evaluate(ev.ex) == (4, 5)
 
 # expressions and funs mixed in a tuple
 ev = Simulate.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), Main, 10.0, 0.0)
-@test sum([Simulate.evExec(ex) for ex in ev.ex if ex isa Function]) == 10
+@test sum([Simulate.evaluate(ex) for ex in ev.ex if ex isa Function]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
-@test Simulate.evExec(ev.ex) == (2, 6, 3, 4)
+@test Simulate.evaluate(ev.ex) == (2, 6, 3, 4)
 
 @test Simulate.scale(0) == 1
 @test Simulate.scale(pi*1e7) == 1e7
@@ -109,7 +109,7 @@ event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20)))
 event!(sim, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
 event!(sim, fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
 @test length(sim.sc.cevents) == 2
-@test Simulate.evExec(sim.sc.cevents[1].cond) == (false, false)
+@test Simulate.evaluate(sim.sc.cevents[1].cond) == (false, false)
 @test sim.Δt == 0.01
 
 @test length(sim.sc.events) == 12
