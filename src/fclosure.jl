@@ -94,8 +94,7 @@ g (generic function with 1 method)
 julia> a = 1
 1
 
-julia> gg = fun(g, :a, y=2)   # we pass a as a symbol to fun
-#12 (generic function with 1 method)
+julia> gg = fun(g, :a, y=2);   # we pass a as a symbol to fun
 
 julia> a += 1   # a becomes 2
 2
@@ -105,8 +104,7 @@ julia> gg()     # at execution g gets the current value of a
 └ @ Simulate ~/.julia/dev/Simulate/src/fclosure.jl:38
 4
 
-julia> hh = fun(g, fun(()->a), y=3)   # reference to a with an anonymous fun
-#12 (generic function with 1 method)
+julia> hh = fun(g, fun(()->a), y=3);   # reference to a with an anonymous fun
 
 julia> a += 1   # a becomes 3
 3
@@ -114,8 +112,7 @@ julia> a += 1   # a becomes 3
 julia> hh()     # at execution g gets again a current a
 6
 
-julia> ii = fun(g, ()->a, y=4)  # reference to a with an anonymous function
-#12 (generic function with 1 method)
+julia> ii = fun(g, ()->a, y=4);  # reference to a with an anonymous function
 
 julia> a += 1   # a becomes 4
 4

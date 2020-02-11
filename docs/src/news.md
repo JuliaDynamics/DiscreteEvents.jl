@@ -19,10 +19,12 @@ multithreading, resource handling and a streamlined documentation.
 
 ## New functionality in v0.3.0
 - [`Action`](@ref) is introduced as synonym for `Union{Expr,Function,Tuple}`,
+- thereby in addition to `funs`, you can now schedule arbitrary function
+  closures as events,  
 - [`periodic!`](@ref) takes now an `Action` as argument,
 - Arguments to [`fun`](@ref) can now be given also as symbols, expressions or as
-  other `fun`s. They get evaluated at event time before being
-  passed to the event function,
+  other `fun`s or function closures. They get evaluated at event time before
+  being passed to the event function,
 - [`Simulate.version`](@ref) gives now the package version,
 - `Simulate.jl` is now much faster due to optimizations,
 
