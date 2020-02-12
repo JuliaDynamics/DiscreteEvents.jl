@@ -18,7 +18,7 @@ multithreading, resource handling and a streamlined documentation.
   - `sample!` → [`periodic!`](@ref), was a name collision with `Distributions.jl`.
 
 ## New functionality in v0.3.0
-- [`Action`](@ref) is introduced as synonym for `Union{Expr,Function,Tuple}`,
+- [`Action`](@ref) is introduced as synonym for `Union{Function,Expr,Tuple}`,
 - thereby in addition to `funs`, you can now schedule arbitrary function
   closures as events,  
 - [`periodic!`](@ref) takes now an `Action` as argument,
@@ -54,6 +54,10 @@ multithreading, resource handling and a streamlined documentation.
 - [`event!`](@ref) no longer accepts a `Vector` as argument.
 - `Clk` as alias of [`𝐶`](@ref) is no longer provided.
 - [`event!`](@ref) now returns nothing.
+- [`event!`](@ref) and [`periodic!`](@ref) now doesn't take anymore the scope
+  as an argument. Symbols or expressions given to them or included in `fun`s
+  are only evaluated in `Main` scope: this feature therefore can be
+  used only by end users but not by any packages using `Simulate.jl`.
 
 ## Deprecated functionality in v0.3.0
 - Evaluating expressions or symbols at global scope is much slower than using

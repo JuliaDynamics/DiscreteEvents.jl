@@ -224,7 +224,11 @@ function reset!(clk::Clock, Δt::Number=0;
     else
         sync!(clk, Clock(Δt, t0=t0, unit=unit))
     end
-    "clock reset to t₀=$(float(t0*unit)), sampling rate Δt=$(float(Δt*unit))."
+    if threadid() == 1
+        foreach(ac->put!(ac.forth, Reset(hard)), clk.ac)
+        foreach(ac->take!(ac.back), clk.ac)
+        "clock reset to t₀=$(float(t0*unit)), sampling rate Δt=$(float(Δt*unit))."
+    end
 end
 
 """

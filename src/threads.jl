@@ -6,6 +6,8 @@
 # This is a Julia package for discrete event simulation
 #
 
+const _handle_exceptions = [true]
+
 # ---------------------------------------------------------
 # methods for active clocks
 # ---------------------------------------------------------
@@ -30,7 +32,11 @@ step!(A::ActiveClock, ::ClockState, ::Query) = put!(A.back, Response(A))
 
 step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register) = assign(A, σ.x, A.id)
 
-step!(A::ActiveClock, ::Union{Idle, Busy}, ::Reset) = nothing
+function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Reset)
+    m = A.master[]
+    reset!(A.clock, m.Δt, t0=m.time, hard=σ.type, unit=m.unit)
+    put!(A.back, Response(1))
+end
 
 step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, σ=$σ not implemented")
 
@@ -49,19 +55,20 @@ function activeClock(cmd::Channel, ans::Channel)
     sync!(ac.clock, ac.master[])
 
     while true
-        try
-            σ = take!(cmd)
-            if σ isa Stop
-                break
-            elseif σ isa Diag
-                put!(ans, Response((exp, sf)))
-            else
+        σ = take!(cmd)
+        if σ isa Stop
+            break
+        elseif σ isa Diag
+            put!(ans, Response((exp, sf)))
+        elseif _handle_exceptions[end]
+            try
                 step!(ac, ac.clock.state, σ)
+            catch exp
+                sf = stacktrace(catch_backtrace())
+                @warn "clock $(ac.id), thread $(ac.thread) exception: $exp"
             end
-        catch exp
-            sf = stacktrace(catch_backtrace())
-            @warn "clock $(ac.id), thread $(ac.thread) exception: $exp"
-#            throw(exp)
+        else
+            step!(ac, ac.clock.state, σ)
         end
     end
     # stop task

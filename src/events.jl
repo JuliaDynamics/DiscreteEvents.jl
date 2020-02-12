@@ -33,7 +33,7 @@ function do_event!(c::Clock)
     evaluate(ev.ex)
     c.evcount += 1
     if ev.Δt > 0.0  # schedule repeat event
-        event!(c, ev.ex, c.time + ev.Δt, scope=ev.scope, cycle=ev.Δt)
+        event!(c, ev.ex, c.time + ev.Δt, cycle=ev.Δt)
     end
     c.tev = length(c.sc.events) ≥ 1 ? nextevtime(c) : c.time
 end
