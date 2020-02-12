@@ -100,35 +100,35 @@ end
 reset!(𝐶)
 process!(Prc(1, testwait, ch1, ch2))
 
-# run!(𝐶, 10)
-# r = [i[1] for i in res]
-# @test r[1] ≈ 2
-# @test r[2] ≈ 2
-# @test r[3] ≈ 4
-# @test res[3][4] == 201
-# @test b == 801
-#
-# a = 1
-# function testdelay(clk::Clock)
-#     delay!(clk, at, 2)
-#     global a += 10
-# end
-#
-# function testdelay2(clk::Clock)
-#     delay!(clk, until, 5)
-#     global a += 1
-# end
-#
-# reset!(𝐶)
-# process!(Prc(1, testdelay), 3)
-# process!(Prc(2, testdelay2), 3)
-# run!(𝐶, 10)
-#
-# @test 𝐶.processes[1].task.state == :failed
-# @test a == 4
-#
-# testnow(c) = (delay!(c, 1); global a += 1; now!(c, fun(println, "$(tau(c)): a is $a")))
-# reset!(𝐶)
-# process!(Prc(1, testnow), 3)
-# run!(𝐶, 5)
-# @test a == 7
+run!(𝐶, 10)
+r = [i[1] for i in res]
+@test r[1] ≈ 2
+@test r[2] ≈ 2
+@test r[3] ≈ 4
+@test res[3][4] == 201
+@test b == 801
+
+a = 1
+function testdelay(clk::Clock)
+    delay!(clk, at, 2)
+    global a += 10
+end
+
+function testdelay2(clk::Clock)
+    delay!(clk, until, 5)
+    global a += 1
+end
+
+reset!(𝐶)
+process!(Prc(1, testdelay), 3)
+process!(Prc(2, testdelay2), 3)
+run!(𝐶, 10)
+
+@test 𝐶.processes[1].task.state == :failed
+@test a == 4
+
+testnow(c) = (delay!(c, 1); global a += 1; now!(c, fun(println, "$(tau(c)): a is $a")))
+reset!(𝐶)
+process!(Prc(1, testnow), 3)
+run!(𝐶, 5)
+@test a == 7

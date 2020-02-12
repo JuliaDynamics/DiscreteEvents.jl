@@ -11,6 +11,10 @@ Under some environments (e.g. Jupyter) it may happen, that the processes have no
 Normally for clocks pretty printing is enabled. For diagnostic purposes you can
 switch pretty printing off and on:
 
+```@docs
+_show_default
+```
+
 ```julia
 julia> clk = Clock()
 Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
