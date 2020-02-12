@@ -35,30 +35,38 @@ Enumeration type for scheduling events and timed conditions:
 """
     Action
 
-An action is either an `Expr` or a `Function` or a `Tuple` of them.
+An action is either  a `Function` or an `Expr` or a `Tuple` of them. It can
+be scheduled in an event for later execution.
+
+!!! warning "Evaluating expressions is slow"
+    … and should be avoided in time critical parts of applications. You will
+    get a one time warning if you use them. They can be replaced
+    easily by `fun`s or function closures.
+
+!!! note "Expressions `Expr` …"
+    … are evaluated at global scope in Module `Main` only. Other modules using
+    `Simulate.jl` cannot use expressions in events and have to use functions.
+    This is for the end user only.
 """
-const Action = Union{Expr, Function, Tuple}
+const Action = Union{Function, Expr, Tuple}
 
 """
     DiscreteEvent{T<:Action} <: AbstractEvent
 
-A discrete event is a function or an expression or a tuple of them to be
-executed at an event time.
+A discrete event is an `Action` to be executed at an event time.
 
 # Arguments, fields
 - `ex::T`: a function or an expression or a tuple of them,
-- `scope::Module`: evaluation scope,
 - `t::Float64`: event time,
 - `Δt::Float64`: repeat rate with for repeating events.
 """
 struct DiscreteEvent{T<:Action} <: AbstractEvent
     ex::T
-    scope::Module
     t::Float64
     Δt::Float64
 end
-DiscreteEvent(ex::T, scope::Module, t::Real, Δt::Real) where {T<:Action} =
-    DiscreteEvent(ex, scope, float(t), float(Δt))
+DiscreteEvent(ex::T, t::Real, Δt::Real) where {T<:Action} =
+    DiscreteEvent(ex, float(t), float(Δt))
 
 """
     DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
@@ -71,27 +79,22 @@ to be executed if conditions are met.
     (conditions must evaluate to `Bool`),
 - `ex::T`: a function or an expression or a tuple of them to be executed
     if conditions are met,
-- `scope::Module`: evaluation scope
 """
 struct DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
     cond::S
     ex::T
-    scope::Module
 end
 
 """
     Sample{T<:Action} <: AbstractEvent
 
-Sampling functions or expressions are called at sampling time.
+Sampling actions are executed at sampling time.
 
 # Arguments, fields
-- `ex<:Action`: expression or function or a tuple of them to be called
-    at sample time,
-- `scope::Module`: evaluation scope.
+- `ex<:Action`: an [`Action`](@ref) to be executed at sample time.
 """
 struct Sample{T<:Action} <: AbstractEvent
     ex::T
-    scope::Module
 end
 
 """

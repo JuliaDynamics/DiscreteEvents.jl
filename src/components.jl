@@ -75,7 +75,9 @@ struct Query <: ClockEvent end
 struct Diag <: ClockEvent end
 
 "`Reset()`: command"
-struct Reset <: ClockEvent end
+struct Reset <: ClockEvent
+    type::Bool
+end
 
 "`Response()`: response from an active clock"
 struct Response <: ClockEvent
@@ -90,9 +92,7 @@ end
 """
     step!(A::AbstractClock, q::ClockState, σ::ClockEvent)
 
-Default transition for clock state machines.
-
-This is called if no otherwise defined transition occurs.
+Default transition for clocks, called for undefined transitions.
 
 # Arguments
 - `A::AbstractClock`: state machine for which a transition is called

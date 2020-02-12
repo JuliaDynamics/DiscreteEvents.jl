@@ -143,11 +143,8 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(clk::Clock, t::Number)
     c = Condition()
-    event!(clk, fun(wakeup, c), after, t)
+    event!(clk, ()->wakeup(c), after, t)
     wait(c)
-    # c = Channel{Int}()
-    # event!(clk, fun(wakeup, c), after, t)
-    # take!(c)
 end
 
 """
@@ -166,7 +163,7 @@ function delay!(clk::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
         c = Condition()
-        event!(clk, fun(wakeup, c), t)
+        event!(clk, ()->wakeup(c), t)
         wait(c)
     else
         now!(clk, fun(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
@@ -175,7 +172,7 @@ end
 
 """
 ```
-wait!(clk::Clock, cond::Action; scope::Module=Main)
+wait!(clk::Clock, cond::Action)
 ```
 Wait on a clock for a condition to become true. Suspend the calling process
 until the given condition is true.
@@ -185,14 +182,13 @@ until the given condition is true.
 - `cond::Action`: a condition is an expression or function
     or an array or tuple of them. It is true only if all expressions or functions
     therein return true,
-- `scope::Module=Main`: evaluation scope for given expressions.
 """
-function wait!(clk::Clock, cond::Action; scope::Module=Main)
-    if all(evExec(cond))   # all conditions met
+function wait!(clk::Clock, cond::Action)
+    if all(evaluate(cond))   # all conditions met
         return         # return immediately
     else
         c = Condition()
-        event!(clk, fun(wakeup, c), cond, scope=scope)
+        event!(clk, ()->wakeup(c), cond)
         wait(c)
     end
 end

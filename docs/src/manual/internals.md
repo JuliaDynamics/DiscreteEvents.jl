@@ -78,8 +78,6 @@ register!
 ```@docs
 evaluate
 _invoke
-_invokelt
-evExec
 nextevent
 nextevtime
 setTimes
