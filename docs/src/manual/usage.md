@@ -54,7 +54,7 @@ PClock
 fork!
 pclock
 collapse!
-diag
+diagnose
 ```
 
 !!! note

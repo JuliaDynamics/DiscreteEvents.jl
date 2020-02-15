@@ -8,22 +8,12 @@
 
 import Base.invokelatest
 
-"""
-    event!
-
-An event! is a Julia function or expression or a tuple of them to execute at
-a given event time or under given conditions.
-"""
 function event! end
 
-"""
-    evaluate(y)
-
-Function barrier for functions and expressions as well for arguments and
-keywords of a `fun`. It allows Expr, Symbol and `fun` as arguments for `fun`.
-"""
-evaluate(y) = y    # catchall, gives back the argument
-function evaluate(y::Function)
+# Function barrier for functions and expressions as well for arguments and
+# keywords of a `fun`. It allows Expr, Symbol and `fun` as arguments for `fun`.
+_evaluate(y) = y    # catchall, gives back the argument
+function _evaluate(y::Function)
     # try
     #     y()
     # catch exc
@@ -39,9 +29,9 @@ function evaluate(y::Function)
         invokelatest(y)
     end
 end
-evaluate(y::Tuple) = evaluate.(y)
-evaluate(kw::Iterators.Pairs) = (; zip(keys(kw), map(i->evaluate(i), values(kw)) )...)
-function evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
+_evaluate(y::Tuple) = _evaluate.(y)
+_evaluate(kw::Iterators.Pairs) = (; zip(keys(kw), map(i->_evaluate(i), values(kw)) )...)
+function _evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
     try
         ret = Core.eval(Main,y)
         @warn "Evaluating expressions is slow, use functions instead" maxlog=1
@@ -51,11 +41,11 @@ function evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
     end
 end
 
-"Function barrier for executing `fun`s."
+# Function barrier for executing `fun`s.
 _invoke(@nospecialize(f), ::Nothing, ::Nothing) = f()
-_invoke(@nospecialize(f), arg, ::Nothing) = f(evaluate.(arg)...)
-_invoke(@nospecialize(f), ::Nothing, kw) = f(; evaluate(kw)...)
-_invoke(@nospecialize(f), arg, kw) = f(evaluate.(arg)...; evaluate(kw)...)
+_invoke(@nospecialize(f), arg, ::Nothing) = f(_evaluate.(arg)...)
+_invoke(@nospecialize(f), ::Nothing, kw) = f(; _evaluate(kw)...)
+_invoke(@nospecialize(f), arg, kw) = f(_evaluate.(arg)...; _evaluate(kw)...)
 _invoke(f::typeof(event!), arg, ::Nothing) = f(arg...)
 _invoke(f::typeof(event!), ::Nothing, kw) = f(; kw...)
 _invoke(f::typeof(event!), arg, kw) = f(arg..., kw...)
