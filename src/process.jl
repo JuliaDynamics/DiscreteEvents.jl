@@ -12,12 +12,8 @@
 #     @eval const $(Symbol("@spawn")) = $(Symbol("@async"))
 # end
 
-"""
-    register!(clk::Clock, p::Prc)
-
-Register a Prc to a clock. Check its id and change it apropriately.
-"""
-function register!(clk::Clock, p::Prc)
+# Register a Prc to a clock. Check its id and change it apropriately.
+function _register!(clk::Clock, p::Prc)
     id = p.id
     while haskey(clk.processes, id)
         if isa(id, Float64)
@@ -87,7 +83,7 @@ function _startup!(c::AbstractClock, p::Prc, cycles::Number, spawn::Bool)
     else
         startit()
     end
-    register!(p.clk, p)
+    _register!(p.clk, p)
 end
 
 """

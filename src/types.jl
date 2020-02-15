@@ -12,10 +12,8 @@ abstract type AbstractClock end
 "supertype for events"
 abstract type AbstractEvent end
 
-"supertype for clock states"
+# abstract types for clock state machines
 abstract type ClockState end
-
-"supertype for clock events"
 abstract type ClockEvent end
 
 """

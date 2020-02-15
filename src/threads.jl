@@ -49,7 +49,7 @@ step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, �
 # -------------------------------------
 # event loop for an active clock.
 # -------------------------------------
-function activeClock(cmd::Channel, ans::Channel)
+function _activeClock(cmd::Channel, ans::Channel)
     info = take!(cmd) # get a pointer to the master clock and id
     ac = ActiveClock(Clock(), info.m, cmd, ans, info.id, threadid())
     ac.clock.id = info.id
@@ -87,7 +87,7 @@ end
 # Start a task on each available thread (other than 1).
 # - `f::Function`: function to start, has to take two channels as arguments,
 # - `mul::Int=3`: startup multiplication factor,
-function start_threads(f::Function) :: Vector{ClockChannel}
+function _start_threads(f::Function) :: Vector{ClockChannel}
     ac = ClockChannel[]
     @threads for i in 1:nthreads()
         if threadid() > 1
@@ -115,7 +115,7 @@ function fork!(master::Clock)
         if VERSION >= v"1.3"
             if nthreads() > 1
                 if isempty(master.ac)
-                    master.ac = start_threads(activeClock)           # startup steps
+                    master.ac = _start_threads(_activeClock)           # startup steps
                     for i in eachindex(master.ac)                    # to all active clocks …
                         put!(master.ac[i].forth, Startup(Ref(master), i)) # send pointer and id
                     end
