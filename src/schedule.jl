@@ -61,18 +61,18 @@ julia> event!(fun(myfunc, 5, 6), after, 1hr)
 """
 function event!(clk::CL, ex::Action, t::Number; cycle::Number=0.0,
                 cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock}
-    t = tadjust(clk, t)
-    cycle = tadjust(clk, cycle)
-    t = max(t, clk.time)
+    t = _tadjust(clk, t)
+    cycle = _tadjust(clk, cycle)
+    t = max(t, _tadjust(clk, tau(clk)))
 
     if cid == clk.id && spawn  # evaluate spawn only if cid == clk.id
-        cid = spawnid(clk)
+        cid = _spawnid(clk)
     end
-    assign(clk, DiscreteEvent(ex, t, cycle), cid)
+    _assign(clk, DiscreteEvent(ex, t, cycle), cid)
 end
 function event!(clk::CL, ex::Action, T::Timing, t::Number;
                 cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock}
-    t = tadjust(clk, t)
+    t = _tadjust(clk, t)
     if T == after
         event!(clk, ex, t+clk.time, cid=cid, spawn=spawn, sync=sync)
     elseif T == every
@@ -96,7 +96,6 @@ It is executed immediately if the conditions are met, else the condition is
 checked at each clock tick Δt. A conditional event is triggered only once. After
 that it is removed from the clock. If no sampling rate Δt is setup, a default
 sampling rate is setup depending on the scale of the remaining simulation time
-``Δt = scale(t_r)/100`` or ``0.01`` if ``t_r = 0``.
 
 # Arguments
 - `clk::AbstractClock`: if no clock is supplied, the event is scheduled to 𝐶,
@@ -133,13 +132,13 @@ Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=10.0 , Δt=0.0 , prc:0
 """
 function event!(clk::T, ex::Action, cond::Action;
                 cid::Int=clk.id, spawn=false) where {T<:AbstractClock}
-    if busy(clk) && all(evaluate(cond))   # all conditions met
-        evaluate(ex)                      # execute immediately
+    if _busy(clk) && all(_evaluate(cond))   # all conditions met
+        _evaluate(ex)                      # execute immediately
     else
         if cid == clk.id && spawn  # evaluate spawn only if cid == clk.id
-            cid = spawnid(clk)
+            cid = _spawnid(clk)
         end
-        assign(clk, DiscreteCond(cond, ex), cid)
+        _assign(clk, DiscreteCond(cond, ex), cid)
     end
     return nothing
 end
@@ -160,23 +159,15 @@ Register a function or expression for periodic execution at the clock`s sample r
 """
 function periodic!(clk::Clock, ex::T, Δt::Number=clk.Δt;
                    spawn=false) where {T<:Action}
-    clk.Δt = Δt == 0 ? scale(clk.end_time - clk.time)/100 : Δt
-    assign(clk, Sample(ex), spawn ? spawnid(clk) : 0)
+    clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
+    _assign(clk, Sample(ex), spawn ? _spawnid(clk) : 0)
 end
 periodic!(ex::T, Δt::Number=𝐶.Δt; kw...) where {T<:Action} = periodic!(𝐶, ex, Δt; kw...)
 periodic!(ac::ActiveClock, ex::T, Δt::Number=ac.clock.Δt; kw...) where {T<:Action} = periodic!(ac.clock, ex, Δt; kw...)
 
-"""
-    spawnid(clk::Clock) :: Int
-
-Return a random number out of the thread ids of all available parallel clocks.
-This is used for `spawn`ing tasks or events to them.
-
-!!! note
-    This function may be used for workload balancing between threads
-    in the future.
-"""
-function spawnid(clk::Clock) :: Int
+# Return a random number out of the thread ids of all available parallel clocks.
+# This is used for `spawn`ing tasks or events to them.
+function _spawnid(clk::Clock) :: Int
     if isempty(clk.ac)
         return 0
     else
@@ -184,12 +175,8 @@ function spawnid(clk::Clock) :: Int
     end
 end
 
-"""
-    scale(n::Number)::Float64
-
-calculate the scale from a given number
-"""
-function scale(n::Number)::Float64
+# calculate the scale from a given number
+function _scale(n::Number)::Float64
     if n > 0
         i = 1.0
         while !(10^i ≤ n < 10^(i+1))
@@ -204,38 +191,23 @@ end
 # ---------------------------------------------------------------
 # assign and register events and samples to a clock
 # ---------------------------------------------------------------
-
-"""
-    assign(c::S, ev::T, id::Int=c.id) where {S<:AbstractClock, T<:AbstractEvent}
-
-Assign an event to a clock.
-
-There are several ways to do it:
-1. assign it directly to a clock or an active clock or
-2. assign it via a channel to another one, if given a different id.
-    In this case the event is sent over the channel to the target clock.
-    - The master clock (id=0) can directly send to an active clock.
-    - An active clock can send directly to master.
-    - An active clock can only send via master to another active clock.
-"""
-function assign(c::S, ev::T, id::Int=c.id) where {S<:AbstractClock, T<:AbstractEvent}
+# There are several ways to do it:
+# 1. assign it directly to a clock or an active clock or
+# 2. assign it via a channel to another one, if given a different id.
+#    In this case the event is sent over the channel to the target clock.
+#    - The master clock (id=0) can directly send to an active clock.
+#    - An active clock can send directly to master.
+#    - An active clock can only send via master to another active clock.
+function _assign(c::S, ev::T, id::Int=c.id) where {S<:AbstractClock, T<:AbstractEvent}
     if id == c.id
-        register!(c, ev)       # 1: register it to yourself
+        _register!(c, ev)       # 1: register it to yourself
     else
-        register(c, ev, id)    # 2: register it to another clock
+        _register(c, ev, id)    # 2: register it to another clock
     end
 end
 
-"""
-```
-register!(c::Clock, ev::DiscreteEvent)
-register!(c::Clock, cond::DiscreteCond)
-register!(c::Clock, sp::Sample)
-register!(ac::ActiveClock, ev::T) where {T<:AbstractEvent}
-```
-Register a concrete event directly to a clock.
-"""
-function register!(c::Clock, ev::DiscreteEvent)
+# function barrier: register a concrete event directly to a clock.
+function _register!(c::Clock, ev::DiscreteEvent)
     t = ev.t
     while any(i->i==t, values(c.sc.events)) # in case an event at that time exists
         t = nextfloat(float(t))                  # increment scheduled time
@@ -243,44 +215,36 @@ function register!(c::Clock, ev::DiscreteEvent)
     c.sc.events[ev] = t
     return
 end
-function register!(c::Clock, cond::DiscreteCond)
-    (c.Δt == 0) && (c.Δt = scale(c.end_time - c.time)/100)
+function _register!(c::Clock, cond::DiscreteCond)
+    (c.Δt == 0) && (c.Δt = _scale(c.end_time - c.time)/100)
     push!(c.sc.cevents, cond)
     return
 end
-register!(c::Clock, sp::Sample) = ( push!(c.sc.samples, sp); nothing )
-register!(ac::ActiveClock, ev::T) where {T<:AbstractEvent} = register!(ac.clock, ev)
+_register!(c::Clock, sp::Sample) = ( push!(c.sc.samples, sp); nothing )
+_register!(ac::ActiveClock, ev::T) where {T<:AbstractEvent} = _register!(ac.clock, ev)
 
-"""
-```
-register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
-register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
-```
-Register an event to another clock via a channel.
-
-# Arguments
-- `c::Clock`: a master clock can forward events to active clocks,
-- `ac::ActiveClock`: active clocks can forward events only through master,
-    he then does the distribution for them,
-- `ev<:AbstractEvent`: the event to register,
-- `id::Int`: the id of the clock it should get registered to.
-"""
-function register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
+# Register an event to another clock via a channel.
+# - c::Clock: a master clock can forward events to active clocks,
+# - ac::ActiveClock: active clocks can forward events only through master,
+#                    he then does the distribution for them,
+# - ev<:AbstractEvent: the event to register,
+# - id::Int: the id of the clock it should get registered to.
+function _register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
     if id > 0 && threadid() == 1       # only master can forward events
         if id ≤ length(c.ac)
             @inbounds put!(c.ac[id].forth, Register(ev))
             return
         end
     end
-    register!(c, ev)                   # otherwise take it yourself
+    _register!(c, ev)                   # otherwise take it yourself
 end
-function register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
+function _register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
     if ac.id == id                     # if id is your id
-        register!(ac.clock, ev)        # take it yourself
+        _register!(ac.clock, ev)       # take it yourself
     elseif ac.clock.state == Busy()    # if master handles its channels
         put!(ac.back, Forward(ev, id)) # put it over the channel
         return
     else
-        register(ac.master[], ev, id)  # otherwise call him directly
+        _register(ac.master[], ev, id) # otherwise call him directly
     end
 end

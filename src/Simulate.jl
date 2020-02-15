@@ -57,7 +57,7 @@ export  Clock, ActiveClock, RTClock, RTC, setUnit!, 𝐶,
         Action, fun, event!, periodic!,
         incr!, run!, stop!, resume!, reset!, sync!,
         Prc, process!, interrupt!, delay!, wait!, now!,
-        PClock, fork!, collapse!, pclock, diag
+        PClock, fork!, collapse!, pclock, diagnose
 
 
 Random.seed!(123)

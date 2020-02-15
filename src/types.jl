@@ -182,6 +182,7 @@ mutable struct ClockChannel{T <: ClockEvent}
     back::Channel{T}
     thread::Int
     done::Bool
+    load::Int
 end
 
 """
