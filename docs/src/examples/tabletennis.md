@@ -60,10 +60,10 @@ end
 function serve(p::Player)
     ts = 3 + dist*rd(0.15)/(vs*rd(0.25))
     if (rand() ≤ p.accuracy) && (p.state == Wait())
-        event!(𝐶, Fun(step!, p.opp, Serve()), after, ts)
+        event!(𝐶, fun(step!, p.opp, Serve()), after, ts)
         @printf("%5.2f: %s serves %s\n", tau()+ts, p.name, p.opp.name)
     else
-        event!(𝐶, Fun(step!, p.opp, Miss()), after, ts)
+        event!(𝐶, fun(step!, p.opp, Miss()), after, ts)
         @printf("%5.2f: %s serves and misses %s\n", tau()+ts, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -74,10 +74,10 @@ end
 function ret(p::Player)
     tr = dist*rd(0.15)/(vr*rd(0.25))
     if rand() ≤ p.accuracy
-        event!(𝐶, Fun(step!, p.opp, Return()), after, tr)
+        event!(𝐶, fun(step!, p.opp, Return()), after, tr)
         @printf("%5.2f: %s returns %s\n", tau()+tr, p.name, p.opp.name)
     else
-        event!(𝐶, Fun(step!, p.opp, Miss()), after, tr)
+        event!(𝐶, fun(step!, p.opp, Miss()), after, tr)
         @printf("%5.2f: %s returns and misses %s\n", tau()+tr, p.name, p.opp.name)
     end
     if rand() ≥ p.attentiveness
@@ -182,4 +182,4 @@ julia> reset!(𝐶)
 clock reset to t₀=0, sampling rate Δt=0.
 ```
 
-**See also:** [`event!`](@ref), [`Fun`](@ref), [`tau`](@ref), [`𝐶`](@ref),  [`run!`](@ref), [`reset!`](@ref)
+**See also:** [`event!`](@ref), [`fun`](@ref), [`tau`](@ref), [`𝐶`](@ref),  [`run!`](@ref), [`reset!`](@ref)

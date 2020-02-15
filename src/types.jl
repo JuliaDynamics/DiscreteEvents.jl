@@ -12,10 +12,8 @@ abstract type AbstractClock end
 "supertype for events"
 abstract type AbstractEvent end
 
-"supertype for clock states"
+# abstract types for clock state machines
 abstract type ClockState end
-
-"supertype for clock events"
 abstract type ClockEvent end
 
 """
@@ -31,93 +29,42 @@ Enumeration type for scheduling events and timed conditions:
 """
 @enum Timing at after every before until
 
+
 """
-```
-Fun(f::Function, arg...; kw...)
-```
-Store a function and its arguments for being called later as an event.
+    Action
 
-# Arguments, fields
-- `f::Function`:  event function to be executed at event time,
-- `arg...`: arguments to the event function,
-- `kw...`: keyword arguments to the event function.
+An action is either  a `Function` or an `Expr` or a `Tuple` of them. It can
+be scheduled in an event for later execution.
 
-Arguments and keyword arguments can be 1) values or variables mixed with 2) symbols,
-expressions or even other functions. In the 2nd cases they are evaluated at
-event time before they are passed to the event function.
+!!! warning "Evaluating expressions is slow"
+    … and should be avoided in time critical parts of applications. You will
+    get a one time warning if you use them. They can be replaced
+    easily by `fun`s or function closures.
 
-!!! note
-    Composite types or variables given symbolically can change until they
-    are evaluated later at event time.
-
-# Examples
-```jldoctest
-julia> using Simulate
-
-julia> f(a,b,c; d=4, e=5) = a+b+c+d+e       # if you define a function and ...
-f (generic function with 1 method)
-
-julia> sf = Fun(f, 10, 20, 30, d=14, e=15);  # store it as Fun
-
-julia> sf.f(sf.arg...; sf.kw...)         # it can be executed later
-89
-
-julia> d = Dict(:a => 1, :b => 2);          # we set up a dictionary
-
-julia> g(t) = t[:a] + t[:b]                 # and a function adding :a and :b
-g (generic function with 1 method)
-
-julia> g(d)                                 # our add function gives 3
-3
-
-julia> ff = Fun(g, d);              # we set up a Fun
-
-julia> d[:a] = 10;                          # later somehow we change d
-
-julia> ff.f(ff.arg...)                   # calling ff then gives a different result
-12
-```
+!!! note "Expressions `Expr` …"
+    … are evaluated at global scope in Module `Main` only. Other modules using
+    `Simulate.jl` cannot use expressions in events and have to use functions.
+    This is for the end user only.
 """
-struct Fun  ### this is the fastest version
-    f::Function
-    arg  #::Union{Nothing,Tuple}
-    kw   #::Union{Nothing,Iterators.Pairs}
-
-    Fun(f::Function, arg...; kw...) =
-        new(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
-end
-### the "book" version is 10% slower (overall benchmark)
-# struct Fun{S<:Union{Nothing,Tuple},T<:Union{Nothing,Iterators.Pairs}}
-#     f::Function
-#     arg::S
-#     kw::T
-# end
-# Fun(f::Function, arg...; kw...) =
-#     Fun(f, ifelse(isempty(arg), nothing, arg), ifelse(isempty(kw), nothing, kw))
-
-"An action is either an `Expr` or a `Fun` or a `Tuple` of them."
-const Action = Union{Expr, Fun, Tuple}
+const Action = Union{Function, Expr, Tuple}
 
 """
     DiscreteEvent{T<:Action} <: AbstractEvent
 
-A discrete event is a function or an expression or a tuple of them to be
-executed at an event time.
+A discrete event is an `Action` to be executed at an event time.
 
 # Arguments, fields
 - `ex::T`: a function or an expression or a tuple of them,
-- `scope::Module`: evaluation scope,
 - `t::Float64`: event time,
 - `Δt::Float64`: repeat rate with for repeating events.
 """
 struct DiscreteEvent{T<:Action} <: AbstractEvent
     ex::T
-    scope::Module
     t::Float64
     Δt::Float64
 end
-DiscreteEvent(ex::T, scope::Module, t::Real, Δt::Real) where {T<:Action} =
-    DiscreteEvent(ex, scope, float(t), float(Δt))
+DiscreteEvent(ex::T, t::Real, Δt::Real) where {T<:Action} =
+    DiscreteEvent(ex, float(t), float(Δt))
 
 """
     DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
@@ -130,27 +77,22 @@ to be executed if conditions are met.
     (conditions must evaluate to `Bool`),
 - `ex::T`: a function or an expression or a tuple of them to be executed
     if conditions are met,
-- `scope::Module`: evaluation scope
 """
 struct DiscreteCond{S<:Action, T<:Action} <: AbstractEvent
     cond::S
     ex::T
-    scope::Module
 end
 
 """
     Sample{T<:Action} <: AbstractEvent
 
-Sampling functions or expressions are called at sampling time.
+Sampling actions are executed at sampling time.
 
 # Arguments, fields
-- `ex<:Action`: expression or function or a tuple of them to be called
-    at sample time,
-- `scope::Module`: evaluation scope.
+- `ex<:Action`: an [`Action`](@ref) to be executed at sample time.
 """
 struct Sample{T<:Action} <: AbstractEvent
     ex::T
-    scope::Module
 end
 
 """
@@ -238,6 +180,7 @@ mutable struct ClockChannel{T <: ClockEvent}
     back::Channel{T}
     thread::Int
     done::Bool
+    load::Int
 end
 
 """

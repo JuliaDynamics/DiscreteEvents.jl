@@ -12,12 +12,8 @@
 #     @eval const $(Symbol("@spawn")) = $(Symbol("@async"))
 # end
 
-"""
-    register!(clk::Clock, p::Prc)
-
-Register a Prc to a clock. Check its id and change it apropriately.
-"""
-function register!(clk::Clock, p::Prc)
+# Register a Prc to a clock. Check its id and change it apropriately.
+function _register!(clk::Clock, p::Prc)
     id = p.id
     while haskey(clk.processes, id)
         if isa(id, Float64)
@@ -35,17 +31,11 @@ function register!(clk::Clock, p::Prc)
     p.id = id
 end
 
-"""
-    loop(p::Prc, start::Channel, cycles::Number)
-
-Put a [`Prc`](@ref) in a loop which can be broken by a `ClockException`.
-
-# Arguments
-- `p::Prc`:
-- `start::Channel`: a channel to ensure that a process starts,
-- `cycles=Inf`: determine, how often the loop should be run.
-"""
-function loop(p::Prc, start::Channel, cycles::Number)
+# Put a [`Prc`](@ref) in a loop which can be broken by a `ClockException`.
+# - `p::Prc`:
+# - `start::Channel`: a channel to ensure that a process starts,
+# - `cycles=Inf`: determine, how often the loop should be run.
+function _loop(p::Prc, start::Channel, cycles::Number)
     take!(start)
     if threadid() > 1
         p.clk = pclock(p.clk, threadid())
@@ -65,16 +55,12 @@ function loop(p::Prc, start::Channel, cycles::Number)
     p.clk.processes = delete!(p.clk.processes, p.id)
 end
 
-"""
-    startup!(p::Prc, cycles::Number, spawn::Bool)
-
-Start a `Prc` as a task in a loop.
-"""
-function startup!(c::AbstractClock, p::Prc, cycles::Number, spawn::Bool)
+# startup a `Prc` as a task in a loop.
+function _startup!(c::AbstractClock, p::Prc, cycles::Number, spawn::Bool)
 
     function startit()
         start = Channel{Int}(0)
-        p.task = @async loop(p, start, cycles)
+        p.task = @async _loop(p, start, cycles)
         put!(start, 1)  # block until the process has started
     end
 
@@ -97,7 +83,7 @@ function startup!(c::AbstractClock, p::Prc, cycles::Number, spawn::Bool)
     else
         startit()
     end
-    register!(p.clk, p)
+    _register!(p.clk, p)
 end
 
 """
@@ -122,13 +108,13 @@ return the `id` it was registered with. It can then be found under `clk.processe
 """
 function process!(c::AbstractClock, p::Prc, cycles::Number=Inf; spawn::Bool=false)
     p.clk = c
-    startup!(c, p, cycles, spawn)
+    _startup!(c, p, cycles, spawn)
     p.id
 end
 process!(p::Prc, cycles=Inf) = process!(𝐶, p, cycles)
 
-"wakeup a process waiting for a `Condition`"
-wakeup(c::Condition) = (notify(c); yield())
+# wakeup a process waiting for a `Condition`
+_wakeup(c::Condition) = (notify(c); yield())
 
 """
 ```
@@ -143,11 +129,8 @@ process until being reactivated by the clock at the appropriate time.
 """
 function delay!(clk::Clock, t::Number)
     c = Condition()
-    event!(clk, Fun(wakeup, c), after, t)
+    event!(clk, ()->_wakeup(c), after, t)
     wait(c)
-    # c = Channel{Int}()
-    # event!(clk, Fun(wakeup, c), after, t)
-    # take!(c)
 end
 
 """
@@ -166,16 +149,16 @@ function delay!(clk::Clock, T::Timing, t::Number)
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
         c = Condition()
-        event!(clk, Fun(wakeup, c), t)
+        event!(clk, ()->_wakeup(c), t)
         wait(c)
     else
-        now!(clk, Fun(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
+        now!(clk, fun(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
     end
 end
 
 """
 ```
-wait!(clk::Clock, cond::Action; scope::Module=Main)
+wait!(clk::Clock, cond::Action)
 ```
 Wait on a clock for a condition to become true. Suspend the calling process
 until the given condition is true.
@@ -185,14 +168,13 @@ until the given condition is true.
 - `cond::Action`: a condition is an expression or function
     or an array or tuple of them. It is true only if all expressions or functions
     therein return true,
-- `scope::Module=Main`: evaluation scope for given expressions.
 """
-function wait!(clk::Clock, cond::Action; scope::Module=Main)
-    if all(evExec(cond))   # all conditions met
+function wait!(clk::Clock, cond::Action)
+    if all(_evaluate(cond))   # all conditions met
         return         # return immediately
     else
         c = Condition()
-        event!(clk, Fun(wakeup, c), cond, scope=scope)
+        event!(clk, ()->_wakeup(c), cond)
         wait(c)
     end
 end

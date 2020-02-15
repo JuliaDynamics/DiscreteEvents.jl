@@ -14,9 +14,9 @@ import Dates.now
 function take(id::Int64, ch::Channel, step::Int64, qpi::Array{Float64,1})
     if isready(ch)
         take!(ch)                                            # take something from common channel
-        event!(Fun(put, id, ch, step, qpi), after, rand())    # timed event after some time
+        event!(fun(put, id, ch, step, qpi), after, rand())    # timed event after some time
     else
-        event!(Fun(take, id, ch, step, qpi), Fun(isready, ch)) # conditional event until channel is ready
+        event!(fun(take, id, ch, step, qpi), fun(isready, ch)) # conditional event until channel is ready
     end
 end
 

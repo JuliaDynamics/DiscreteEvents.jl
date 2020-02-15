@@ -11,18 +11,20 @@ multithreading, resource handling and a streamlined documentation.
   [issue #13](https://github.com/pbayer/Simulate.jl/issues/13) `Simulate.jl`  
   gets renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
 - there are further renamings to make the API more consistent:
-  - `Simfunction` → [`Fun`](@ref), `SF` is no longer defined,
+  - `Simfunction` → [`fun`](@ref), `SF` is no longer defined,
   - `SimProcess` → [`Prc`](@ref), `SP` is no longer defined,
   - `SimEvent` → [`DiscreteEvent`](@ref),
   - `SimCond` → [`DiscreteCond`](@ref),
   - `sample!` → [`periodic!`](@ref), was a name collision with `Distributions.jl`.
 
 ## New functionality in v0.3.0
-- [`Action`](@ref) is introduced as synonym for `Union{Expr,Fun,Tuple}`,
-- [`periodic!`](@ref) takes now an `Action` as argument, 
-- Arguments to [`Fun`](@ref) can now be given also as symbols, expressions or as
-  other `Fun`s. They get evaluated at event time before being
-  passed to the event function,
+- [`Action`](@ref) is introduced as synonym for `Union{Function,Expr,Tuple}`,
+- thereby in addition to `funs`, you can now schedule arbitrary function
+  closures as events,  
+- [`periodic!`](@ref) takes now an `Action` as argument,
+- Arguments to [`fun`](@ref) can now be given also as symbols, expressions or as
+  other `fun`s or function closures. They get evaluated at event time before
+  being passed to the event function,
 - [`Simulate.version`](@ref) gives now the package version,
 - `Simulate.jl` is now much faster due to optimizations,
 
@@ -52,10 +54,14 @@ multithreading, resource handling and a streamlined documentation.
 - [`event!`](@ref) no longer accepts a `Vector` as argument.
 - `Clk` as alias of [`𝐶`](@ref) is no longer provided.
 - [`event!`](@ref) now returns nothing.
+- [`event!`](@ref) and [`periodic!`](@ref) now doesn't take anymore the scope
+  as an argument. Symbols or expressions given to them or included in `fun`s
+  are only evaluated in `Main` scope: this feature therefore can be
+  used only by end users but not by any packages using `Simulate.jl`.
 
 ## Deprecated functionality in v0.3.0
 - Evaluating expressions or symbols at global scope is much slower than using
-  `SimFunction`s and gives now a one time warning. This functionality may be
+  functions and gives now a one time warning. This functionality may be
   removed entirely in a future version. (Please write an issue if you want to
   keep it.)
 

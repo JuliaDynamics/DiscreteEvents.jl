@@ -6,6 +6,8 @@
 # This is a Julia package for discrete event simulation
 #
 
+# - `_show_default[1] = false`: switch pretty printing on,
+# - `_show_default[1] = true`: pretty printing off, Julia default on.
 const _show_default = [false]
 
 function c_info(c::Clock)

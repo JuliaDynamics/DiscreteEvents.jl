@@ -6,11 +6,13 @@
 # This is a Julia package for discrete event simulation
 #
 
+const _handle_exceptions = [true]
+
 # ---------------------------------------------------------
 # methods for active clocks
 # ---------------------------------------------------------
 tau(ac::ActiveClock) = tau(ac.clock)
-busy(ac::ActiveClock) = ac.clock.state == Busy()
+_busy(ac::ActiveClock) = ac.clock.state == Busy()
 sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
 
 delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
@@ -21,47 +23,56 @@ now!(ac::ActiveClock, ex::Action) = now!(ac.clock, ex)
 # ---------------------------------------------------------
 # state machine operations of active clocks
 # ---------------------------------------------------------
-"Run an active clock for a given duration."
-step!(A::ActiveClock, ::Idle, σ::Run) = do_run!(A.clock, σ.duration)
+step!(A::ActiveClock, ::Idle, ::Start) = ( A.clock.evcount = 0; A.clock.scount = 0)
+
+step!(A::ActiveClock, ::Idle, σ::Run) = _run!(A.clock, σ.duration)
+
+function step!(A::Clock, ::Idle, σ::Finish)
+    _finish!(A.clock, σ.tend)
+    put!(A.back, Response((A.clock.evcount, A.clock.scount)))
+end
 
 step!(A::ActiveClock, ::Union{Idle, Busy}, ::Sync) = nothing
 
 step!(A::ActiveClock, ::ClockState, ::Query) = put!(A.back, Response(A))
 
-step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register) = assign(A, σ.x, A.id)
+step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register) = _assign(A, σ.x, A.id)
 
-step!(A::ActiveClock, ::Union{Idle, Busy}, ::Reset) = nothing
+function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Reset)
+    m = A.master[]
+    reset!(A.clock, m.Δt, t0=m.time, hard=σ.type, unit=m.unit)
+    put!(A.back, Response(1))
+end
 
 step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, σ=$σ not implemented")
 
-"""
-    activeClock(ch::Channel)
-
-Operate an active clock on a given channel. This is its event loop.
-"""
-function activeClock(cmd::Channel, ans::Channel)
-    info = take!(cmd).x # get a pointer to the master clock and id
-    ac = ActiveClock(Clock(), info[1], cmd, ans, info[2], threadid())
-    ac.clock.id = info[2]
+# -------------------------------------
+# event loop for an active clock.
+# -------------------------------------
+function _activeClock(cmd::Channel, ans::Channel)
+    info = take!(cmd) # get a pointer to the master clock and id
+    ac = ActiveClock(Clock(), info.m, cmd, ans, info.id, threadid())
+    ac.clock.id = info.id
     sf = Array{Base.StackTraces.StackFrame,1}[]
     exp = nothing
     ac.clock.state = Idle()
     sync!(ac.clock, ac.master[])
 
     while true
-        try
-            σ = take!(cmd)
-            if σ isa Stop
-                break
-            elseif σ isa Diag
-                put!(ans, Response((exp, sf)))
-            else
+        σ = take!(cmd)
+        if σ isa Stop
+            break
+        elseif σ isa Diag
+            put!(ans, Response((exp, sf)))
+        elseif _handle_exceptions[end]
+            try
                 step!(ac, ac.clock.state, σ)
+            catch exp
+                sf = stacktrace(catch_backtrace())
+                @warn "clock $(ac.id), thread $(ac.thread) exception: $exp"
             end
-        catch exp
-            sf = stacktrace(catch_backtrace())
-            @warn "clock $(ac.id), thread $(ac.thread) exception: $exp"
-#            throw(exp)
+        else
+            step!(ac, ac.clock.state, σ)
         end
     end
     # stop task
@@ -72,21 +83,16 @@ end
 # ---------------------------------------------------------
 # starting and destroying active clocks
 # ---------------------------------------------------------
-"""
-    start_threads(f::Function, mul::Int=3)
 
-Start a task on each available thread (other than 1).
-
-# Arguments
-- `f::Function`: function to start, has to take two channels as arguments,
-- `mul::Int=3`: startup multiplication factor,
-"""
-function start_threads(f::Function) :: Vector{ClockChannel}
+# Start a task on each available thread (other than 1).
+# - `f::Function`: function to start, has to take two channels as arguments,
+# - `mul::Int=3`: startup multiplication factor,
+function _start_threads(f::Function) :: Vector{ClockChannel}
     ac = ClockChannel[]
     @threads for i in 1:nthreads()
         if threadid() > 1
             ai = ClockChannel(Ref{Task}(), Channel{ClockEvent}(8), Channel{ClockEvent}(5),
-                    threadid(), false)
+                    threadid(), false, 0)
             ai.ref = Ref(@async f(ai.forth, ai.back))
             push!(ac, ai)
         end
@@ -109,9 +115,9 @@ function fork!(master::Clock)
         if VERSION >= v"1.3"
             if nthreads() > 1
                 if isempty(master.ac)
-                    master.ac = start_threads(activeClock)           # startup steps
+                    master.ac = _start_threads(_activeClock)           # startup steps
                     for i in eachindex(master.ac)                    # to all active clocks …
-                        put!(master.ac[i].forth, Start(( Ref(master), i) )) # send pointer and id
+                        put!(master.ac[i].forth, Startup(Ref(master), i)) # send pointer and id
                     end
                 else
                     println(stderr, "clock already has $(length(clk.ac)) active clocks!")
@@ -222,7 +228,7 @@ function pclock(ac::ActiveClock, id::Int) :: AbstractClock
 end
 
 """
-    diag(clk::Clock, id::Int)
+    diagnose(clk::Clock, id::Int)
 
 Return the stacktrace from a parallel clock.
 
@@ -230,7 +236,7 @@ Return the stacktrace from a parallel clock.
 - `clk::Clock`: a master clock,
 - `id::Int`: the id of a parallel clock.
 """
-function diag(clk::Clock, id::Int)
+function diagnose(clk::Clock, id::Int)
     if id in eachindex(clk.ac)
         if istaskfailed(clk.ac[id].ref[])
             return clk.ac[id].ref[]

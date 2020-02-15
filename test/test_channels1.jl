@@ -23,9 +23,9 @@ function take(S::Server)
     if isready(S.input)
         S.token = take!(S.input)
         push!(A, (tau(), S.name, S.id, S.token))
-        event!(Fun(put, S), after, rand())         # call put after some time
+        event!(fun(put, S), after, rand())         # call put after some time
     else
-        event!(Fun(take, S), Fun(isready, S.input)) # call again if input is ready
+        event!(fun(take, S), fun(isready, S.input)) # call again if input is ready
     end
 end
 

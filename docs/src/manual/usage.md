@@ -54,7 +54,7 @@ PClock
 fork!
 pclock
 collapse!
-diag
+diagnose
 ```
 
 !!! note
@@ -70,11 +70,11 @@ Functions and expressions can be scheduled for execution
 
 ```@docs
 AbstractEvent
+Action
 DiscreteEvent
 DiscreteCond
 Timing
-Fun
-Action
+fun
 event!
 ```
 Functions and expressions can be given to events on their own or in tuples, even mixed:
@@ -82,8 +82,8 @@ Functions and expressions can be given to events on their own or in tuples, even
 ```julia
 function events()
     event!(:(i += 1), after, 10)  # one expression
-    event!(Fun(f, 1, 2, 3, diff=pi), every, 1)  # one Fun
-    event!((:(i += 1), Fun(g, j)), [:(tau() ≥ 50), Fun(isready, input), :(a ≤ 10)]) # two Fun under three conditions
+    event!(fun(f, 1, 2, 3, diff=pi), every, 1)  # one fun
+    event!((:(i += 1), fun(g, j)), [:(tau() ≥ 50), fun(isready, input), :(a ≤ 10)]) # two funs under three conditions
 end
 ```
 
@@ -91,9 +91,7 @@ All given functions or expressions are then called or evaluated at a given simul
 
 !!! warning
     Evaluating expressions or symbols at global scope is much slower than using
-    `Fun`s and gives a one time warning. See [Performance](../performance/performance.md).
-    This functionality may be removed entirely in a future version. (Please write
-    an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
+    functions and gives a one time warning. See [Performance](../performance/performance.md). This functionality may be removed entirely in a future version. (Please write an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
 
 !!! note
     Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `:(tau() ≥ 100)` is preferable to `:(tau() == 100)`.

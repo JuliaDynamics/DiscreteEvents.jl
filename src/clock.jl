@@ -224,15 +224,15 @@ function reset!(clk::Clock, Δt::Number=0;
     else
         sync!(clk, Clock(Δt, t0=t0, unit=unit))
     end
-    "clock reset to t₀=$(float(t0*unit)), sampling rate Δt=$(float(Δt*unit))."
+    if threadid() == 1
+        foreach(ac->put!(ac.forth, Reset(hard)), clk.ac)
+        foreach(ac->take!(ac.back), clk.ac)
+        "clock reset to t₀=$(float(t0*unit)), sampling rate Δt=$(float(Δt*unit))."
+    end
 end
 
-"""
-    tadjust(clk::Clock, t::Unitful.Time) :: Float64
-
-Adjust/convert `t` given according to clock settings and return a Float64 value.
-"""
-function tadjust(clk::Clock, t::Unitful.Time) :: Float64
+# Adjust/convert `t` given according to clock settings and return a Float64
+function _tadjust(clk::Clock, t::Unitful.Time) :: Float64
     if clk.unit == NoUnits
         println(stderr, "Warning: clock has no time unit, ignoring units")
         return t.val
@@ -240,7 +240,8 @@ function tadjust(clk::Clock, t::Unitful.Time) :: Float64
         return uconvert(clk.unit, t).val
     end
 end
-tadjust(clk::Clock, t::Number) = t
+_tadjust(clk::Clock, t::Number) = t
+_tadjust(ac::ActiveClock, t::Number) = _tadjust(ac.clock, t)
 
 """
 ```
@@ -253,47 +254,20 @@ set the clock's sample rate starting from now (`tau(clk)`).
 - `Δt::Number`: sample rate, time interval for sampling
 """
 function sample_time!(clk::Clock, Δt::Number)
-    clk.Δt = Δt isa Unitful.Time ? tadjust(clk, Δt) : Δt
+    clk.Δt = Δt isa Unitful.Time ? _tadjust(clk, Δt) : Δt
     clk.tn = clk.time + clk.Δt
 end
 sample_time!(Δt::Number) = sample_time!(𝐶, Δt)
 
-"Is a Clock busy?"
-busy(clk::Clock) = clk.state == Busy()
+# Is a Clock busy?
+_busy(clk::Clock) = clk.state == Busy()
 
 
-# ----------------------------------------------------
-# step! transition functions for Clocks
-# ----------------------------------------------------
-
-"""
-    step!(clk::Clock, ::Undefined, ::Init)
-
-initialize a clock.
-"""
-function step!(clk::Clock, ::Undefined, ::Init)
-    clk.state = Idle()
-end
-
-"""
-    step!(clk::Clock, ::Undefined, σ::Union{Step,Run})
-
-if uninitialized, initialize and then Step or Run.
-"""
-function step!(clk::Clock, ::Undefined, σ::Union{Step,Run})
-    step!(clk, clk.state, Init(0))
-    step!(clk, clk.state, σ)
-end
-
-"""
-    setTimes(clk::Clock)
-
-set clock times for next event or sampling action. The internal clock times
-`clk.tev` and `clk.tn` must always be set to be at least `clk.time`.
-"""
-function setTimes(clk::Clock)
+# set clock times for next event or sampling action. The internal clock times
+# `clk.tev` and `clk.tn` must always be set to be at least `clk.time`.
+function _setTimes(clk::Clock)
     if !isempty(clk.sc.events)
-        clk.tev = nextevtime(clk)
+        clk.tev = _nextevtime(clk)
         clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : clk.time
     else
         clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : clk.time
@@ -301,30 +275,26 @@ function setTimes(clk::Clock)
     end
 end
 
-"""
-    step!(c::Clock, ::Union{Idle,Busy,Halted}, ::Step)
+# ----------------------------------------------------
+# step! transition functions for Clocks
+# ----------------------------------------------------
 
-step forward to next tick or scheduled event.
+step!(clk::Clock, ::Undefined, ::Init) = ( clk.state = Idle() )
 
-At a tick evaluate 1) all sampling functions or expressions, 2) all conditional
-events, then 3) if an event is encountered, trigger the event.
+# if uninitialized, initialize and then Step or Run.
+function step!(clk::Clock, ::Undefined, σ::Union{Step,Run})
+    step!(clk, clk.state, Init(0))
+    step!(clk, clk.state, σ)
+end
 
-The internal clock times `c.tev` and `c.tn` are always at least `c.time`.
-"""
-step!(c::Clock, ::Union{Idle,Halted}, ::Step) = do_step!(c)
+step!(c::Clock, ::Union{Idle,Halted}, ::Step) = _step!(c)
 
-"""
-    do_run(c::Clock, Δt::Float64)
-
-Run a clock for a time Δt.
-"""
-function do_run!(c::Clock, Δt::Float64)
+# Run a clock for a time Δt.
+function _run!(c::Clock, Δt::Float64)
     c.end_time = c.time + Δt
-    c.evcount = 0
-    c.scount = 0
-    setTimes(c)
+    _setTimes(c)
     while any(i->(c.time < i ≤ c.end_time), (c.tn, c.tev))
-        do_step!(c)
+        _step!(c)
         if c.state == Halted()
             return c.end_time
         end
@@ -332,54 +302,81 @@ function do_run!(c::Clock, Δt::Float64)
     c.time = c.end_time
 end
 
-"""
-    step!(clk::Clock, ::Idle, σ::Run)
+# Finish a run at time tend, catch remaining events scheduled for tend.
+function _finish!(c::Clock, tend::Float64)
+    while (length(c.sc.events) ≥ 1) && (_nextevtime(c) ≤ tend + Base.eps(tend)*10)
+        step!(c, c.state, Step())
+        tend = nextfloat(tend)
+    end
+    c.time = c.end_time
+end
 
-Run a simulation for a given duration.
-
-The duration is given with `Run(duration)`. Call scheduled events and evaluate
-sampling expressions at each tick in that timeframe.
-"""
+# ----------------------------------------
+# Run a simulation for a given duration.
+#
+# The duration is given with `Run(duration)`. Call scheduled events and evaluate
+# sampling expressions at each tick in that timeframe.
+# ----------------------------------------
 function step!(clk::Clock, ::Idle, σ::Run)
-    tend = do_run!(clk, σ.duration)
+
+    function handle_response(ix::Int)
+        while true
+            token = take!(clk.ac[ix].back)
+            if token isa Done
+                break
+            elseif token isa Forward
+                assign(clk, token.ev, token.id)
+            elseif token isa Error
+                throw(token.exp)
+            else
+                error("invalid response ac $ix: $token")
+            end
+        end
+        clk.ac[ix].load += token.t
+    end
+
+    clk.evcount = 0
+    clk.scount = 0
+    foreach(ac->put!(ac.forth, Start()), clk.ac)
+    if length(clk.ac) == 0
+        tend = _run!(clk, σ.duration)
+    else
+        tend = clk.time + σ.duration
+        while clk.time < tend
+            Δt = min(clk.Δt, abs(tmax-clk.time))
+            foreach(ac->put!(ac.forth, Run(Δt)), clk.ac)
+            _run!(clk, Δt)
+            foreach(handle_response, eachindex(clk.ac))
+        end
+    end
     if clk.state == Halted()
         return
     end
-    # catch remaining events scheduled for the end_time
-    while (length(clk.sc.events) ≥ 1) && (nextevtime(clk) ≤ tend + Base.eps(tend)*10)
-        step!(clk, clk.state, Step())
-        tend = nextfloat(tend)
-    end
     clk.time = clk.end_time
+    _finish!(clk, tend)
+    foreach(ac->put!(ac.forth, Finish(tend)), clk.ac)
+    for ac in clk.ac
+        c1, c2 = take!(ac.back).x
+        clk.evcount += c1
+        clk.scount  += c2
+    end
 
     "run! finished with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(clk.time)"
 end
 
-"""
-    step!(clk::Clock, ::Busy, ::Stop)
-
-Stop the clock.
-"""
+# Stop the clock.
 function step!(clk::Clock, ::Busy, ::Stop)
     clk.state = Halted()
     "Halted after $(clk.evcount) events, simulation time: $(clk.time)"
 end
 
-"""
-    step!(clk::Clock, ::Halted, ::Resume)
-
-Resume a halted clock.
-"""
+# Resume a halted clock.
 function step!(clk::Clock, ::Halted, ::Resume)
     clk.state = Idle()
     step!(clk, clk.state, Run(clk.end_time - clk.time))
 end
 
-"""
-    step!(clk::Clock, q::ClockState, σ::ClockEvent)
-
-catch all step!-function.
-"""
+# catch all step!-function.
 function step!(clk::Clock, q::ClockState, σ::ClockEvent)
     println(stderr, "Warning: undefined transition ",
             "$(typeof(clk)), ::$(typeof(q)), ::$(typeof(σ)))\n",
@@ -397,7 +394,7 @@ Run a simulation for a given duration. Call scheduled events and evaluate
 sampling expressions at each tick in that timeframe.
 """
 function run!(clk::Clock, duration::Number)
-    duration = duration isa Unitful.Time ? tadjust(clk, duration) : duration
+    duration = duration isa Unitful.Time ? _tadjust(clk, duration) : duration
     step!(clk, clk.state, Run(duration))
 end
 
