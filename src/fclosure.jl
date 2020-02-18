@@ -13,7 +13,7 @@ function event! end
 # Function barrier for functions and expressions as well for arguments and
 # keywords of a `fun`. It allows Expr, Symbol and `fun` as arguments for `fun`.
 _evaluate(y) = y    # catchall, gives back the argument
-function _evaluate(y::Function)
+function _evaluate(y::T) where {T<:Function}
     # try
     #     y()
     # catch exc
@@ -29,8 +29,10 @@ function _evaluate(y::Function)
         invokelatest(y)
     end
 end
-_evaluate(y::Tuple) = _evaluate.(y)
-_evaluate(kw::Iterators.Pairs) = (; zip(keys(kw), map(i->_evaluate(i), values(kw)) )...)
+_evaluate(y::T) where {T<:Tuple{Vararg{<:Any}}} = _evaluate.(y)
+# _evaluate(y::Vararg{<:Any, N}) where {N} = _evaluate.(y)
+# _evaluate(y::T) where {T<:Tuple} = _evaluate.(y)
+_evaluate(kw::T) where {T<:Iterators.Pairs} = (; zip(keys(kw), map(i->_evaluate(i), values(kw)) )...)
 function _evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
     try
         ret = Core.eval(Main,y)
@@ -42,10 +44,14 @@ function _evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
 end
 
 # Function barrier for executing `fun`s.
-_invoke(@nospecialize(f), ::Nothing, ::Nothing) = f()
-_invoke(@nospecialize(f), arg, ::Nothing) = f(_evaluate.(arg)...)
-_invoke(@nospecialize(f), ::Nothing, kw) = f(; _evaluate(kw)...)
-_invoke(@nospecialize(f), arg, kw) = f(_evaluate.(arg)...; _evaluate(kw)...)
+_invoke(f::F, ::Nothing, ::Nothing) where {F<:Function} = f()
+_invoke(f::F, arg::T, ::Nothing) where {F<:Function,T<:Tuple{Vararg{<:Any}}} = f(_evaluate.(arg)...)
+_invoke(f::F, ::Nothing, kw) where {F<:Function} = f(; _evaluate(kw)...)
+_invoke(f::F, arg::T, kw) where {F<:Function,T<:Tuple{Vararg{<:Any}}} = f(_evaluate.(arg)...; _evaluate(kw)...)
+# _invoke(@nospecialize(f), ::Nothing, ::Nothing) = f()
+# _invoke(@nospecialize(f), arg, ::Nothing) = f(_evaluate.(arg)...)
+# _invoke(@nospecialize(f), ::Nothing, kw) = f(; _evaluate(kw)...)
+# _invoke(@nospecialize(f), arg, kw) = f(_evaluate.(arg)...; _evaluate(kw)...)
 _invoke(f::typeof(event!), arg, ::Nothing) = f(arg...)
 _invoke(f::typeof(event!), ::Nothing, kw) = f(; kw...)
 _invoke(f::typeof(event!), arg, kw) = f(arg..., kw...)
@@ -57,7 +63,7 @@ Return a closure of a function `f` and its arguments for later execution.
 
 # Arguments
 The arguments `args...` and keyword arguments `kwargs...` to fun are passed
-to `f` at execution. But they may change their values between
+to `f` at execution but may change their values between
 beeing captured in `fun` and `f`s later execution. If `f` needs their
 current values at execution time there are two possibilities:
 1. `fun` can take symbols, expressions, `fun`s or function closures at the
@@ -71,7 +77,7 @@ current values at execution time there are two possibilities:
     … and should be avoided in time critical parts of applications. You will
     get a one time warning if you use that feature. They can be replaced
     easily by `fun`s or function closures. See the Performance section in the
-    documentation and the subsequent example.
+    documentation and the subsequent examples.
 
 !!! note "Symbols and expressions"
     … are evaluated at global scope in Module `Main` only. Other modules using
@@ -118,8 +124,13 @@ julia> ii()     # ok, g gets an updated x
 8
 ```
 """
-@inline function fun(@nospecialize(f), @nospecialize args...; kwargs...)
+@inline function fun(f::F, args::Vararg{Any, N}; kwargs...) where {F<:Function,N}
     args = ifelse(isempty(args), nothing, args)
     kwargs = ifelse(isempty(kwargs), nothing, kwargs)
     () -> _invoke(f, args, kwargs)
 end
+# @inline function fun(@nospecialize(f), @nospecialize args...; kwargs...)
+#     args = ifelse(isempty(args), nothing, args)
+#     kwargs = ifelse(isempty(kwargs), nothing, kwargs)
+#     () -> _invoke(f, args, kwargs)
+# end

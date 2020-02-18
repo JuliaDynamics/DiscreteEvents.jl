@@ -59,8 +59,8 @@ julia> event!(fun(myfunc, 5, 6), after, 1hr)
 
 ```
 """
-function event!(clk::CL, ex::Action, t::Number; cycle::Number=0.0,
-                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock}
+function event!(clk::CL, ex::Action, t::U; cycle::V=0.0,
+                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock,U<:Number,V<:Number}
     t = _tadjust(clk, t)
     cycle = _tadjust(clk, cycle)
     t = max(t, _tadjust(clk, tau(clk)))
@@ -70,8 +70,8 @@ function event!(clk::CL, ex::Action, t::Number; cycle::Number=0.0,
     end
     _assign(clk, DiscreteEvent(ex, t, cycle), cid)
 end
-function event!(clk::CL, ex::Action, T::Timing, t::Number;
-                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock}
+function event!(clk::CL, ex::Action, T::Timing, t::U;
+                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock,U<:Number}
     t = _tadjust(clk, t)
     if T == after
         event!(clk, ex, t+clk.time, cid=cid, spawn=spawn, sync=sync)
@@ -157,8 +157,8 @@ Register a function or expression for periodic execution at the clock`s sample r
 - `Δt::Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
 """
-function periodic!(clk::Clock, ex::T, Δt::Number=clk.Δt;
-                   spawn=false) where {T<:Action}
+function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
+                   spawn=false) where {T<:Action,U<:Number}
     clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
     _assign(clk, Sample(ex), spawn ? _spawnid(clk) : 0)
 end
@@ -176,7 +176,7 @@ function _spawnid(clk::Clock) :: Int
 end
 
 # calculate the scale from a given number
-function _scale(n::Number)::Float64
+function _scale(n::T)::Float64 where {T<:Number}
     if n > 0
         i = 1.0
         while !(10^i ≤ n < 10^(i+1))
@@ -184,7 +184,7 @@ function _scale(n::Number)::Float64
         end
         return 10^i
     else
-        return 1
+        return 1.0
     end
 end
 
