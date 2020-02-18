@@ -30,8 +30,6 @@ function _evaluate(y::T) where {T<:Function}
     end
 end
 _evaluate(y::T) where {T<:Tuple{Vararg{<:Any}}} = _evaluate.(y)
-# _evaluate(y::Vararg{<:Any, N}) where {N} = _evaluate.(y)
-# _evaluate(y::T) where {T<:Tuple} = _evaluate.(y)
 _evaluate(kw::T) where {T<:Iterators.Pairs} = (; zip(keys(kw), map(i->_evaluate(i), values(kw)) )...)
 function _evaluate(y::T) where {T<:Union{Symbol,Expr}}  # Symbol,Expr: eval
     try
@@ -48,10 +46,6 @@ _invoke(f::F, ::Nothing, ::Nothing) where {F<:Function} = f()
 _invoke(f::F, arg::T, ::Nothing) where {F<:Function,T<:Tuple{Vararg{<:Any}}} = f(_evaluate.(arg)...)
 _invoke(f::F, ::Nothing, kw) where {F<:Function} = f(; _evaluate(kw)...)
 _invoke(f::F, arg::T, kw) where {F<:Function,T<:Tuple{Vararg{<:Any}}} = f(_evaluate.(arg)...; _evaluate(kw)...)
-# _invoke(@nospecialize(f), ::Nothing, ::Nothing) = f()
-# _invoke(@nospecialize(f), arg, ::Nothing) = f(_evaluate.(arg)...)
-# _invoke(@nospecialize(f), ::Nothing, kw) = f(; _evaluate(kw)...)
-# _invoke(@nospecialize(f), arg, kw) = f(_evaluate.(arg)...; _evaluate(kw)...)
 _invoke(f::typeof(event!), arg, ::Nothing) = f(arg...)
 _invoke(f::typeof(event!), ::Nothing, kw) = f(; kw...)
 _invoke(f::typeof(event!), arg, kw) = f(arg..., kw...)
