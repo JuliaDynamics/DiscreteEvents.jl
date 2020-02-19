@@ -185,14 +185,14 @@ end
 
 """
 ```
-Clock(Δt::Number=0; t0::Number=0, unit::FreeUnits=NoUnits)
+Clock(Δt::T=0; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
 ```
 Create a new simulation clock.
 
 # Arguments
-- `Δt::Number=0`: time increment. If no Δt is given, the simulation doesn't tick,
+- `Δt::T=0`: time increment. If no Δt is given, the simulation doesn't tick,
     but jumps from event to event. Δt can be set later with `sample_time!`.
-- `t0::Number=0`: start time for simulation
+- `t0::U=0`: start time for simulation
 - `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
     setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
     t0 to a time, e.g. `t0=60s`.
@@ -255,8 +255,8 @@ mutable struct Clock <: AbstractClock
     evcount::Int
     scount::Int
 
-    function Clock(Δt::Number=0;
-                   t0::Number=0, unit::FreeUnits=NoUnits)
+    function Clock(Δt::T=0;
+                   t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
         if 1unit isa Time
             Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
             t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0

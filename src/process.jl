@@ -35,7 +35,7 @@ end
 # - `p::Prc`:
 # - `start::Channel`: a channel to ensure that a process starts,
 # - `cycles=Inf`: determine, how often the loop should be run.
-function _loop(p::Prc, start::Channel, cycles::Number)
+function _loop(p::Prc, start::Channel{Int}, cycles::T) where {T<:Number}
     take!(start)
     if threadid() > 1
         p.clk = pclock(p.clk, threadid())
@@ -56,7 +56,7 @@ function _loop(p::Prc, start::Channel, cycles::Number)
 end
 
 # startup a `Prc` as a task in a loop.
-function _startup!(c::AbstractClock, p::Prc, cycles::Number, spawn::Bool)
+function _startup!(c::C, p::Prc, cycles::T, spawn::Bool) where {C<:AbstractClock,T<:Number}
 
     function startit()
         start = Channel{Int}(0)
@@ -97,7 +97,7 @@ return the `id` it was registered with. It can then be found under `clk.processe
 - `c::AbstractClock`: `Clock` or `ActiveClock`, if not provided, the process runs
     under `𝐶`,
 - `p::Prc`: it contains a function and its arguments,
-- `cycles::Number=Inf`: number of cycles the process should run,
+- `cycles::T=Inf`: number of cycles the process should run,
 - `spawn::Bool=false`: if true, the process may be scheduled on another thread
     in parallel and registered to the thread specific clock.
 
@@ -106,28 +106,28 @@ return the `id` it was registered with. It can then be found under `clk.processe
     [`PClock`](@ref) or [`fork!`](@ref).
 
 """
-function process!(c::AbstractClock, p::Prc, cycles::Number=Inf; spawn::Bool=false)
+function process!(c::C, p::Prc, cycles::T=Inf; spawn::Bool=false) where {C<:AbstractClock,T<:Number}
     p.clk = c
     _startup!(c, p, cycles, spawn)
     p.id
 end
-process!(p::Prc, cycles=Inf) = process!(𝐶, p, cycles)
+process!(p::Prc, cycles::T=Inf) where {T<:Number} = process!(𝐶, p, cycles)
 
 # wakeup a process waiting for a `Condition`
 _wakeup(c::Condition) = (notify(c); yield())
 
 """
 ```
-delay!(clk::Clock, t::Number)
+delay!(clk::Clock, t::T) where {T<:Number}
 ```
 Delay a process for a time interval `t` on the clock `clk`. Suspend the calling
 process until being reactivated by the clock at the appropriate time.
 
 # Arguments
 - `clk::Clock`: if not provided, the delay goes to `𝐶`.
-- `t::Number`: the time interval for the delay.
+- `t::T`: the time interval for the delay.
 """
-function delay!(clk::Clock, t::Number)
+function delay!(clk::Clock, t::T) where {T<:Number}
     c = Condition()
     event!(clk, ()->_wakeup(c), after, t)
     wait(c)
@@ -135,7 +135,7 @@ end
 
 """
 ```
-delay!(clk::Clock, T::Timing, t::Number)
+delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
 ```
 
 Used for delaying a process *until* a given time t.
@@ -143,9 +143,9 @@ Used for delaying a process *until* a given time t.
 # Arguments
 - `clk::Clock`: if no clock is given, the delay goes to 𝐶,
 - `T::Timing`: only `until` is accepted,
-- `t::Number`: delay until time t if t > clk.time, else give a warning.
+- `t::N`: delay until time t if t > clk.time, else give a warning.
 """
-function delay!(clk::Clock, T::Timing, t::Number)
+function delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
         c = Condition()
@@ -158,18 +158,18 @@ end
 
 """
 ```
-wait!(clk::Clock, cond::Action)
+wait!(clk::Clock, cond::A) where {A<:Action}
 ```
 Wait on a clock for a condition to become true. Suspend the calling process
 until the given condition is true.
 
 # Arguments
 - `clk::Clock`: if no clock is supplied, the delay goes to `𝐶`,
-- `cond::Action`: a condition is an expression or function
+- `cond::A`: a condition is an expression or function
     or an array or tuple of them. It is true only if all expressions or functions
     therein return true,
 """
-function wait!(clk::Clock, cond::Action)
+function wait!(clk::Clock, cond::A) where {A<:Action}
     if all(_evaluate(cond))   # all conditions met
         return         # return immediately
     else
@@ -184,7 +184,7 @@ end
 
 Interrupt a `Prc` by throwing a `ClockException` to it.
 """
-function interrupt!(p::Prc, ev::ClockEvent, value=nothing)
+function interrupt!(p::Prc, ev::EV, value=nothing) where {EV<:ClockEvent}
     schedule(p.task, ClockException(ev, value), error=true)
     yield()
 end
@@ -194,7 +194,7 @@ stop!(p::Prc, value=nothing) = interrupt!(p, Stop(), value)
 
 """
 ```
-now!(clk::Clock, op::Action)
+now!(clk::Clock, ex::A) where {A<:Action}
 ```
 Tell the clock to execute an operation. Thus it cannot proceed before the op is finished.
 
@@ -206,6 +206,6 @@ Tell the clock to execute an operation. Thus it cannot proceed before the op is 
 
 # Arguments
 - `clk::Clock`,
-- `op::Action`: operation to execute.
+- `op::A`: operation to execute.
 """
-now!(clk::Clock, ex::Action) = event!(clk, ex, clk.time)
+now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time)

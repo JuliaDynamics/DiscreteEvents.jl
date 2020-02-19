@@ -81,6 +81,30 @@ function _step!(c::Clock)
     else
         error("_step!: nothing to evaluate")
     end
-    length(c.processes) == 0 || yield() # let processes run
+    # length(c.processes) == 0 || yield() # let processes run
+    length(c.processes) == 0 || sleep(0.01) # let processes run
     (c.state == Busy()) && (c.state = Idle())
+end
+
+# ----------------------------------------------------
+# execute all events in a clock cycle, then do the periodic actions
+# ----------------------------------------------------
+function _cycle!(clk::Clock, Δt::Float64, sync::Bool=false)
+    clk.state = Busy()
+    tcyc = clk.time + Δt
+    clk.tev = length(clk.sc.events) ≥ 1 ? _nextevtime(clk) : clk.time
+    while clk.time ≤ tcyc
+        if (clk.tev ≤ tcyc) && length(clk.sc.events) ≥ 1
+            _event!(clk)
+        else
+            clk.time = tcyc
+            break
+        end
+        length(clk.processes) == 0 || yield() # let processes run
+    end
+    if !sync
+        clk.tn = tcyc
+        _tick!(clk)
+    end
+    (clk.state == Busy()) && (clk.state = Idle())
 end
