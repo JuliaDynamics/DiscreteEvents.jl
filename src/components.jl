@@ -19,6 +19,9 @@ struct Diag <: ClockEvent end   # ask for the stacktrace of an async clock
 struct Done <: ClockEvent       # notication of a worker clock to master
     t::UInt
 end
+struct Error <: ClockEvent
+    exc::Exception
+end
 struct Finish <: ClockEvent     # ask a worker clock to finish
     tend::Float64
 end
@@ -42,6 +45,7 @@ end
 struct Resume <: ClockEvent end
 struct Run <: ClockEvent
     duration::Float64
+    sync::Bool
 end
 struct Start <: ClockEvent end
 struct Startup <: ClockEvent

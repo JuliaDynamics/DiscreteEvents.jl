@@ -8,18 +8,18 @@
 
 """
 ```
-event!([clk::CL], ex::Action, t::Number; cycle::Number=0.0,
-        cid::Int=clk.id, spawn=false, sync::Bool=false) where {CL<:AbstractClock}
-event!([clk::CL], ex::Action, T::Timing, t::Number;
-        cid::Int=clk.id, spawn=false, sync::Bool=false) where {CL<:AbstractClock}
+event!([clk::CL], ex::A, t::U; cycle::V=0.0,
+        cid::Int=clk.id, spawn=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
+event!([clk::CL], ex::A, T::Timing, t::U;
+        cid::Int=clk.id, spawn=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number}
 ```
 Schedule an event for a given simulation time.
 
 # Arguments
 - `clk::AbstractClock`: it not supplied, the event is scheduled to 𝐶,
-- `ex::Action`: an expression or function or a tuple of them,
+- `ex<:Action`: an expression or function or a tuple of them,
 - `T::Timing`: a timing, one of `at`, `after` or `every`,
-- `t::Real` or `t::Time`: simulation time, if t < clk.time set t = clk.time,
+- `t::U`: simulation time, if t < clk.time set t = clk.time,
 
 # Keyword arguments
 - `cycle::Float64=0.0`: repeat cycle time for an event,
@@ -59,8 +59,8 @@ julia> event!(fun(myfunc, 5, 6), after, 1hr)
 
 ```
 """
-function event!(clk::CL, ex::Action, t::Number; cycle::Number=0.0,
-                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock}
+function event!(clk::CL, ex::A, t::U; cycle::V=0.0,
+                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
     t = _tadjust(clk, t)
     cycle = _tadjust(clk, cycle)
     t = max(t, _tadjust(clk, tau(clk)))
@@ -70,8 +70,8 @@ function event!(clk::CL, ex::Action, t::Number; cycle::Number=0.0,
     end
     _assign(clk, DiscreteEvent(ex, t, cycle), cid)
 end
-function event!(clk::CL, ex::Action, T::Timing, t::Number;
-                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock}
+function event!(clk::CL, ex::A, T::Timing, t::U;
+                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number}
     t = _tadjust(clk, t)
     if T == after
         event!(clk, ex, t+clk.time, cid=cid, spawn=spawn, sync=sync)
@@ -81,14 +81,14 @@ function event!(clk::CL, ex::Action, T::Timing, t::Number;
         event!(clk, ex, t, cid=cid, spawn=spawn, sync=sync)
     end
 end
-event!(ex::Action, t::Number; kw...) = event!(𝐶, ex, t; kw...)
-event!(ex::Action, T::Timing, t::Number; kw...) = event!(𝐶, ex, T, t; kw...)
+event!(ex::A, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, t; kw...)
+event!(ex::A, T::Timing, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, T, t; kw...)
 
 
 """
 ```
-event!([clk::T], ex::Action, cond::Action;
-        cid::Int=clk.id, spawn=false) where {T<:AbstractClock}
+event!(clk::T, ex::A, cond::C;
+       cid::Int=clk.id, spawn=false) where {T<:AbstractClock,A<:Action,C<:Action}
 ```
 Schedule a conditional event.
 
@@ -130,8 +130,8 @@ Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=10.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
-function event!(clk::T, ex::Action, cond::Action;
-                cid::Int=clk.id, spawn=false) where {T<:AbstractClock}
+function event!(clk::T, ex::A, cond::C;
+                cid::Int=clk.id, spawn=false) where {T<:AbstractClock,A<:Action,C<:Action}
     if _busy(clk) && all(_evaluate(cond))   # all conditions met
         _evaluate(ex)                      # execute immediately
     else
@@ -142,28 +142,28 @@ function event!(clk::T, ex::Action, cond::Action;
     end
     return nothing
 end
-event!( ex::Action, cond::Action; kw...) = event!(𝐶, ex, cond; kw...)
+event!( ex::A, cond::C; kw...) where {A<:Action,C<:Action} = event!(𝐶, ex, cond; kw...)
 
 """
 ```
-periodic!([clk::Clock], ex::T, Δt::Number=clk.Δt; spawn=false) where {T<:Action}
-periodic!(ac::ActiveClock, ex::T, Δt::Number=ac.clock.Δt; kw...) where {T<:Action}
+periodic!([clk::Clock], ex::T, Δt::U=clk.Δt; spawn=false) where {T<:Action,U<:Number}
+periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number}
 ```
 Register a function or expression for periodic execution at the clock`s sample rate.
 
 # Arguments
 - `clk::Clock`, `ac::ActiveClock`: if not supplied, it samples on 𝐶,
 - `ex<:Action`: an expression or function or a tuple of them,
-- `Δt::Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
+- `Δt::U=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
 """
-function periodic!(clk::Clock, ex::T, Δt::Number=clk.Δt;
-                   spawn=false) where {T<:Action}
+function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
+                   spawn=false) where {T<:Action,U<:Number}
     clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
     _assign(clk, Sample(ex), spawn ? _spawnid(clk) : 0)
 end
-periodic!(ex::T, Δt::Number=𝐶.Δt; kw...) where {T<:Action} = periodic!(𝐶, ex, Δt; kw...)
-periodic!(ac::ActiveClock, ex::T, Δt::Number=ac.clock.Δt; kw...) where {T<:Action} = periodic!(ac.clock, ex, Δt; kw...)
+periodic!(ex::T, Δt::U=𝐶.Δt; kw...) where {T<:Action,U<:Number} = periodic!(𝐶, ex, Δt; kw...)
+periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(ac.clock, ex, Δt; kw...)
 
 # Return a random number out of the thread ids of all available parallel clocks.
 # This is used for `spawn`ing tasks or events to them.
@@ -176,7 +176,7 @@ function _spawnid(clk::Clock) :: Int
 end
 
 # calculate the scale from a given number
-function _scale(n::Number)::Float64
+function _scale(n::T)::Float64 where {T<:Number}
     if n > 0
         i = 1.0
         while !(10^i ≤ n < 10^(i+1))
@@ -184,7 +184,7 @@ function _scale(n::Number)::Float64
         end
         return 10^i
     else
-        return 1
+        return 1.0
     end
 end
 

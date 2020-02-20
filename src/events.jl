@@ -15,15 +15,12 @@ _nextevent(c::Clock) = peek(c.sc.events)[1]
 _nextevtime(c::Clock) = peek(c.sc.events)[2]
 
 # Execute or evaluate the next timed event on a clock c.
-function _event!(c::Clock)
+@inline function _event!(c::Clock)
     c.time = c.tev
     ev = dequeue!(c.sc.events)
     _evaluate(ev.ex)
     c.evcount += 1
-    if ev.Δt > 0.0  # schedule repeat event
-        event!(c, ev.ex, c.time + ev.Δt, cycle=ev.Δt)
-    end
-    c.tev = length(c.sc.events) ≥ 1 ? _nextevtime(c) : c.time
+    ev.Δt > 0.0 && event!(c, ev.ex, c.time + ev.Δt, cycle=ev.Δt)
 end
 
 # First execute all sampling expressions in a schedule, then evaluate all
@@ -53,13 +50,13 @@ end
 # 3) if an event is encountered, trigger the event.
 # The internal clock times `c.tev` and `c.tn` are always at least `c.time`.
 # -------------------------------------------------------
-function _step!(c::Clock)
+@inline function _step!(c::Clock)
     c.state = Busy()
     if (c.tev ≤ c.time) && (length(c.sc.events) > 0)
         c.tev = _nextevtime(c)
     end
 
-    if length(c.sc.events) > 0
+    if !isempty(c.sc.events)
         if c.Δt > 0.0
             if c.tn <= c.tev     # if t_next_tick  ≤ t_next_event
                 _tick!(c)
@@ -72,15 +69,37 @@ function _step!(c::Clock)
             end
         else
             _event!(c)
-            c.tn = c.time
         end
     elseif c.Δt > 0.0
         _tick!(c)
         c.tn += c.Δt
-        c.tev = c.time
     else
         error("_step!: nothing to evaluate")
     end
-    length(c.processes) == 0 || yield() # let processes run
+    !isempty(c.processes) && yield() # let processes run
+    c.tev = !isempty(c.sc.events) ? _nextevtime(c) : c.end_time
     (c.state == Busy()) && (c.state = Idle())
+end
+
+# ----------------------------------------------------
+# execute all events in a clock cycle, then do the periodic actions
+# ----------------------------------------------------
+function _cycle!(clk::Clock, Δt::Float64, sync::Bool=false)
+    clk.state = Busy()
+    tcyc = clk.time + Δt
+    clk.tev = length(clk.sc.events) ≥ 1 ? _nextevtime(clk) : clk.time
+    while clk.time ≤ tcyc
+        if (clk.tev ≤ tcyc) && length(clk.sc.events) ≥ 1
+            _event!(clk)
+        else
+            clk.time = tcyc
+            break
+        end
+        length(clk.processes) == 0 || yield() # let processes run
+    end
+    if !sync
+        clk.tn = tcyc
+        _tick!(clk)
+    end
+    (clk.state == Busy()) && (clk.state = Idle())
 end

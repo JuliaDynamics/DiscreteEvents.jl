@@ -17,7 +17,7 @@ sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
 
 delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
 wait!(ac::ActiveClock, args...; kwargs...) = wait!(ac.clock, args...; kwargs...)
-now!(ac::ActiveClock, ex::Action) = now!(ac.clock, ex)
+now!(ac::ActiveClock, ex::A) where {A<:Action} = now!(ac.clock, ex)
 
 
 # ---------------------------------------------------------
@@ -25,9 +25,13 @@ now!(ac::ActiveClock, ex::Action) = now!(ac.clock, ex)
 # ---------------------------------------------------------
 step!(A::ActiveClock, ::Idle, ::Start) = ( A.clock.evcount = 0; A.clock.scount = 0)
 
-step!(A::ActiveClock, ::Idle, σ::Run) = _run!(A.clock, σ.duration)
+function step!(A::ActiveClock, ::Idle, σ::Run)
+    t0 = time_ns()
+    _cycle!(A.clock, σ.duration, σ.sync)
+    put!(A.back, Done(time_ns()-t0))
+end
 
-function step!(A::Clock, ::Idle, σ::Finish)
+function step!(A::ActiveClock, ::Idle, σ::Finish)
     _finish!(A.clock, σ.tend)
     put!(A.back, Response((A.clock.evcount, A.clock.scount)))
 end
@@ -49,12 +53,12 @@ step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, �
 # -------------------------------------
 # event loop for an active clock.
 # -------------------------------------
-function _activeClock(cmd::Channel, ans::Channel)
+function _activeClock(cmd::Channel, resp::Channel)
     info = take!(cmd) # get a pointer to the master clock and id
-    ac = ActiveClock(Clock(), info.m, cmd, ans, info.id, threadid())
+    ac = ActiveClock(Clock(), info.m, cmd, resp, info.id, threadid())
     ac.clock.id = info.id
     sf = Array{Base.StackTraces.StackFrame,1}[]
-    exp = nothing
+    exc = nothing
     ac.clock.state = Idle()
     sync!(ac.clock, ac.master[])
 
@@ -63,13 +67,14 @@ function _activeClock(cmd::Channel, ans::Channel)
         if σ isa Stop
             break
         elseif σ isa Diag
-            put!(ans, Response((exp, sf)))
+            put!(resp, Response((exc, sf)))
         elseif _handle_exceptions[end]
             try
                 step!(ac, ac.clock.state, σ)
-            catch exp
+            catch exc
                 sf = stacktrace(catch_backtrace())
-                @warn "clock $(ac.id), thread $(ac.thread) exception: $exp"
+                @warn "clock $(ac.id), thread $(ac.thread) exception: $exc"
+                put!(resp, Error(exc))  # send error to avoid master hangs
             end
         else
             step!(ac, ac.clock.state, σ)
@@ -86,12 +91,15 @@ end
 
 # Start a task on each available thread (other than 1).
 # - `f::Function`: function to start, has to take two channels as arguments,
-# - `mul::Int=3`: startup multiplication factor,
-function _start_threads(f::Function) :: Vector{ClockChannel}
+# - `ch_size=256`: channel capacity for event transfer between clocks during
+#                  each time step.
+function _start_threads(f::F, ch_size=256)::Vector{ClockChannel} where {F<:Function}
     ac = ClockChannel[]
     @threads for i in 1:nthreads()
         if threadid() > 1
-            ai = ClockChannel(Ref{Task}(), Channel{ClockEvent}(8), Channel{ClockEvent}(5),
+            ai = ClockChannel(Ref{Task}(),
+                    Channel{ClockEvent}(ch_size),
+                    Channel{ClockEvent}(ch_size),
                     threadid(), false, 0)
             ai.ref = Ref(@async f(ai.forth, ai.back))
             push!(ac, ai)
@@ -165,15 +173,15 @@ function collapse!(master::Clock)
 end
 
 """
-    PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
+    PClock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
 
 Setup a clock with parallel clocks on all available threads.
 
 # Arguments
 
-- `Δt::Number=0.01`: time increment. For parallel clocks Δt has to be > 0.
+- `Δt::T=0.01`: time increment. For parallel clocks Δt has to be > 0.
     If given Δt ≤ 0 it is set to 0.01.
-- `t0::Number=0`: start time for simulation
+- `t0::U=0`: start time for simulation
 - `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
     setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
     t0 to a time, e.g. `t0=60s`.
@@ -182,7 +190,7 @@ Setup a clock with parallel clocks on all available threads.
     Processes on multiple threads are possible in Julia ≥ 1.3 and with
     [`JULIA_NUM_THREADS > 1`](https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_NUM_THREADS-1).
 """
-function PClock(Δt::Number=0.01; t0::Number=0, unit::FreeUnits=NoUnits)
+function PClock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
     Δt = Δt > 0 ? Δt : 0.01
     clk = Clock(Δt, t0=t0, unit=unit)
     fork!(clk)
@@ -241,6 +249,10 @@ function diagnose(clk::Clock, id::Int)
         if istaskfailed(clk.ac[id].ref[])
             return clk.ac[id].ref[]
         else
+            while isready(clk.ac[id].back)
+                msg = take!(clk.ac[id].back)
+                println(msg)
+            end
             put!(clk.ac[id].forth, Diag())
             return take!(clk.ac[id].back).x
         end
