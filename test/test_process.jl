@@ -34,7 +34,7 @@ A = []
 function simple(c::Clock, input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
     push!(A, (tau(c), name, id, token))
-    d = delay!(c, rand())           # after a delay
+    delay!(c, rand())           # after a delay
     put!(output, op(token, id))  # put it out with some op applied
 end
 

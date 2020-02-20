@@ -9,11 +9,13 @@
 println("... basic tests: printing  ...")
 str = "Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 reset!(𝐶)
-@test repr(𝐶) == str
-Simulate._show_default[1] = true
-str = "Clock(0, Simulate.Idle(), 0.0, , 0.0, Simulate.ClockChannel[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
-@test repr(𝐶) == str
-Simulate._show_default[1] = false
+if Simulate._show_default[1] == false
+    @test repr(𝐶) == str
+    Simulate._show_default[1] = true
+    str = "Clock(0, Simulate.Idle(), 0.0, , 0.0, Simulate.ClockChannel[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+    @test repr(𝐶) == str
+    Simulate._show_default[1] = false
+end
 @test tau() == 0
 
 println("... basic tests: only events  ...")
@@ -253,7 +255,8 @@ setUnit!(c, Unitful.m)
 @test c.unit == NoUnits
 
 setUnit!(c, s)
-run!(𝐶, 1)
+@test_throws ErrorException run!(𝐶,1)
+reset!(𝐶, t0=1)
 sync!(c)
 @test c.time == 1
 reset!(𝐶)
