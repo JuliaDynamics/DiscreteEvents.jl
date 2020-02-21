@@ -48,7 +48,9 @@ end
 # 1) all sampling functions or expressions,
 # 2) all conditional events, then
 # 3) if an event is encountered, trigger the event.
-# The internal clock times `c.tev` and `c.tn` are always at least `c.time`.
+# ------------------------------------------------------
+# If sampling rate Δt==0, c.tn is set to 0
+# If no events are present, c.tev is set to c.end_time
 # -------------------------------------------------------
 @inline function _step!(c::Clock)
     c.state = Busy()
