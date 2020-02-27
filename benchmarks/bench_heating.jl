@@ -81,9 +81,9 @@ run!(𝐶, 48)
 
 # take measurements
 println(now())
-setup()
-@time info = run!(𝐶, 48)
+@time onthread(2) do; setup(); end
+@time onthread(2) do; info = run!(𝐶, 48); end
 println(info)
 println("measurements:", length(house.datTr), " mean_tr=", mean(house.datTr))
 
-t = run(@benchmarkable run!(𝐶, 48) setup=setup() evals=1 seconds=15.0 samples=100)
+t = run(@benchmarkable onthread(2) do; run!(𝐶, 48); end setup=onthread(2) do; setup(); end  evals=1 seconds=15.0 samples=100)
