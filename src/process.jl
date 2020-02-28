@@ -37,7 +37,7 @@ end
 # - `cycles=Inf`: determine, how often the loop should be run.
 function _loop(p::Prc, start::Channel{Int}, cycles::T) where {T<:Number}
     take!(start)
-    if threadid() > 1
+    if threadid() > 1 && !isempty(p.clk.ac)
         p.clk = pclock(p.clk, threadid())
     end
 

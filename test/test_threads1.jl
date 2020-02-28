@@ -5,11 +5,13 @@ println("number of available threads: ", nthreads())
 
 clk = PClock()
 Δt = clk.Δt
+sleep(sleeptime)
+
 print(clk)
 @test clk.id == 0
 m = match(r"Clock thread 1 \(\+ (\d+) ac\)", repr(clk))
 @test parse(Int, m.captures[1]) > 0
-@test length(clk.ac) >= (nthreads() >>> 1)
+@test length(clk.ac) == nthreads()-1
 @test clk.ac[1].thread == 2
 
 println("... parallel clock identification ...")

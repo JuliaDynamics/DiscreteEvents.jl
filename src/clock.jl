@@ -266,7 +266,7 @@ sample_time!(Δt::T) where {T<:Number} = sample_time!(𝐶, Δt)
 _busy(clk::Clock) = clk.state == Busy()
 
 
-# set internal clock times for next event or sampling action. 
+# set internal clock times for next event or sampling action.
 # If sampling rate Δt==0, c.tn is set to 0
 # If no events are present, c.tev is set to c.end_time
 function _setTimes(clk::Clock)

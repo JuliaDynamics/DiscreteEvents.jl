@@ -59,8 +59,8 @@ run!(clk, 1000)
 
 # then take measurements
 println(now())
-@time setup(5, 5, Gamma(10,1/10), Normal(1,0), jobs=1200)
-println(@time run!(clk, 1000))
+@time onthread(2) do; setup(5, 5, Gamma(10,1/10), Normal(1,0), jobs=1200); end
+println(@time onthread(2) do; run!(clk, 1000); end)
 println("events=", clk.evcount, " throughput:", length(C[end].data))
 
-t = run(@benchmarkable run!(clk, 1000) setup=setup(5, 5, Gamma(10,1/10), Normal(1,0), jobs=1200) evals=1 seconds=15.0 samples=50)
+t = run(@benchmarkable onthread(2) do; run!(clk, 1000); end setup=onthread(2) do; setup(5, 5, Gamma(10,1/10), Normal(1,0), jobs=1200); end  evals=1 seconds=15.0 samples=50)

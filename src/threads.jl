@@ -95,17 +95,18 @@ end
 #                  each time step.
 function _start_threads(f::F, ch_size=256)::Vector{ClockChannel} where {F<:Function}
     ac = ClockChannel[]
-    @threads for i in 1:nthreads()
-        if threadid() > 1
+    for i in 1:nthreads()
+        if i > 1
             ai = ClockChannel(Ref{Task}(),
                     Channel{ClockEvent}(ch_size),
                     Channel{ClockEvent}(ch_size),
-                    threadid(), false, 0)
-            ai.ref = Ref(@async f(ai.forth, ai.back))
+                    i, false, 0)
             push!(ac, ai)
         end
     end
-    sort!(ac, by = x->x.thread)
+    @threads for i in 1:nthreads()
+        i > 1 && (ai = ac[i-1]; ai.ref = Ref(@async f(ai.forth, ai.back)))
+    end
     return ac
 end
 
@@ -259,4 +260,41 @@ function diagnose(clk::Clock, id::Int)
     else
         println(stderr, "parallel clock $id not available!")
     end
+end
+
+"""
+    onthread(f::F, id::Int) where {F<:Function}
+
+Execute a function f on thread id.
+
+Single-threaded simulations involving processes speed up a lot when
+they are run on a thread other than 1. Thus they must not compete
+against background tasks.
+
+# Examples, usage
+
+```julia
+julia> using Simulate, .Threads
+
+julia> onthread(threadid, 2)
+2
+
+julia> onthread(3) do; threadid(); end
+3
+
+julia> onthread(4) do
+           threadid()
+       end
+4
+```
+"""
+function onthread(f::F, id::Int) where {F<:Function}
+    t = Task(nothing)
+    @assert id in 1:nthreads() "thread $id not available!"
+    @threads for i in 1:nthreads()
+        if i == id
+            t = @async f()
+        end
+    end
+    fetch(t)
 end

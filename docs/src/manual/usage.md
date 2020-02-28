@@ -137,12 +137,13 @@ now!
 
 ## Running simulations
 
-If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are executed … We can also step through a simulation, stop, resume or reset it.
+If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are simulated … We can also step through a simulation, stop, resume or reset it.
 
 ```@docs
 reset!
 incr!
 run!
+onthread
 stop!(::Clock)
 resume!
 sync!

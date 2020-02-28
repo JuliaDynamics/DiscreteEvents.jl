@@ -25,23 +25,19 @@ actions overall and measure their duration.
 Benchmark results:
 ==================
 time        datetime                channel [ms]    dice [ms]   heating [ms]        sum [ms]
-minimum     2020-01-11T12:03:01.529       84.189      322.629         64.191         471.009
-mean        2020-01-11T12:03:01.529       85.611      340.396         70.126         496.133
+minimum     2020-02-27T16:56:14.647       44.630       36.641          5.091          86.362
+mean        2020-02-27T16:56:14.647       46.213       38.476          5.966          90.656
 
 action times:
 -------------
 time        datetime                channel [μs]    dice [μs]   heating [μs]    overall [μs]
-minimum     2020-01-11T12:03:01.529       34.532       66.521         20.534          45.228
-mean        2020-01-11T12:03:01.529       35.115       70.185         22.433          47.641
-                                                       ^^^^^^
+minimum     2020-02-27T16:56:14.647       18.083        7.555          1.629           8.269
+mean        2020-02-27T16:56:14.647       18.725        7.933          1.908           8.680
 ```
 
-The most interesting thing to note is, that actions for a process based simulation
-(dice) take twice the time than for an event based one (channel). This shows that
-task switching comes with a cost.  
-
 ## Platform
-Benchmarks were taken on a single thread on
+Benchmarks were taken on a single thread (dice and heating on thread 2) on a
+2013 MacBook Pro:
 
 ```julia
 julia> versioninfo()

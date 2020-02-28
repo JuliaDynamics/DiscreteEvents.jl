@@ -27,6 +27,8 @@ multithreading, resource handling and a streamlined documentation.
   being passed to the event function,
 - [`Simulate.version`](@ref) gives now the package version,
 - `Simulate.jl` is now much faster due to optimizations,
+- [`onthread`](@ref) allows simulations with processes to run much faster on
+  threads other than 1.
 
 ### Multithreading (still in the making)
 - The data structure of [`Clock`](@ref) has been changed, it now has a field
