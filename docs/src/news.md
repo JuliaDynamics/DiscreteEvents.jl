@@ -6,7 +6,7 @@ CurrentModule = Simulate
 v0.3.0 is a significant improvement over 0.2.0 with a name change,
 multithreading, resource handling and a streamlined documentation.
 
-## breaking name changes
+## Breaking name changes
 - following the [advice on discourse](https://discourse.julialang.org/t/simulate-v0-2-0-a-julia-package-for-discrete-event-simulation/31822) and in
   [issue #13](https://github.com/pbayer/Simulate.jl/issues/13) `Simulate.jl`  
   gets renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
@@ -17,14 +17,20 @@ multithreading, resource handling and a streamlined documentation.
   - `SimCond` → [`DiscreteCond`](@ref),
   - `sample!` → [`periodic!`](@ref), was a name collision with `Distributions.jl`.
 
+## Streamlined documentation
+- the documentation has been reduced to minimal introductory examples and API
+  documentation,
+- everything else (further examples, notebooks, explanations, benchmarks) has
+  been moved to a companion site: DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
+
 ## New functionality in v0.3.0
 - [`Action`](@ref) is introduced as synonym for `Union{Function,Expr,Tuple}`,
 - thereby in addition to `funs`, you can now schedule arbitrary function
   closures as events,  
 - [`periodic!`](@ref) takes now an `Action` as argument,
-- Arguments to [`fun`](@ref) can now be given also as symbols, expressions or as
-  other `fun`s or function closures. They get evaluated at event time before
-  being passed to the event function,
+- Arguments to [`fun`](@ref) can now be symbols, expressions or other `fun`s or
+  function closures. They get evaluated at event time before being passed to the
+  event function,
 - [`Simulate.version`](@ref) gives now the package version,
 - `Simulate.jl` is now much faster due to optimizations,
 - [`onthread`](@ref) allows simulations with processes to run much faster on
@@ -69,4 +75,4 @@ multithreading, resource handling and a streamlined documentation.
 
 ## Earlier releases
 
-- [**Release notes**](manual/history.md): A look at earlier releases.
+- [**Release notes**](history.md): A look at earlier releases.
