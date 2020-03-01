@@ -9,25 +9,10 @@ makedocs(
         "Home" => "index.md",
         "News" => "news.md",
         "Manual" => [
-            "manual/intro.md",
-            "manual/approach.md",
-            "manual/parallel.md",
-            "manual/timer.md",
-            "manual/usage.md",
-            "Performance" => [
-                "performance/performance.md",
-                "performance/par_perf.md",
-                "performance/benchmarks.md"]],
-        "Examples" => [
-            "examples/examples.md",
-            "examples/tabletennis.md",
-            "examples/singleserver.md",
-            "examples/postoffice/postoffice.md",
-            "examples/dicegame/dicegame.md",
-            "examples/house_heating/house_heating.md"],
-        "Internals" => "manual/internals.md",
-        "Troubleshooting" => "manual/troubleshooting.md",
-        "Release notes" => "manual/history.md"
+            "intro.md",
+            "usage.md",
+            "troubleshooting.md",
+            "history.md"]
     ]
 )
 
