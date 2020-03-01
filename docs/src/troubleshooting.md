@@ -13,18 +13,18 @@ switch pretty printing off and on:
 
 ```julia
 julia> clk = Clock()
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> Simulate._show_default[1] = true;
+julia> DiscreteEvents._show_default[1] = true;
 
 julia> clk
-Clock(0, Simulate.Undefined(), 0.0, , 0.0, Simulate.AC[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)
+Clock(0, DiscreteEvents.Undefined(), 0.0, , 0.0, DiscreteEvents.AC[], DiscreteEvents.Schedule(DataStructures.PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)
 
-julia> Simulate._show_default[1] = false;
+julia> DiscreteEvents._show_default[1] = false;
 
 julia> clk
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 
@@ -45,4 +45,4 @@ MethodError: no method matching round(::Float64, ::Int64)
 
 ## Report
 
-Otherwise please report your problem and open an issue or commit your solution to [the repo](https://github.com/pbayer/Simulate.jl).  
+Otherwise please report your problem and open an issue or commit your solution to [the repo](https://github.com/pbayer/DiscreteEvents.jl).  

@@ -21,9 +21,9 @@ c1 = pclock(clk, 1)
 m = match(r"Active clock 1 on thrd (\d+)\:", repr(c1))
 @test parse(Int, m.captures[1]) > 1
 
-if Simulate._handle_exceptions[1]
+if DiscreteEvents._handle_exceptions[1]
     println("... remote error handling ...")
-    put!(clk.ac[1].forth, Simulate.Clear())
+    put!(clk.ac[1].forth, DiscreteEvents.Clear())
     sleep(sleeptime)
     err = diagnose(clk, 1)
     @test err[1] isa ErrorException
@@ -32,29 +32,29 @@ end
 
 println("... testing channel and active clock ...")
 a = 0
-ev = Simulate.DiscreteEvent(fun(()->global a+=1),1.0,0.0)
-put!(clk.ac[1].forth, Simulate.Register(ev))
+ev = DiscreteEvents.DiscreteEvent(fun(()->global a+=1),1.0,0.0)
+put!(clk.ac[1].forth, DiscreteEvents.Register(ev))
 sleep(sleeptime)
 @test length(c1.clock.sc.events) == 1
-cev = Simulate.DiscreteCond(fun(≥, fun(tau, c1), 5), fun(()->global a+=1))
-put!(clk.ac[1].forth, Simulate.Register(cev))
+cev = DiscreteEvents.DiscreteCond(fun(≥, fun(tau, c1), 5), fun(()->global a+=1))
+put!(clk.ac[1].forth, DiscreteEvents.Register(cev))
 sleep(sleeptime)
 @test length(c1.clock.sc.cevents) == 1
 b = 0
-sp = Simulate.Sample(fun(()->global b+=1))
-put!(clk.ac[1].forth, Simulate.Register(sp))
+sp = DiscreteEvents.Sample(fun(()->global b+=1))
+put!(clk.ac[1].forth, DiscreteEvents.Register(sp))
 sleep(sleeptime)
 @test length(c1.clock.sc.samples) == 1
 
 println("... run parallel clock 1 (thread 2) ...")
-# put!(clk.ac[1].forth, Simulate.Run(10.0))
+# put!(clk.ac[1].forth, DiscreteEvents.Run(10.0))
 # @test take!(clk.ac[1].back).t > 0
 # sleep(sleeptime)
 tns = 0
 t1 = time_ns()
 iter = 0
 while (c1.clock.time+Δt) ≤ 10
-    put!(clk.ac[1].forth, Simulate.Run(Δt, false))
+    put!(clk.ac[1].forth, DiscreteEvents.Run(Δt, false))
     global tns += take!(clk.ac[1].back).t
     global iter += 1
 end
@@ -66,31 +66,31 @@ println("$iter ticks took $(Int(t1)*1e-9) s, clock time $(Int(tns)*1e-9) s")
 @test b == 1000
 
 println("... parallel clock 1 reset ...")
-put!(clk.ac[1].forth, Simulate.Reset(true))
+put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
 @test take!(clk.ac[1].back).x == 1
 @test c1.clock.time == 0
 @test c1.clock.scount == 0
 
 println("... testing register(!) five cases ... ")
-ev1 = Simulate.DiscreteEvent(fun(()->global a+=1),1.0,0.0)
-ev2 = Simulate.DiscreteEvent(fun(()->global a+=1),2.0,0.0)
-Simulate._register(clk, ev1, 0)              # 1. register ev1 to clk
-@test Simulate._nextevent(clk) == ev1
-Simulate._register(clk, ev1, 1)              # 2. register ev1 to 1st parallel clock
+ev1 = DiscreteEvents.DiscreteEvent(fun(()->global a+=1),1.0,0.0)
+ev2 = DiscreteEvents.DiscreteEvent(fun(()->global a+=1),2.0,0.0)
+DiscreteEvents._register(clk, ev1, 0)              # 1. register ev1 to clk
+@test DiscreteEvents._nextevent(clk) == ev1
+DiscreteEvents._register(clk, ev1, 1)              # 2. register ev1 to 1st parallel clock
 sleep(sleeptime)
-@test Simulate._nextevent(c1.clock) == ev1
-Simulate._register(c1, ev2, 1)               # 3. register ev2 directly to 1st parallel clock
+@test DiscreteEvents._nextevent(c1.clock) == ev1
+DiscreteEvents._register(c1, ev2, 1)               # 3. register ev2 directly to 1st parallel clock
 sleep(sleeptime)
 @test length(c1.clock.sc.events) == 2
-Simulate._register(c1, ev2, 0)               # 4. register ev2 back to master
+DiscreteEvents._register(c1, ev2, 0)               # 4. register ev2 back to master
 sleep(sleeptime)
 @test length(clk.sc.events) == 2
 
 if nthreads() > 2                           # This fails on CI (only 2 threads)
-    Simulate._register(c1, ev2, 2)           # 5. register ev2 to another parallel clock
+    DiscreteEvents._register(c1, ev2, 2)           # 5. register ev2 to another parallel clock
     c2 = pclock(clk, 2)
     sleep(sleeptime)
-    @test Simulate._nextevent(c2.clock) == ev2
+    @test DiscreteEvents._nextevent(c2.clock) == ev2
 end
 
 println("... testing API on multiple threads ...")

@@ -1,15 +1,14 @@
 # News in v0.3.0
 
 ```@meta
-CurrentModule = Simulate
+CurrentModule = DiscreteEvents
 ```
 v0.3.0 is a significant improvement over 0.2.0 with a name change,
 multithreading, resource handling and a streamlined documentation.
 
 ## Breaking name changes
 - following the [advice on discourse](https://discourse.julialang.org/t/simulate-v0-2-0-a-julia-package-for-discrete-event-simulation/31822) and in
-  [issue #13](https://github.com/pbayer/Simulate.jl/issues/13) `Simulate.jl`  
-  gets renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
+  [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13) `Simulate.jl` was renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
 - there are further renamings to make the API more consistent:
   - `Simfunction` → [`fun`](@ref), `SF` is no longer defined,
   - `SimProcess` → [`Prc`](@ref), `SP` is no longer defined,
@@ -31,8 +30,8 @@ multithreading, resource handling and a streamlined documentation.
 - Arguments to [`fun`](@ref) can now be symbols, expressions or other `fun`s or
   function closures. They get evaluated at event time before being passed to the
   event function,
-- [`Simulate.version`](@ref) gives now the package version,
-- `Simulate.jl` is now much faster due to optimizations,
+- [`DiscreteEvents.version`](@ref) gives now the package version,
+- `DiscreteEvents.jl` is now much faster due to optimizations,
 - [`onthread`](@ref) allows simulations with processes to run much faster on
   threads other than 1.
 
@@ -65,7 +64,7 @@ multithreading, resource handling and a streamlined documentation.
 - [`event!`](@ref) and [`periodic!`](@ref) now doesn't take anymore the scope
   as an argument. Symbols or expressions given to them or included in `fun`s
   are only evaluated in `Main` scope: this feature therefore can be
-  used only by end users but not by any packages using `Simulate.jl`.
+  used only by end users but not by any packages using `DiscreteEvents.jl`.
 
 ## Deprecated functionality in v0.3.0
 - Evaluating expressions or symbols at global scope is much slower than using

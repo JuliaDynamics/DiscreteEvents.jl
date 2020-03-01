@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2019
 #
@@ -15,13 +15,13 @@ simulation at a time, you can use it for time keeping.
 # Examples
 
 ```jldoctest
-julia> using Simulate
+julia> using DiscreteEvents
 
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
 julia> 𝐶  # default clock
-Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -44,12 +44,12 @@ current clock times to the new unit.
 
 # Examples
 ```jldoctest
-julia> using Simulate, Unitful
+julia> using DiscreteEvents, Unitful
 
 julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60)     # setup a new clock with t0=60
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=60.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> tau(c) # current time is 60.0 NoUnits
@@ -115,7 +115,7 @@ Return the current simulation time.
 # Examples
 
 ```jldoctest
-julia> using Simulate
+julia> using DiscreteEvents
 
 julia> reset!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
@@ -176,19 +176,19 @@ reset a clock
 # Examples
 
 ```jldoctest
-julia> using Simulate, Unitful
+julia> using DiscreteEvents, Unitful
 
 julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=60.0 s, Δt=1.0 s, prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> reset!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
 julia> c
-Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """

@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2019
 #
@@ -8,21 +8,21 @@
 
 """
 ```
-Simulate
+DiscreteEvents
 ```
 A Julia package for discrete event simulation.
 
 The current stable, registered version is installed with
 ```julia
-pkg> add Simulate
+pkg> add DiscreteEvents
 ```
 
 The development version is installed with:
 ```julia
-pkg> add("https://github.com/pbayer/Simulate.jl")
+pkg> add("https://github.com/pbayer/DiscreteEvents.jl")
 ```
 """
-module Simulate
+module DiscreteEvents
 
 """
     version
@@ -30,9 +30,9 @@ module Simulate
 Gives the package version:
 
 ```jldoctest
-julia> using Simulate
+julia> using DiscreteEvents
 
-julia> Simulate.version
+julia> DiscreteEvents.version
 v"0.3.0"
 ```
 """

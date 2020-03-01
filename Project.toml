@@ -1,6 +1,6 @@
-name = "Simulate"
-uuid = "7fe0908f-881e-4672-99a3-35ccdc95dcfc"
-authors = ["Paul Bayer"]
+name = "DiscreteEvents"
+uuid = "127e53a7-d08a-4bd9-afb0-daf0d2b65a85"
+authors = ["Paul Bayer <Paul.Bayer@gleichsam.de>"]
 version = "0.3.0"
 
 [deps]

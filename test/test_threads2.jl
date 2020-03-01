@@ -28,7 +28,7 @@ println("... test threading 2 ...")
 #
 # @test length(clk.processes) == 8
 # for p in values(clk.processes)
-#     @test p.state == Simulate.Idle()
+#     @test p.state == DiscreteEvents.Idle()
 #     @test istaskstarted(p.task)
 # end
 #

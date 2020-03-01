@@ -2,10 +2,10 @@
 
 Get an overview and learn the basics.
 
-`Simulate.jl` provides 1) a *clock* with a virtual simulation time and 2) the ability to schedule Julia functions and expressions as *events* on the clock's timeline or 3) run them as *processes* synchronizing with the clock. The clock can 4) invoke *sampling* functions or expressions continuously at a given rate.
+`DiscreteEvents.jl` provides 1) a *clock* with a virtual simulation time and 2) the ability to schedule Julia functions and expressions as *events* on the clock's timeline or 3) run them as *processes* synchronizing with the clock. The clock can 4) invoke *sampling* functions or expressions continuously at a given rate.
 
 !!! note
-    `Simulate.jl` doesn't have a special concept for shared resources since this
+    `DiscreteEvents.jl` doesn't have a special concept for shared resources since this
     can be expressed in native Julia via tokens in a `Channel`.
 
 ## A first example
@@ -13,7 +13,7 @@ Get an overview and learn the basics.
 A simple server takes something (a resource) from its input and puts it out modified after some time. We implement the server's activity in a function, create input and output channels and some "foo" and "bar" processes interacting on them:  
 
 ```julia
-using Simulate, Printf, Random
+using DiscreteEvents, Printf, Random
 
 function simple(c::Clock, input::Channel, output::Channel, name, id, op)
     token = take!(input)         # take something from the input
@@ -61,7 +61,7 @@ julia> include("docs/examples/channels.jl")
 
 ## Four building blocks
 
-`Simulate.jl` provides 4 major building blocks for modeling and simulation of discrete event systems:
+`DiscreteEvents.jl` provides 4 major building blocks for modeling and simulation of discrete event systems:
 
 1. the logical [**clock**](@ref the_clock) gives the simulation time,
 2. [**events**](@ref event_scheme) are Julia functions or expressions   executing at given simulation times or under given conditions,
@@ -74,7 +74,7 @@ The clock is central to any model and simulation, since it establishes the timel
 
 ```julia
 julia> c = Clock()                           # create a new clock
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> tick() = println(tau(c), ": tick!")   # define a function printing the clock's time
@@ -113,7 +113,7 @@ julia> sample_time!(1)                            # set the sampling rate on the
 julia> periodic!( fun(tick) );                       # set tick as a sampling function
 
 julia> 𝐶                                          # 𝐶 now has one sampling entry and the sample rate set
-Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=1.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=1.0 , prc:0
   scheduled ev:0, cev:0, sampl:1
 
 julia> run!(𝐶, 5)                                 # run 𝐶 for 5 time units
@@ -167,7 +167,7 @@ tuple.
 
 !!! warning
     Evaluating expressions or symbols at global scope is much slower than using
-    functions and gives a one time warning. This functionality may be removed entirely in a future version. (Please write an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
+    functions and gives a one time warning. This functionality may be removed entirely in a future version. (Please write an [issue](https://github.com/pbayer/DiscreteEvents.jl/issues) if you want to keep it.)
 
 ### Timed events
 

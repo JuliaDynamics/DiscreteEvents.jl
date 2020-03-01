@@ -3,19 +3,19 @@
 ## Installation
 
 ```@meta
-CurrentModule = Simulate
+CurrentModule = DiscreteEvents
 ```
 
-`Simulate.jl` runs on Julia versions ≥ v"1.0". Multithreading requires Julia ≥ v"1.3".
+`DiscreteEvents.jl` runs on Julia versions ≥ v"1.0". Multithreading requires Julia ≥ v"1.3".
 
 ```@docs
-Simulate
+DiscreteEvents
 version
 ```
 
 ## Clocks
 
-A clock in `Simulate.jl` is an active object residing in a thread and
+A clock in `DiscreteEvents.jl` is an active object residing in a thread and
 registers function calls or expressions as events, schedules them at a given time or under a given condition and executes them at their time or if conditions are met.
 
 - `Clock` and `ActiveClock`s have virtual (simulation) time. A `Clock` can
@@ -91,7 +91,7 @@ All given functions or expressions are then called or evaluated at a given simul
 
 !!! warning
     Evaluating expressions or symbols at global scope is much slower than using
-    functions and gives a one time warning. See [Performance](../performance/performance.md). This functionality may be removed entirely in a future version. (Please write an [issue](https://github.com/pbayer/Simulate.jl/issues) if you want to keep it.)
+    functions and gives a one time warning. This functionality may be removed entirely in a future version. (Please write an [issue](https://github.com/pbayer/DiscreteEvents.jl/issues) if you want to keep it.)
 
 !!! note
     Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `:(tau() ≥ 100)` is preferable to `:(tau() == 100)`.

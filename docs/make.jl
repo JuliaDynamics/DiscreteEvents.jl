@@ -1,9 +1,9 @@
-using Documenter, Simulate
+using Documenter, DiscreteEvents
 
 makedocs(
-    modules = [Simulate],
+    modules = [DiscreteEvents],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
-    sitename = "Simulate.jl",
+    sitename = "DiscreteEvents.jl",
     authors  = "Paul Bayer",
     pages = [
         "Home" => "index.md",
@@ -17,7 +17,7 @@ makedocs(
 )
 
 deploydocs(
-    repo   = "github.com/pbayer/Simulate.jl.git",
+    repo   = "github.com/pbayer/DiscreteEvents.jl.git",
     target = "build",
     deps   = nothing,
     make   = nothing,
