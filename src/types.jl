@@ -37,14 +37,10 @@ An action is either  a `Function` or an `Expr` or a `Tuple` of them. It can
 be scheduled in an event for later execution.
 
 !!! warning "Evaluating expressions is slow"
-    … and should be avoided in time critical parts of applications. You will
-    get a one time warning if you use them. They can be replaced
-    easily by `fun`s or function closures.
-
-!!! note "Expressions `Expr` …"
-    … are evaluated at global scope in Module `Main` only. Other modules using
-    `DiscreteEvents.jl` cannot use expressions in events and have to use functions.
-    This is for the end user only.
+    Expr should be avoided in time critical parts of applications. You will get a one
+    time warning if you use them. They can be replaced easily by `fun`s or function
+    closures. They are evaluated at global scope in Module `Main` only. Other modules using
+    `DiscreteEvents.jl` cannot use Expr in events and have to use functions.
 """
 const Action = Union{Function, Expr, Tuple}
 
@@ -111,27 +107,26 @@ struct ClockException <: Exception
 end
 
 """
-    Prc( id, f::Function, arg...; kw...)
+    Prc(id, f, arg...; kw...)
 
-Prepare a function to run as a process in a simulation.
+Prepare a function to run as a process (asynchronous task) in a simulation.
 
 # Arguments, fields
 - `id`: some unique identification for registration,
-- `task::Union{Task,Nothing}`: a task structure,
-- `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
-- `state::ClockState`: process state,
-- `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` as its
-    first argument,
+- `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` (a [`Clock`](@ref))
+    as its first argument,
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
-!!! note
-    A function started as a Prc most often runs in a loop. It has to
-    give back control by e.g. doing a `take!(input)` or by calling
-    `delay!` etc., which will `yield` it. Otherwise it will starve everything else!
+# Fields
+- `task::Union{Task,Nothing}`: a task structure,
+- `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
+- `state::ClockState`: process state,
 
-!!! warn
-    That `f` nust take `clk` as first argument is a breaking change in v0.3!
+!!! note
+    A function started as a Prc runs in a loop. It has to give back control
+    by e.g. doing a `take!(input)` or by calling [`delay!`](@ref) or [`wait!`](@ref),
+    which will `yield` it. Otherwise it will starve everything else!
 """
 mutable struct Prc
     id::Any
@@ -198,14 +193,14 @@ Create a new simulation clock.
     t0 to a time, e.g. `t0=60s`.
 
 # Fields
-- `id::Int`: thread on which the clock is running,
+- `id::Int`: clock ident number, 0: master clock, ≥ 1: parallel clock,
 - `state::ClockState`: clock state,
 - `time::Float64`: clock time,
 - `unit::FreeUnits`: time unit,
 - `end_time::Float64`: end time for simulation,
 - `Δt::Float64`: sampling time, timestep between ticks,
-- `ac::Vector{ClockChannel}`: active clocks running on parallel threads,
-- `sc::Schedule`: the clock schedule (events, cond events and sampling),
+- `ac::Vector{ClockChannel}`: [`channels`](@ref ClockChannel) to active clocks on parallel threads,
+- `sc::Schedule`: the clock [`Schedule`](@ref) (events, cond events and sampling),
 - `processes::Dict{Any, Prc}`: registered `Prc`es,
 - `tn::Float64`: next timestep,
 - `tev::Float64`: next event time,
@@ -220,23 +215,23 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()                 # create a unitless clock (standard)
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> c = Clock(1s, unit=minute)  # create a clock with units, does conversions automatically
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
+julia> c1 = Clock(1s, unit=minute)  # create a clock with unit [minute]
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> c = Clock(1s)               # create a clock with implicit unit setting
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
+julia> c2 = Clock(1s)               # create a clock with implicit unit [s]
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> c = Clock(t0=60s)           # another example of implicit unit setting
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.0 s, prc:0
+julia> c3 = Clock(t0=60s)           # another clock with implicit unit [s]
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt takes precedence
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
+julia> c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -276,10 +271,8 @@ mutable struct Clock <: AbstractClock
 end
 
 """
-```
-ActiveClock(clock::Clock, master::Ref{Clock},
-            cmd::Channel{ClockEvent}, ans::Channel{ClockEvent})
-```
+    ActiveClock(clock, master, cmd, ans)
+
 A thread specific clock which can be operated via a channel.
 
 # Fields
@@ -296,27 +289,32 @@ implicitly by [`fork!`](@ref)ing a [`Clock`](@ref) to other available threads
 or directly with [`PClock`](@ref).
 It then can be accessed via [`pclock`](@ref) as in the following example.
 
+!!! note
+Directly accessing the `clock`-field of parallel `ActiveClock`s in simulations is
+possible but not recommended since it breaks parallel operation. The right way is
+to pass `event!`s to the `ActiveClock`-variable. The communication then happens
+over the channel to the `ActiveClock` as it should be.
+
 # Example
 ```jldoctest
 julia> using DiscreteEvents
 
 julia> clk = Clock()
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
-
 
 julia> fork!(clk)
 
-julia> clk    #  ⬇ you got 3 parallel active clocks
-Clock thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+julia> clk    #  ⬇ here you got 3 parallel active clocks
+Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 
 julia> clk = PClock()
-Clock thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
+julia> ac1 = pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
 Active clock 1 on thrd 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
    scheduled ev:0, cev:0, sampl:0
 ```
@@ -333,10 +331,9 @@ end
 """
     RTClock{T <: ClockEvent} <: AbstractClock
 
-Real time clocks use system time for time keeping and are controlled over
-a channel. They are independent from each other and other clocks and run
-asynchronously as tasks on arbitrary threads. Multiple real time clocks
-can be setup with arbitrary frequencies to do different things.
+Real time clocks use system time and are controlled over channels. They are independent
+from each other and other clocks and run asynchronously as tasks on arbitrary threads.
+Multiple real time clocks can be setup with arbitrary frequencies to do different things.
 
 # Fields
 - `clock::Clock`:

@@ -53,33 +53,24 @@ _invoke(f::typeof(event!), arg::T, kw) where {T<:Tuple{Vararg{<:Any}}} = f(arg..
 """
     fun(f::Function, args...; kwargs...)
 
-Return a closure of a function `f` and its arguments for later execution.
+Save a function `f` and its arguments in a closure for later execution.
 
 # Arguments
-The arguments `args...` and keyword arguments `kwargs...` to fun are passed
-to `f` at execution but may change their values between
-beeing captured in `fun` and `f`s later execution. If `f` needs their
-current values at execution time there are two possibilities:
-1. `fun` can take symbols, expressions, `fun`s or function closures at the
-    place of values or variable arguments. They are evaluated just before
-    being passed to f. There is one exception: if `f` is an `event!`, its
-    arguments are passed on unevaluated.
+The arguments `args...` and keyword arguments `kwargs...` to fun are passed to `f` at
+execution but may change their values between beeing captured in `fun` and `f`s later
+execution. If `f` needs their current values at execution time there are two possibilities:
+1. `fun` can take `fun`s, function closures, symbols or expressions at the place of values
+    or variable arguments. They are evaluated at event time just before being passed to f.
+    There is one exception: if `f` is an `event!`, its arguments are passed on unevaluated.
 2.  A mutable type argument (Array, struct ...) is always current. You can
     also change its content from within a function.
 
 !!! warning "Evaluating symbols and expressions is slow"
-    … and should be avoided in time critical parts of applications. You will
-    get a one time warning if you use that feature. They can be replaced
-    easily by `fun`s or function closures. See the Performance section in the
-    documentation and the subsequent examples.
-
-!!! note "Symbols and expressions"
-    … are evaluated at global scope in Module `Main` only. Other modules using
-    `DiscreteEvents.jl` cannot use this feature and have to use functions.
-
-# Returns
-A function closure of f(args..., kwargs...), which can be evaluated without
-arguments.
+    Symbols and Expr should be avoided in time critical parts of applications. You will
+    get a one time warning if you use that feature. They can be replaced easily by
+    `fun`s or function closures. They are evaluated at global scope in Module `Main` only.
+    Other modules using `DiscreteEvents.jl` cannot use this feature and have to use
+    functions.
 
 # Examples
 ```jldoctest
@@ -123,8 +114,3 @@ julia> ii()     # ok, g gets an updated x
     kwargs = ifelse(isempty(kwargs), nothing, kwargs)
     () -> _invoke(f, args, kwargs)
 end
-# @inline function fun(@nospecialize(f), @nospecialize args...; kwargs...)
-#     args = ifelse(isempty(args), nothing, args)
-#     kwargs = ifelse(isempty(kwargs), nothing, kwargs)
-#     () -> _invoke(f, args, kwargs)
-# end

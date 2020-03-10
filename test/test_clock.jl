@@ -7,7 +7,7 @@
 #
 
 println("... basic tests: printing  ...")
-str = "Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
+str = "Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 reset!(𝐶)
 if DiscreteEvents._show_default[1] == false
     @test repr(𝐶) == str

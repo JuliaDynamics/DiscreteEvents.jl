@@ -6,8 +6,6 @@
 CurrentModule = DiscreteEvents
 ```
 
-`DiscreteEvents.jl` runs on Julia versions ≥ v"1.0". Multithreading requires Julia ≥ v"1.3".
-
 ```@docs
 DiscreteEvents
 version
@@ -15,39 +13,44 @@ version
 
 ## Clocks
 
-A clock in `DiscreteEvents.jl` is an active object residing in a thread and
-registers function calls or expressions as events, schedules them at a given time or under a given condition and executes them at their time or if conditions are met.
+Clock schedule and execute Julia functions or expressions as events at given times or
+under given conditions.
 
-- `Clock` and `ActiveClock`s have virtual (simulation) time. A `Clock` can
-  control and synchronizes with `ActiveClock`s on other threads. It can be
-  started and run for a given time.
-- `RTClock`s have real (system) time and operate independently from each other
-  and other clocks. They run continuously at given clock ticks and execute
-  scheduled events if their time becomes due.
+- `Clock`s have virtual time and precede as fast as possible when they simulate chains of
+  events. For parallel simulations they can control [`ActiveClock`](@ref)s on parallel
+  threads.
+- `RTClock`s schedule and execute events on a real (system) time line.
+
+Clocks have an ident number:
+- a master `Clock` on thread has id = 0,
+- worker [`ActiveClock`](@ref)s on parallel threads have id ≥ 1,
+- real time `RTClock`s have id ≤ -1.
 
 ```@docs
 Clock
-ActiveClock
 RTClock
 ```
-Clocks have the following substructures:
 
-```@docs
-Schedule
-ClockChannel
-```
-
-You can set time units and query the current clock time. There is a default clock `𝐶`, which can be used for experimental work. `RTC` can be used to setup and
-control real time Clocks.
+You can set time units and query the current clock time.
 
 ```@docs
 setUnit!
 tau
+```
+
+There is a default clock `𝐶`, which can be used for experimental work.
+
+```@docs
 𝐶
+```
+
+`RTC` can be used to setup and control real time Clocks.
+
+```@docs
 RTC
 ```
 
-You can create a clock with parallel active clocks on all available threads or fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel clocks and diagnose them.
+You can create a clock with parallel active clocks on all available threads or fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel [`ActiveClock`](@ref)s and diagnose them.
 
 ```@docs
 PClock
@@ -57,22 +60,14 @@ collapse!
 diagnose
 ```
 
-!!! note
-Directly accessing the `clock` substructure of parallel `ActiveClock`s is possible but not recommended since it breaks parallel operation. The right way is to pass `event!`s to the `ActiveClock`-variable. The communication then happens over the channel to the `ActiveClock` as it should be.
-
 ## Events
 
-Julia expressions and functions can be scheduled as events on the clock's timeline and are triggered at a given simulation time or under conditions which may become true during simulation.
-
-Functions and expressions can be scheduled for execution
+Julia functions and expressions can be scheduled for execution
 1. at given clock times and
 2. under specified conditions.
 
 ```@docs
-AbstractEvent
 Action
-DiscreteEvent
-DiscreteCond
 Timing
 fun
 event!
@@ -87,40 +82,34 @@ function events()
 end
 ```
 
-All given functions or expressions are then called or evaluated at a given simulation time or when during simulation the given conditions become true.
-
-!!! warning
-    Evaluating expressions or symbols at global scope is much slower than using
-    functions and gives a one time warning. This functionality may be removed entirely in a future version. (Please write an [issue](https://github.com/pbayer/DiscreteEvents.jl/issues) if you want to keep it.)
+Scheduled events are called or evaluated during simulation at a given time or when the
+given conditions become true.
 
 !!! note
-    Since conditions often are not met exactly you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `:(tau() ≥ 100)` is preferable to `:(tau() == 100)`.
+    For conditions you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `tau() ≥ 100` is preferable to `tau() == 100`.
 
 ## Continuous sampling
 
 Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt.
 
 ```@docs
-Sample
 sample_time!
 periodic!
 ```
 
 ## Processes
 
-Julia functions can be registered and run as processes. They follow another (the process-oriented) scheme and can be suspended and reactivated by the scheduler if they wait for something or delay. They must not (but are free to) handle and create events explicitly.
+Julia functions can be registered and run as processes (asynchronous tasks).
 
 ```@docs
 Prc
-ClockException
 process!
 interrupt!
-stop!(::Prc, ::ClockEvent)
 ```
 
 ### Delay and wait …
 
-Processes do not need to handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. This usually comes in handy. They are then suspended until certain conditions are met or requested resources are available.
+Processes do not need to handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. They are then suspended until a given time or until certain conditions are met or requested resources are available.
 
 ```@docs
 delay!
@@ -144,7 +133,7 @@ reset!
 incr!
 run!
 onthread
-stop!(::Clock)
+stop!
 resume!
 sync!
 ```

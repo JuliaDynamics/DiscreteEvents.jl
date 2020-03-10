@@ -11,6 +11,7 @@ makedocs(
         "Manual" => [
             "intro.md",
             "usage.md",
+            "internals.md",
             "troubleshooting.md",
             "history.md"]
     ]
