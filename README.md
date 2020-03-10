@@ -62,7 +62,7 @@ julia> include("docs/examples/channels.jl")
 "run! finished with 43 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  [notebooks](https://github.com/pbayer/DiscreteEvents.jl/tree/master/docs/notebooks) or [example programs](https://github.com/pbayer/DiscreteEvents.jl/tree/master/docs/examples).
+For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion package [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
 
 ## Installation
 
