@@ -87,24 +87,21 @@ function _startup!(c::C, p::Prc, cycles::T, spawn::Bool) where {C<:AbstractClock
 end
 
 """
-```
-process!([clk::Clock], p::Prc, cycles=Inf; spawn::Bool=false)
-```
+    process!([clk], prc, cycles; spawn)
+
 Register a [`Prc`](@ref) to a clock, start it as an asynchronous process and
 return the `id` it was registered with. It can then be found under `clk.processes[id]`.
 
 # Arguments
-- `c::AbstractClock`: `Clock` or `ActiveClock`, if not provided, the process runs
-    under `𝐶`,
-- `p::Prc`: it contains a function and its arguments,
-- `cycles::T=Inf`: number of cycles the process should run,
+- `c<:AbstractClock`: if not provided, the process runs under `𝐶`,
+- `prc::Prc`: it contains a function and its arguments,
+- `cycles<:Number=Inf`: number of cycles the process should run,
 - `spawn::Bool=false`: if true, the process may be scheduled on another thread
     in parallel and registered to the thread specific clock.
 
 !!! note
     `spawn`ing a process is possible only with parallel clocks setup with
     [`PClock`](@ref) or [`fork!`](@ref).
-
 """
 function process!(c::C, p::Prc, cycles::T=Inf; spawn::Bool=false) where {C<:AbstractClock,T<:Number}
     p.clk = c
@@ -118,33 +115,20 @@ _wakeup(c::Condition) = (notify(c); yield())
 
 """
 ```
-delay!(clk::Clock, t::T) where {T<:Number}
+delay!(clk, t)
+delay!(clk, T, t)
 ```
-Delay a process for a time interval `t` on the clock `clk`. Suspend the calling
-process until being reactivated by the clock at the appropriate time.
+Delay (suspend) a process for a time interval `t` on the clock `clk`.
 
 # Arguments
-- `clk::Clock`: if not provided, the delay goes to `𝐶`.
-- `t::T`: the time interval for the delay.
+- `T::Timing`: only `until` is accepted,
+- `t<:Number`: delay until time t if t > clk.time, else give a warning.
 """
-function delay!(clk::Clock, t::T) where {T<:Number}
+function delay!(clk::Clock, t::N) where {N<:Number}
     c = Condition()
     event!(clk, ()->_wakeup(c), after, t)
     wait(c)
 end
-
-"""
-```
-delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
-```
-
-Used for delaying a process *until* a given time t.
-
-# Arguments
-- `clk::Clock`: if no clock is given, the delay goes to 𝐶,
-- `T::Timing`: only `until` is accepted,
-- `t::N`: delay until time t if t > clk.time, else give a warning.
-"""
 function delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
@@ -157,17 +141,12 @@ function delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
 end
 
 """
-```
-wait!(clk::Clock, cond::A) where {A<:Action}
-```
-Wait on a clock for a condition to become true. Suspend the calling process
-until the given condition is true.
+    wait!(clk, cond)
+
+Delay (suspend) a process on a clock clk until a condition has become true.
 
 # Arguments
-- `clk::Clock`: if no clock is supplied, the delay goes to `𝐶`,
-- `cond::A`: a condition is an expression or function
-    or an array or tuple of them. It is true only if all expressions or functions
-    therein return true,
+- `cond<:Action`: a condition is is true if all expressions or functions therein return true.
 """
 function wait!(clk::Clock, cond::A) where {A<:Action}
     if all(_evaluate(cond))   # all conditions met
@@ -193,19 +172,8 @@ end
 stop!(p::Prc, value=nothing) = interrupt!(p, Stop(), value)
 
 """
-```
-now!(clk::Clock, ex::A) where {A<:Action}
-```
-Tell the clock to execute an operation. Thus it cannot proceed before the op is finished.
+    now!(clk::Clock, ex::A) where {A<:Action}
 
-!!! note
-    This is needed for IO-operations of tasks. IO-operations yield the task to
-    the scheduler and the scheduler may invoke the clock before giving control
-    back to the task. In that case the clock will proceed and the task has gone
-    out of sync with the clock. Use `now!` to avoid this situation!
-
-# Arguments
-- `clk::Clock`,
-- `op::A`: operation to execute.
+Tell the clock to execute an IO-operation ex and not to proceed before ex is finished.
 """
 now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time)

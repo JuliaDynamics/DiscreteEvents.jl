@@ -107,13 +107,11 @@ end
 
 
 """
-```
-tau(clk::Clock=𝐶)
-```
+    tau(clk::Clock=𝐶)
+
 Return the current simulation time.
 
 # Examples
-
 ```jldoctest
 julia> using DiscreteEvents
 
@@ -126,9 +124,8 @@ julia> tau() # gives the central time
 tau(clk::Clock=𝐶) = clk.unit == NoUnits ? clk.time : clk.time*clk.unit
 
 """
-```
-sync!(clk::Clock, to::Clock=𝐶)
-```
+    sync!(clk::Clock, to::Clock=𝐶)
+
 Force a synchronization of two clocks. Change all registered times of
 `clk` accordingly. Convert or force clk.unit to to.unit.
 """
@@ -157,10 +154,9 @@ function sync!(clk::Clock, to::Clock=𝐶)
 end
 
 """
-```
-reset!(clk::Clock, Δt::T=0; t0::U=0, hard::Bool=true, unit=NoUnits) where {T<:Number, U<:Number}
-```
-reset a clock
+    reset!(clk::Clock, Δt::T=0; t0::U=0; <keyword arguments>) where {T<:Number, U<:Number}
+
+Reset a clock
 
 # Arguments
 - `clk::Clock`
@@ -234,6 +230,9 @@ function reset!(clk::Clock, Δt::T=0;
     end
 end
 
+# initialize a clock.
+init!(clk::Clock) = step!(clk, clk.state, Init(""))
+
 # Adjust/convert `t` given according to clock settings and return a Float64
 function _tadjust(clk::Clock, t::Unitful.Time) :: Float64
     if clk.unit == NoUnits
@@ -247,10 +246,9 @@ _tadjust(clk::Clock, t::T) where {T<:Number} = t
 _tadjust(ac::ActiveClock, t::T) where {T<:Number} = _tadjust(ac.clock, t)
 
 """
-```
-sample_time!([clk::Clock], Δt::N) where {N<:Number}
-```
-set the clock's sample rate starting from now (`tau(clk)`).
+    sample_time!([clk::Clock], Δt::N) where {N<:Number}
+
+Set the clock's sample rate starting from now (`tau(clk)`).
 
 # Arguments
 - `clk::Clock`: if not supplied, set the sample rate on 𝐶,
@@ -398,8 +396,7 @@ end
 """
     run!(clk::Clock, duration::N) where {N<:Number}
 
-Run a simulation for a given duration. Call scheduled events and evaluate
-sampling expressions at each tick in that timeframe.
+Run a simulation for a given duration.
 """
 function run!(clk::Clock, duration::T) where {T<:Number}
     duration = duration isa Unitful.Time ? _tadjust(clk, duration) : duration
@@ -427,10 +424,3 @@ stop!(clk::Clock) = step!(clk, clk.state, Stop())
 Resume a halted simulation.
 """
 resume!(clk::Clock) = step!(clk, clk.state, Resume())
-
-"""
-    init!(clk::Clock)
-
-initialize a clock.
-"""
-init!(clk::Clock) = step!(clk, clk.state, Init(""))

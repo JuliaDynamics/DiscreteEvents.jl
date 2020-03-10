@@ -113,11 +113,7 @@ end
 """
     fork!(master::Clock)
 
-Establish copies of a clock on all parallel threads and operate them as active
-clocks under control of the master clock.
-
-# Arguments
-- `master::Clock`: the master clock, must be on thread 1
+Establish copies of a master clock (thread 1) on all parallel threads.
 """
 function fork!(master::Clock)
     if (master.id == 0) && (threadid() == 1)
@@ -174,24 +170,21 @@ function collapse!(master::Clock)
 end
 
 """
-    PClock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
+    PClock(Δt::T=0.01; t0::U=0.0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
 
 Setup a clock with parallel clocks on all available threads.
 
 # Arguments
 
-- `Δt::T=0.01`: time increment. For parallel clocks Δt has to be > 0.
-    If given Δt ≤ 0 it is set to 0.01.
-- `t0::U=0`: start time for simulation
-- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
-    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
-    t0 to a time, e.g. `t0=60s`.
+- `Δt::T=0.01`: time increment > 0. If given Δt ≤ 0, it gets set to 0.01.
+- `t0::U=0.0`: start time for simulation,
+- `unit::FreeUnits=NoUnits`: clock time unit for explicitl unit setting.
 
 !!! note
     Processes on multiple threads are possible in Julia ≥ 1.3 and with
     [`JULIA_NUM_THREADS > 1`](https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_NUM_THREADS-1).
 """
-function PClock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
+function PClock(Δt::T=0.01; t0::U=0.0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
     Δt = Δt > 0 ? Δt : 0.01
     clk = Clock(Δt, t0=t0, unit=unit)
     fork!(clk)
@@ -203,8 +196,8 @@ end
 # ---------------------------------------------------------
 """
 ```
-pclock(clk::Clock, id::Int ) :: AbstractClock
-pclock(ac::ActiveClock, id::Int ) :: AbstractClock
+pclock(clk::Clock, id::Int ) :: C where {C<:AbstractClock}
+pclock(ac::ActiveClock, id::Int ) :: C where {C<:AbstractClock}
 ```
 Get a parallel clock to a given clock.
 
@@ -217,7 +210,7 @@ Get a parallel clock to a given clock.
 - the master `Clock` if id==0,
 - a parallel `ActiveClock` else
 """
-function pclock(clk::Clock, id::Int) :: AbstractClock
+function pclock(clk::Clock, id::Int) ::AbstractClock
     if id == 0
         @assert clk.id == 0 "you cannot get master from a local clock!"
         return clk
@@ -228,7 +221,7 @@ function pclock(clk::Clock, id::Int) :: AbstractClock
         println(stderr, "parallel clock $id not available!")
     end
 end
-function pclock(ac::ActiveClock, id::Int) :: AbstractClock
+function pclock(ac::ActiveClock, id::Int) ::AbstractClock
     if id == ac.clock.id
         return ac
     else
@@ -237,25 +230,21 @@ function pclock(ac::ActiveClock, id::Int) :: AbstractClock
 end
 
 """
-    diagnose(clk::Clock, id::Int)
+    diagnose(master::Clock, id::Int)
 
-Return the stacktrace from a parallel clock.
-
-# Arguments
-- `clk::Clock`: a master clock,
-- `id::Int`: the id of a parallel clock.
+Return the stacktrace from parallel clock id.
 """
-function diagnose(clk::Clock, id::Int)
-    if id in eachindex(clk.ac)
-        if istaskfailed(clk.ac[id].ref[])
-            return clk.ac[id].ref[]
+function diagnose(master::Clock, id::Int)
+    if id in eachindex(master.ac)
+        if istaskfailed(master.ac[id].ref[])
+            return master.ac[id].ref[]
         else
-            while isready(clk.ac[id].back)
-                msg = take!(clk.ac[id].back)
+            while isready(master.ac[id].back)
+                msg = take!(master.ac[id].back)
                 println(msg)
             end
-            put!(clk.ac[id].forth, Diag())
-            return take!(clk.ac[id].back).x
+            put!(master.ac[id].forth, Diag())
+            return take!(master.ac[id].back).x
         end
     else
         println(stderr, "parallel clock $id not available!")
@@ -263,36 +252,23 @@ function diagnose(clk::Clock, id::Int)
 end
 
 """
-    onthread(f::F, id::Int) where {F<:Function}
+    onthread(f::F, tid::Int) where {F<:Function}
 
-Execute a function f on thread id.
+Execute a function f on thread tid (to speed it up).
 
-Single-threaded simulations involving processes speed up a lot when
-they are run on a thread other than 1. Thus they must not compete
-against background tasks.
-
-# Examples, usage
-
-```julia
+# Example
+```jldoctest
 julia> using DiscreteEvents, .Threads
 
-julia> onthread(threadid, 2)
+julia> onthread(2) do; threadid(); end
 2
-
-julia> onthread(3) do; threadid(); end
-3
-
-julia> onthread(4) do
-           threadid()
-       end
-4
 ```
 """
-function onthread(f::F, id::Int) where {F<:Function}
+function onthread(f::F, tid::Int) where {F<:Function}
     t = Task(nothing)
-    @assert id in 1:nthreads() "thread $id not available!"
+    @assert tid in 1:nthreads() "thread $tid not available!"
     @threads for i in 1:nthreads()
-        if i == id
+        if i == tid
             t = @async f()
         end
     end

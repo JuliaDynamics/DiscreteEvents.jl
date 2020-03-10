@@ -7,10 +7,10 @@
 #
 
 """
-```
-DiscreteEvents
-```
-A Julia package for discrete event simulation.
+    DiscreteEvents
+
+A Julia package for generating and simulating discrete events. It runs on Julia
+`VERSION ≥ v"1.0"`. Multithreading requires `VERSION ≥ v"1.3"`.
 
 The current stable, registered version is installed with
 ```julia
@@ -52,12 +52,12 @@ include("threads.jl")
 include("timer.jl")
 include("printing.jl")
 
-export  Clock, ActiveClock, RTClock, RTC, setUnit!, 𝐶,
-        Timing, at, after, every, before, until, tau, sample_time!,
-        Action, fun, event!, periodic!,
+export  Clock, PClock, RTClock, RTC, setUnit!, 𝐶,
+        Action, Timing, at, after, every, before, until,
+        tau, sample_time!, fun, event!, periodic!,
         incr!, run!, stop!, resume!, reset!, sync!,
         Prc, process!, interrupt!, delay!, wait!, now!,
-        PClock, fork!, collapse!, pclock, diagnose, onthread
+        fork!, collapse!, pclock, diagnose, onthread
 
 
 Random.seed!(123)

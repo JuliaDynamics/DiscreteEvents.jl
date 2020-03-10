@@ -8,31 +8,24 @@
 
 """
 ```
-event!([clk::CL], ex::A, t::U; cycle::V=0.0,
-        cid::Int=clk.id, spawn=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
-event!([clk::CL], ex::A, T::Timing, t::U;
-        cid::Int=clk.id, spawn=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number}
+event!([clk], ex, t; <keyword arguments>)
+event!([clk], ex, T, t; <keyword arguments>)
 ```
 Schedule an event for a given simulation time.
 
 # Arguments
-- `clk::AbstractClock`: it not supplied, the event is scheduled to 𝐶,
+- `clk<:AbstractClock`: clock, it not supplied, the event is scheduled to 𝐶,
 - `ex<:Action`: an expression or function or a tuple of them,
 - `T::Timing`: a timing, one of `at`, `after` or `every`,
-- `t::U`: simulation time, if t < clk.time set t = clk.time,
+- `t<:Number`: simulation time, if t < clk.time set t = clk.time,
 
 # Keyword arguments
-- `cycle::Float64=0.0`: repeat cycle time for an event,
+- `cycle<:Number=0.0`: repeat cycle time for an event,
 - `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
     with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the event at other available threads,
 - `sync::Bool=false`: if true, force a synchronization of all parallel clocks
     before executing the event.
-
-# returns
-Scheduled internal simulation time (unitless) for that event.
-May return a time `> t` from repeated applications of `nextfloat(t)`
-if there are events scheduled for `t`.
 
 # Examples
 ```jldoctest
@@ -86,25 +79,15 @@ event!(ex::A, T::Timing, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶,
 
 
 """
-```
-event!(clk::T, ex::A, cond::C;
-       cid::Int=clk.id, spawn=false) where {T<:AbstractClock,A<:Action,C<:Action}
-```
-Schedule a conditional event.
+    event!([clk], ex, cond; <keyword arguments>)
 
-It is executed immediately if the conditions are met, else the condition is
-checked at each clock tick Δt. A conditional event is triggered only once. After
-that it is removed from the clock. If no sampling rate Δt is setup, a default
-sampling rate is setup depending on the scale of the remaining simulation time
+Schedule ex as a conditional event, conditions cond get evaluated at each clock tick.
 
 # Arguments
-- `clk::AbstractClock`: if no clock is supplied, the event is scheduled to 𝐶,
-- `ex::Union{SimExpr, Tuple{SimExpr}}`: an expression or function or a tuple of them,
-- `cond::Union{SimExpr, Tuple{SimExpr}}`: a condition is an expression or function
-    or a tuple of them. It is true only if all expressions or `fun`s
-    therein return true,
-- `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
-    with id == cid. This overrides `spawn`,
+- `clk<:AbstractClock`: if no clock is supplied, the event is scheduled to 𝐶,
+- `ex<:Action`: an expression or function or a tuple of them,
+- `cond<:Action`: a condition is true if all functions or expressions therein return true,
+- `cid::Int=clk.id`: assign the event to the parallel clock cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the event at other available threads.
 
 # Examples
@@ -145,17 +128,16 @@ end
 event!( ex::A, cond::C; kw...) where {A<:Action,C<:Action} = event!(𝐶, ex, cond; kw...)
 
 """
-```
-periodic!([clk::Clock], ex::T, Δt::U=clk.Δt; spawn=false) where {T<:Action,U<:Number}
-periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number}
-```
+    periodic!([clk], ex, Δt; spawn)
+
 Register a function or expression for periodic execution at the clock`s sample rate.
 
 # Arguments
-- `clk::Clock`, `ac::ActiveClock`: if not supplied, it samples on 𝐶,
+- `clk<:AbstractClock`: if not supplied, it registers on 𝐶,
 - `ex<:Action`: an expression or function or a tuple of them,
-- `Δt::U=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
+- `Δt<:Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
+- `spawn::Bool=false`: if true, spawn the periodic event to other available threads.
 """
 function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
                    spawn=false) where {T<:Action,U<:Number}

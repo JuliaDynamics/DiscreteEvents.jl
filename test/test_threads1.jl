@@ -9,7 +9,7 @@ sleep(sleeptime)
 
 print(clk)
 @test clk.id == 0
-m = match(r"Clock thread 1 \(\+ (\d+) ac\)", repr(clk))
+m = match(r"Clock 0, thrd 1 \(\+ (\d+) ac\)", repr(clk))
 @test parse(Int, m.captures[1]) > 0
 @test length(clk.ac) == nthreads()-1
 @test clk.ac[1].thread == 2
@@ -27,7 +27,7 @@ if DiscreteEvents._handle_exceptions[1]
     sleep(sleeptime)
     err = diagnose(clk, 1)
     @test err[1] isa ErrorException
-    @test occursin(r"^step\!\(\:\:ActiveClock.+ at threads\.jl", string(err[2][2]))
+    @test occursin(r"^step\!\(\:\:DiscreteEvents.ActiveClock.+ at threads\.jl", string(err[2][2]))
 end
 
 println("... testing channel and active clock ...")
