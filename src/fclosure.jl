@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2020
 #
@@ -75,7 +75,7 @@ current values at execution time there are two possibilities:
 
 !!! note "Symbols and expressions"
     … are evaluated at global scope in Module `Main` only. Other modules using
-    `Simulate.jl` cannot use this feature and have to use functions.
+    `DiscreteEvents.jl` cannot use this feature and have to use functions.
 
 # Returns
 A function closure of f(args..., kwargs...), which can be evaluated without
@@ -83,7 +83,7 @@ arguments.
 
 # Examples
 ```jldoctest
-julia> using Simulate
+julia> using DiscreteEvents
 
 julia> g(x; y=1) = x+y
 g (generic function with 1 method)

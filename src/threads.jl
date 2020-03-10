@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2020
 #
@@ -274,7 +274,7 @@ against background tasks.
 # Examples, usage
 
 ```julia
-julia> using Simulate, .Threads
+julia> using DiscreteEvents, .Threads
 
 julia> onthread(threadid, 2)
 2

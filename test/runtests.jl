@@ -1,15 +1,15 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2019
 #
 # This is a Julia package for discrete event simulation
 #
 
-using Simulate, Random, Unitful, Test, .Threads
+using DiscreteEvents, Random, Unitful, Test, .Threads
 import Unitful: Time, ms, s, minute, hr
 
-println(".... testing Simulate.jl .....")
+println(".... testing DiscreteEvents.jl .....")
 @testset "clock.jl" begin
     include("test_clock.jl")
 end

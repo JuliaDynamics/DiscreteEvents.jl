@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2020
 #
@@ -7,14 +7,14 @@
 #
 
 println("... basic tests: printing  ...")
-str = "Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
+str = "Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 reset!(𝐶)
-if Simulate._show_default[1] == false
+if DiscreteEvents._show_default[1] == false
     @test repr(𝐶) == str
-    Simulate._show_default[1] = true
-    str = "Clock(0, Simulate.Idle(), 0.0, , 0.0, Simulate.ClockChannel[], Simulate.Schedule(DataStructures.PriorityQueue{Simulate.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), Simulate.DiscreteCond[], Simulate.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+    DiscreteEvents._show_default[1] = true
+    str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.0, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(DataStructures.PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
     @test repr(𝐶) == str
-    Simulate._show_default[1] = false
+    DiscreteEvents._show_default[1] = false
 end
 @test tau() == 0
 
@@ -28,59 +28,59 @@ h(a, b; c = 1, d = 2) = a + b + c + d
 i(; a = 1, b = 2) = a + b
 j(x) = x == :unknown
 
-@test Simulate._evaluate(fun(e)) == 123
-@test Simulate._evaluate(fun(f, 1)) == 4
-@test Simulate._evaluate(fun(h, 1, 2, c=3, d=4)) == 10
+@test DiscreteEvents._evaluate(fun(e)) == 123
+@test DiscreteEvents._evaluate(fun(f, 1)) == 4
+@test DiscreteEvents._evaluate(fun(h, 1, 2, c=3, d=4)) == 10
 
 a = 11; b = 12; c = 13; d = 14;
 sf1 = fun(h, a, b, c=c, d=d)
 sf2 = fun(h, :a, :b, c=:c, d=:d)
 sf3 = fun(h, a, b, c=c, d=d)
 sf4 = fun(h, :a, :b, c=:c, d=:d)
-@test Simulate._evaluate(sf1) == 50
-@test Simulate._evaluate(sf2) == 50
-@test Simulate._evaluate(sf3) == 50
-@test Simulate._evaluate(sf4) == 50
+@test DiscreteEvents._evaluate(sf1) == 50
+@test DiscreteEvents._evaluate(sf2) == 50
+@test DiscreteEvents._evaluate(sf3) == 50
+@test DiscreteEvents._evaluate(sf4) == 50
 a = 21; b = 22; c = 23; d = 24;
-@test Simulate._evaluate(sf1) == 50
-@test Simulate._evaluate(sf2) == 90
-@test Simulate._evaluate(fun(h, :a, 2, c=:c, d=4)) == 50
-@test Simulate._evaluate(fun(j, :unknown))
-@test Simulate._evaluate(fun(<=, fun(tau), 1))
+@test DiscreteEvents._evaluate(sf1) == 50
+@test DiscreteEvents._evaluate(sf2) == 90
+@test DiscreteEvents._evaluate(fun(h, :a, 2, c=:c, d=4)) == 50
+@test DiscreteEvents._evaluate(fun(j, :unknown))
+@test DiscreteEvents._evaluate(fun(<=, fun(tau), 1))
 
-@test Simulate._evaluate((fun(i, a=10, b=20))) == 30
+@test DiscreteEvents._evaluate((fun(i, a=10, b=20))) == 30
 
 # one expression
-ev = Simulate.DiscreteEvent(:(1+1), 10.0, 0.0)
-@test Simulate._evaluate(ev.ex) == 2
+ev = DiscreteEvents.DiscreteEvent(:(1+1), 10.0, 0.0)
+@test DiscreteEvents._evaluate(ev.ex) == 2
 @test ev.t == 10
 
 # two expressions
-ev = Simulate.DiscreteEvent((:(1+1), :(1+2)), 15.0, 0.0)
-@test Simulate._evaluate(ev.ex) == (2, 3)
+ev = DiscreteEvents.DiscreteEvent((:(1+1), :(1+2)), 15.0, 0.0)
+@test DiscreteEvents._evaluate(ev.ex) == (2, 3)
 @test ev.t == 15
 
 # one fun
-ev = Simulate.DiscreteEvent(fun(f, 1), 10.0, 0.0)
-@test Simulate._evaluate(ev.ex) == 4
+ev = DiscreteEvents.DiscreteEvent(fun(f, 1), 10.0, 0.0)
+@test DiscreteEvents._evaluate(ev.ex) == 4
 
 # two funs
-ev = Simulate.DiscreteEvent((fun(f, 1), fun(g, 1)), 10.0, 0.0)
-@test Simulate._evaluate(ev.ex) == (4, 5)
+ev = DiscreteEvents.DiscreteEvent((fun(f, 1), fun(g, 1)), 10.0, 0.0)
+@test DiscreteEvents._evaluate(ev.ex) == (4, 5)
 
 # expressions and funs mixed in a tuple
-ev = Simulate.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), 10.0, 0.0)
-@test sum([Simulate._evaluate(ex) for ex in ev.ex if ex isa Function]) == 10
+ev = DiscreteEvents.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), 10.0, 0.0)
+@test sum([DiscreteEvents._evaluate(ex) for ex in ev.ex if ex isa Function]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
-@test Simulate._evaluate(ev.ex) == (2, 6, 3, 4)
+@test DiscreteEvents._evaluate(ev.ex) == (2, 6, 3, 4)
 
-@test Simulate._scale(0) == 1
-@test Simulate._scale(pi*1e7) == 1e7
+@test DiscreteEvents._scale(0) == 1
+@test DiscreteEvents._scale(pi*1e7) == 1e7
 
 sim = Clock()  # set up clock without sampling
-@test_warn "undefined transition" Simulate.step!(sim, sim.state, Simulate.Resume())
-Simulate.init!(sim)
-@test sim.state == Simulate.Idle()
+@test_warn "undefined transition" DiscreteEvents.step!(sim, sim.state, DiscreteEvents.Resume())
+DiscreteEvents.init!(sim)
+@test sim.state == DiscreteEvents.Idle()
 @test tau(sim) == 0
 sim = Clock(t0=100)
 @test tau(sim) == 100
@@ -111,17 +111,17 @@ event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20)))
 event!(sim, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
 event!(sim, fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
 @test length(sim.sc.cevents) == 2
-@test Simulate._evaluate(sim.sc.cevents[1].cond) == (false, false)
+@test DiscreteEvents._evaluate(sim.sc.cevents[1].cond) == (false, false)
 @test sim.Δt == 0.01
 
 @test length(sim.sc.events) == 12
-@test Simulate._nextevent(sim).t == 100
+@test DiscreteEvents._nextevent(sim).t == 100
 
 incr!(sim)
 @test tau(sim) == 100
 @test a == 1
 @test b == 1
-@test Simulate._nextevent(sim).t == 101
+@test DiscreteEvents._nextevent(sim).t == 101
 
 run!(sim, 5)
 @test tau(sim) == 105
@@ -131,7 +131,7 @@ run!(sim, 5)
 event!(sim, :(stop!(sim)), 108)
 run!(sim, 6)
 @test a == 16
-@test sim.state == Simulate.Halted()
+@test sim.state == DiscreteEvents.Halted()
 @test length(sim.sc.cevents) == 1
 resume!(sim)
 @test tau(sim) == 111
@@ -237,9 +237,9 @@ c = Clock(1s, t0=1hr)
 @test c.unit == s
 @test c.time == 3600
 @test c.Δt ==1
-Simulate.init!(c)
+DiscreteEvents.init!(c)
 println(c)
-# @test repr(c) == "Clock: state=Simulate.Idle(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
+# @test repr(c) == "Clock: state=DiscreteEvents.Idle(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
 
 reset!(𝐶)
 @test 𝐶.unit == NoUnits

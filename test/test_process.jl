@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2019
 #
@@ -7,8 +7,8 @@
 #
 
 println("... basic tests: processes ...")
-simex = Simulate.ClockException(Simulate.Stop())
-@test simex.ev == Simulate.Stop()
+simex = DiscreteEvents.ClockException(DiscreteEvents.Stop())
+@test simex.ev == DiscreteEvents.Stop()
 @test simex.value === nothing
 
 # ===== test process registration
@@ -69,7 +69,7 @@ delete!(𝐶.processes, 8)
 
 for p in values(𝐶.processes)
     @test istaskstarted(p.task)
-    stop!(p, Simulate.Stop())
+    stop!(p, DiscreteEvents.Stop())
     @test istaskdone(p.task)
 end
 

@@ -1,5 +1,5 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2020
 #
@@ -36,7 +36,7 @@ if there are events scheduled for `t`.
 
 # Examples
 ```jldoctest
-julia> using Simulate, Unitful
+julia> using DiscreteEvents, Unitful
 
 julia> import Unitful: s, minute, hr
 
@@ -109,16 +109,16 @@ sampling rate is setup depending on the scale of the remaining simulation time
 
 # Examples
 ```jldoctest
-julia> using Simulate
+julia> using DiscreteEvents
 
 julia> c = Clock()   # create a new clock
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
 
 # julia> c              # a conditional event turns sampling on  ⬇
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:1, sampl:0
 
 julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fire the event
@@ -126,7 +126,7 @@ julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fi
 "run! finished with 0 clock events, 501 sample steps, simulation time: 10.0"
 
 julia> c   # after the event sampling is again switched off ⬇
-Clock thread 1 (+ 0 ac): state=Simulate.Idle(), t=10.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=10.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """

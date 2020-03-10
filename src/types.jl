@@ -1,12 +1,12 @@
 #
-# This file is part of the Simulate.jl Julia package, MIT license
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
 # Paul Bayer, 2019
 #
 # This is a Julia package for discrete event simulation
 #
 
-"supertype for clocks in `Simulate.jl`"
+"supertype for clocks in `DiscreteEvents.jl`"
 abstract type AbstractClock end
 
 "supertype for events"
@@ -43,7 +43,7 @@ be scheduled in an event for later execution.
 
 !!! note "Expressions `Expr` …"
     … are evaluated at global scope in Module `Main` only. Other modules using
-    `Simulate.jl` cannot use expressions in events and have to use functions.
+    `DiscreteEvents.jl` cannot use expressions in events and have to use functions.
     This is for the end user only.
 """
 const Action = Union{Function, Expr, Tuple}
@@ -215,28 +215,28 @@ Create a new simulation clock.
 # Examples
 
 ```jldoctest
-julia> using Simulate, Unitful
+julia> using DiscreteEvents, Unitful
 
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()                 # create a unitless clock (standard)
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(1s, unit=minute)  # create a clock with units, does conversions automatically
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(1s)               # create a clock with implicit unit setting
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(t0=60s)           # another example of implicit unit setting
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=60.0 s, Δt=0.0 s, prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c = Clock(1s, t0=1hr)       # if given times with different units, Δt takes precedence
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -298,26 +298,26 @@ It then can be accessed via [`pclock`](@ref) as in the following example.
 
 # Example
 ```jldoctest
-julia> using Simulate
+julia> using DiscreteEvents
 
 julia> clk = Clock()
-Clock thread 1 (+ 0 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 
 julia> fork!(clk)
 
 julia> clk    #  ⬇ you got 3 parallel active clocks
-Clock thread 1 (+ 3 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 
 julia> clk = PClock()
-Clock thread 1 (+ 3 ac): state=Simulate.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
-Active clock 1 on thrd 2: state=Simulate.Idle(), t=0.0 , Δt=0.01 , prc:0
+Active clock 1 on thrd 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
    scheduled ev:0, cev:0, sampl:0
 ```
 """
