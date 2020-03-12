@@ -17,7 +17,7 @@ simulation at a time, you can use it for time keeping.
 ```jldoctest
 julia> using DiscreteEvents
 
-julia> reset!(𝐶)
+julia> resetClock!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
 julia> 𝐶  # default clock
@@ -115,7 +115,7 @@ Return the current simulation time.
 ```jldoctest
 julia> using DiscreteEvents
 
-julia> reset!(𝐶)
+julia> resetClock!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 julia> tau() # gives the central time
 0.0
@@ -154,7 +154,7 @@ function sync!(clk::Clock, to::Clock=𝐶)
 end
 
 """
-    reset!(clk::Clock, Δt::T=0; t0::U=0; <keyword arguments>) where {T<:Number, U<:Number}
+    resetClock!(clk::Clock, Δt::T=0; t0::U=0; <keyword arguments>) where {T<:Number, U<:Number}
 
 Reset a clock
 
@@ -180,7 +180,7 @@ julia> c = Clock(1s, t0=60s)
 Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> reset!(c)
+julia> resetClock!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.0."
 
 julia> c
@@ -188,7 +188,7 @@ Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
-function reset!(clk::Clock, Δt::T=0;
+function resetClock!(clk::Clock, Δt::T=0;
                 t0::U=0, hard::Bool=true, unit=NoUnits) where {T<:Number,U<:Number}
     if (Δt == 0) && !isempty(clk.ac)
         Δt = clk.Δt
@@ -386,7 +386,7 @@ end
 function step!(clk::Clock, q::ClockState, σ::ClockEvent)
     println(stderr, "Warning: undefined transition ",
             "$(typeof(clk)), ::$(typeof(q)), ::$(typeof(σ)))\n",
-            "maybe, you should reset! the clock!")
+            "maybe, you should resetClock!")
 end
 
 # --------------------------------------------------------

@@ -44,7 +44,7 @@ step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register) = _assign(A, σ.x, A.id
 
 function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Reset)
     m = A.master[]
-    reset!(A.clock, m.Δt, t0=m.time, hard=σ.type, unit=m.unit)
+    resetClock!(A.clock, m.Δt, t0=m.time, hard=σ.type, unit=m.unit)
     put!(A.back, Response(1))
 end
 

@@ -121,10 +121,10 @@ for i in eachindex(clk.ac)
 end
 println("    got $(length(clock)) clocks")
 @test sum(length(c.sc.events) for c in clock) ≥ 4
-reset!(clk)                                 # test reset! on multiple clocks
+resetClock!(clk)                                 # test resetClock! on multiple clocks
 @test clk.Δt == Δt                          # must still be the same
 @test sum(length(c.sc.events) for c in clock) == 0
-println("    reset!     ok")
+println("    resetClock!     ok")
 
 a = zeros(Int, nthreads())
 event!(clk, ()->a[1]+=1, 1)

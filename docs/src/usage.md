@@ -129,11 +129,17 @@ now!
 If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are simulated … We can also step through a simulation, stop, resume or reset it.
 
 ```@docs
-reset!
+resetClock!
 incr!
 run!
 onthread
 stop!
 resume!
 sync!
+```
+
+## Resources
+
+```@docs
+Resource
 ```

@@ -35,7 +35,7 @@ function put(S::Server)
     take(S)
 end
 
-reset!(𝐶)
+resetClock!(𝐶)
 Random.seed!(123)
 
 ch1 = Channel(32)  # create two channels

@@ -6,7 +6,7 @@
 # This is a Julia package for discrete event simulation
 #
 
-using DiscreteEvents, Random, Unitful, Test, .Threads
+using DiscreteEvents, Random, Unitful, Test, .Threads, DataStructures
 import Unitful: Time, ms, s, minute, hr
 
 println(".... testing DiscreteEvents.jl .....")
@@ -24,4 +24,8 @@ end
 
 @testset "process.jl" begin
     include("test_process.jl")
+end
+
+@testset "resources.jl" begin
+    include("test_resources.jl")
 end
