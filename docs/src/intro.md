@@ -15,6 +15,10 @@ Using `DiscreteEvents.jl` you want to schedule and execute Julia functions or ex
 ```julia-repl
 ] add DiscreteEvents
 ```
+You can install the development version with
+```julia-repl
+] add https://github.com/pbayer/DiscreteEvents.jl
+```
 You can then load it with
 ```@repl intro
 using DiscreteEvents
