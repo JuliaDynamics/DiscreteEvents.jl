@@ -15,6 +15,7 @@ multithreading, resource handling and a streamlined documentation.
   - `SimEvent` → [`DiscreteEvent`](@ref),
   - `SimCond` → [`DiscreteCond`](@ref),
   - `sample!` → [`periodic!`](@ref), was a name collision with `Distributions.jl`.
+  - `reset!` → [`resetClock!`](@ref), was a name collision with `DataStructures.jl`
 
 ## Streamlined documentation
 - the documentation has been reduced to minimal introductory examples and API

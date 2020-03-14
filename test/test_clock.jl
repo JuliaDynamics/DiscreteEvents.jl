@@ -8,11 +8,11 @@
 
 println("... basic tests: printing  ...")
 str = "Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
-reset!(𝐶)
+resetClock!(𝐶)
 if DiscreteEvents._show_default[1] == false
     @test repr(𝐶) == str
     DiscreteEvents._show_default[1] = true
-    str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.0, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(DataStructures.PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+    str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.0, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
     @test repr(𝐶) == str
     DiscreteEvents._show_default[1] = false
 end
@@ -147,7 +147,7 @@ run!(sim,14)
 @test tau(sim) == 125
 @test a == 47
 @test length(sim.sc.events) == 1
-reset!(sim)
+resetClock!(sim)
 @test tau(sim) == 0
 
 println("... basic tests: sampling ...")
@@ -169,7 +169,7 @@ sample_time!(sim, 0.5)
 run!(sim, 10)
 @test sim.time == 20
 @test b == 30
-reset!(sim, hard=false)
+resetClock!(sim, hard=false)
 @test sim.time == 0
 
 println("... basic tests: events and sampling ...")
@@ -213,11 +213,11 @@ run!(𝐶, 20)
 @test a == 1
 @test b == 11
 
-reset!(𝐶)
+resetClock!(𝐶)
 sample_time!(1)
 @test 𝐶.Δt == 1
 
-reset!(𝐶)
+resetClock!(𝐶)
 @test tau() == 0
 
 println("... unit tests ...")
@@ -241,7 +241,7 @@ DiscreteEvents.init!(c)
 println(c)
 # @test repr(c) == "Clock: state=DiscreteEvents.Idle(), time=3600.0, unit=s, events: 0, cevents: 0, processes: 0, sampling: 0, sample rate Δt=1.0"
 
-reset!(𝐶)
+resetClock!(𝐶)
 @test 𝐶.unit == NoUnits
 setUnit!(𝐶, s)
 @test 𝐶.unit == s
@@ -256,32 +256,32 @@ setUnit!(c, Unitful.m)
 
 setUnit!(c, s)
 @test_throws ErrorException run!(𝐶,1)
-reset!(𝐶, t0=1)
+resetClock!(𝐶, t0=1)
 sync!(c)
 @test c.time == 1
-reset!(𝐶)
+resetClock!(𝐶)
 sync!(c)
 c = Clock(t0=1minute)
-reset!(𝐶, t0=100s)
+resetClock!(𝐶, t0=100s)
 sync!(c)
 @test c.time == 100
 @test c.unit == s
 
-reset!(𝐶, unit=s)
+resetClock!(𝐶, unit=s)
 @test 𝐶.unit == s
 @test isa(1𝐶.unit, Time)
-reset!(𝐶, 1s, t0=1minute)
+resetClock!(𝐶, 1s, t0=1minute)
 @test 𝐶.unit == s
 @test 𝐶.time == 60
-reset!(𝐶, t0=1minute)
+resetClock!(𝐶, t0=1minute)
 @test 𝐶.unit == minute
 @test 𝐶.time == 1
 
 myfunc(a, b) = a+b
-reset!(𝐶)
+resetClock!(𝐶)
 @test_warn "clock has no time unit" event!(𝐶, fun(myfunc, 1, 2), 1s)
 
-reset!(𝐶, unit=s)
+resetClock!(𝐶, unit=s)
 event!(𝐶, fun(myfunc, 4, 5), 1minute, cycle=1minute)
 event!(𝐶, fun(myfunc, 5, 6), after, 1hr)
 @test sample_time!(𝐶, 30s) == 30

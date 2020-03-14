@@ -69,7 +69,7 @@ For further examples see the [documentation](https://pbayer.github.io/DiscreteEv
 The development (and sometimes not so stable) version can be installed with:
 
 ```julia
-pkg> add("https://github.com/pbayer/DiscreteEvents.jl")
+pkg> add https://github.com/pbayer/DiscreteEvents.jl
 ```
 
 The stable, registered version is installed with:

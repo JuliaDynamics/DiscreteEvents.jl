@@ -15,7 +15,7 @@ simex = DiscreteEvents.ClockException(DiscreteEvents.Stop())
 ch1 = Channel(32)
 ch2 = Channel(32)
 
-reset!(𝐶)
+resetClock!(𝐶)
 incr(𝐶, c1::Channel, c2::Channel, a) = (a+1, yield())
 a = [1,1,3.0,3.0,"A","A","A","A"]
 b = [1,2,3.0,nextfloat(3.0),"A","A#1","A#2","A#3"]
@@ -38,7 +38,7 @@ function simple(c::Clock, input::Channel, output::Channel, name, id, op)
     put!(output, op(token, id))  # put it out with some op applied
 end
 
-reset!(𝐶)
+resetClock!(𝐶)
 Random.seed!(123)
 
 for i in 1:2:8    # create, register and start 8 SimProcesses Prc
@@ -97,7 +97,7 @@ function testwait(clk::Clock, c1::Channel, c2::Channel)
     take!(c1)
 end
 
-reset!(𝐶)
+resetClock!(𝐶)
 process!(Prc(1, testwait, ch1, ch2))
 
 run!(𝐶, 10)
@@ -119,7 +119,7 @@ function testdelay2(clk::Clock)
     global a += 1
 end
 
-reset!(𝐶)
+resetClock!(𝐶)
 process!(Prc(1, testdelay), 3)
 process!(Prc(2, testdelay2), 3)
 run!(𝐶, 10)
@@ -128,7 +128,7 @@ run!(𝐶, 10)
 @test a == 4
 
 testnow(c) = (delay!(c, 1); global a += 1; now!(c, fun(println, "$(tau(c)): a is $a")))
-reset!(𝐶)
+resetClock!(𝐶)
 process!(Prc(1, testnow), 3)
 run!(𝐶, 5)
 @test a == 7

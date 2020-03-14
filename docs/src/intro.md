@@ -15,6 +15,10 @@ Using `DiscreteEvents.jl` you want to schedule and execute Julia functions or ex
 ```julia-repl
 ] add DiscreteEvents
 ```
+You can install the development version with
+```julia-repl
+] add https://github.com/pbayer/DiscreteEvents.jl
+```
 You can then load it with
 ```@repl intro
 using DiscreteEvents
@@ -100,8 +104,7 @@ We use here two features of `DiscreteEvents`:
 
 Then we setup a pet, schedule the first event on it and run the clock:
 ```@example intro
-using Random # hide
-Random.seed!(123) # hide
+using Random; Random.seed!(123)     # we seed the random number generator for reprodicibility
 snoopy = Pet(clk, "Snoopy", Sleeping(), "huff")
 event!(clk, fun(doit!, snoopy, snoopy.state, LeapUp()), after, 5)
 ```
@@ -122,4 +125,56 @@ julia> run!(clk, 25)
 "run! finished with 12 clock events, 0 sample steps, simulation time: 25.0"
 ```
 
-# Processes and implicit events
+## Processes and implicit events
+
+`DiscreteEvents` provides us also with another approach: process-based simulation. In this case we implement the pet behaviour in a single function. For such a simple example this comes out simpler and more convenient:
+```@example intro
+function pet(clk::Clock, p::Pet)
+    setstate!(p, Running());  delay!(clk,  5*rand())
+    speak(p, 5);              delay!(clk,    rand())  # get hungry
+    setstate!(p, Scuffing()); delay!(clk,  2*rand())
+    setstate!(p, Running());  delay!(clk,  2*rand())
+    speak(p, 2);              delay!(clk,  2*rand())  # get weary
+    setstate!(p, Sleeping()); delay!(clk, 10*rand())
+end
+```
+This describes one pet cycle. After each status change the pet function calls [`delay!`](@ref) for a given timeout on the clock. Note that the `pet` function takes the clock as its first argument. This is required for calling `delay!` on it.
+
+We have to reimplement our `speak` and `setstate!` functions since now we print from an asynchronous process. With [`now!`](@ref) we let the clock do the printing:
+```@example intro
+speak(p, n) = now!(p.clk, fun(println, @sprintf("%5.2f %s: %s", tau(p.clk), p.name, p.speak^n)))
+
+function setstate!(p::Pet, q::PetState)
+    p.state = q
+    now!(p.clk, fun(println, @sprintf("%5.2f %s: %s", tau(p.clk), p.name, repr(p.state))))
+end
+```
+In order to make this work we have to register the pet function to the clock.
+```@example intro
+resetClock!(clk, t0=5)              # reset the clock, we start at 5
+Random.seed!(123)                   # reseed the random generator
+setstate!(snoopy, Sleeping())       # set snoopy sleeping
+process!(clk, Prc(1, pet, snoopy));
+```
+We use `process!` and `Prc` to register `pet` to the clock and to start it as an asynchronous process (as a task). Then we can run the clock as before:
+```julia
+julia> run!(clk, 20)
+ 5.00 Snoopy: Running()
+ 8.84 Snoopy: huffhuffhuffhuffhuff
+ 9.78 Snoopy: Scuffing()
+11.13 Snoopy: Running()
+11.92 Snoopy: huffhuff
+12.55 Snoopy: Sleeping()
+19.17 Snoopy: Running()
+22.10 Snoopy: huffhuffhuffhuffhuff
+22.16 Snoopy: Scuffing()
+22.69 Snoopy: Running()
+22.91 Snoopy: huffhuff
+23.24 Snoopy: Sleeping()
+"run! finished with 24 clock events, 0 sample steps, simulation time: 25.0"
+```
+We got the same output – with more implicit events for the `delay!` and `now!` calls).
+
+## Evaluation
+
+There is no point in doing simulations with such simple sequential examples, but if we do the same with more pets operating in parallel, things get messy very quickly and there is no way to do sequential programming for it. For such simulations we need parallel state machines, processes, actors etc. and their coordination on a time line. Our first approaches above scale well for such requirements.

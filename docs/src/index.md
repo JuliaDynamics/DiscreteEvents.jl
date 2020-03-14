@@ -2,7 +2,7 @@
 
 A Julia package for discrete event simulation.
 
-`DiscreteEvents.jl` provides *three schemes* for modeling and simulating discrete event systems (DES): 1) [event scheduling](@ref event_scheme), 2) [interacting processes](@ref process_scheme) and 3) [continuous sampling](@ref continuous_sampling). It introduces a *clock* and allows to schedule arbitrary  functions or expressions as *events*, *processes* or *sampling* operations on the clock's timeline. It provides simplicity and flexibility in building models and performance in simulation.
+`DiscreteEvents.jl` provides *three schemes* for modeling and simulating discrete event systems (DES): 1) event scheduling, 2) interacting processes and 3) continuous sampling]. It introduces a *clock* and allows to schedule arbitrary  functions or expressions as *events*, *processes* or *sampling* operations on the clock's timeline. It provides simplicity and flexibility in building models and performance in simulation.
 
 !!! warning "Development documentation"
     The development documentation is not yet updated. Many **examples**
