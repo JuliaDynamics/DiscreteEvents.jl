@@ -46,6 +46,8 @@ end
 @test first(R) == 2
 pushfirst!(R, 1)
 @test first(R) == 1
+empty!(R)
+@test isempty(R)
 
 println("... basic tests: extended channel API  ...")
 ch = Channel{Int}(5)

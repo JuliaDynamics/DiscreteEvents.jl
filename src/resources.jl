@@ -25,7 +25,7 @@ conditions by explicitly wrapping modifying calls with `lock-unlock`.
 julia>
 ```
 !!! note
-    In order to use the full interface to `Resource` you have to load `DataStructures.
+    In order to use the full interface to `Resource` you have to load `DataStructures`.
 """
 mutable struct Resource{T} <: AbstractResource
     items::Deque{T}
