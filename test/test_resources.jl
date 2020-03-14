@@ -6,7 +6,7 @@
 # This is a Julia package for discrete event simulation
 #
 
-println("... basic tests: printing  ...")
+println("... basic tests: resources  ...")
 
 R = Resource{Int}()
 @test R.items isa Deque{Int}
@@ -17,6 +17,19 @@ R = Resource{Int}(5)
 @test length(R) == 0
 @test isempty(R)
 @test !isready(R)
+
+@test !islocked(R)
+lock(R)
+@test islocked(R)
+unlock(R)
+@test !islocked(R)
+@test trylock(R)
+@test islocked(R)
+t = @async trylock(R)
+@test !fetch(t)
+unlock(R)
+@test !islocked(R)
+
 for i in 1:5
     push!(R, i)
 end
@@ -33,3 +46,18 @@ end
 @test first(R) == 2
 pushfirst!(R, 1)
 @test first(R) == 1
+
+println("... basic tests: extended channel API  ...")
+ch = Channel{Int}(5)
+@test capacity(ch) == 5
+@test isempty(ch)
+for i in 1:5
+    put!(ch, i)
+end
+@test first(ch) == 1
+@test length(ch) == 5
+@test isfull(ch)
+@test take!(ch) == 1
+@test length(ch) == 4
+empty!(ch)
+@test isempty(ch)
