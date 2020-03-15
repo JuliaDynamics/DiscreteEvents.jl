@@ -35,7 +35,7 @@ multithreading, resource handling and a streamlined documentation.
 - `DiscreteEvents.jl` is now much faster due to optimizations,
 - [`onthread`](@ref) allows simulations with processes to run much faster on
   threads other than 1,
-  [`Resource`](@ref) provides an API for modeling limited resources.
+- [`Resource`](@ref) provides an API for modeling limited resources.
 
 ### Multithreading (still in the making)
 - The data structure of [`Clock`](@ref) has been changed, it now has a field
