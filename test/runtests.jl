@@ -32,7 +32,11 @@ end
     include("test_resources.jl")
 end
 
-@testset "doctests" begin
-    include("test_docs.jl")
+if VERSION ≥ v"1.3"
+    @testset "doctests" begin
+        include("test_docs.jl")
+    end
+else
+    println("... no doctests with Julia < v1.3 ...")
 end
 println(".... finished testing DiscreteEvents.jl .....")
