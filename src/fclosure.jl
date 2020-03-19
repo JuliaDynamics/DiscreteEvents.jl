@@ -73,7 +73,7 @@ execution. If `f` needs their current values at execution time there are two pos
     functions.
 
 # Examples
-```jldoctest; filter = r"^.*fclosure.jl:[0-9]+"
+```jldoctest; filter = r".*fclosure.jl:[0-9]+"
 julia> using DiscreteEvents
 
 julia> g(x; y=1) = x+y
