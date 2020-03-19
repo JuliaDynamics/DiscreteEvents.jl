@@ -73,7 +73,7 @@ execution. If `f` needs their current values at execution time there are two pos
     functions.
 
 # Examples
-```jldoctest
+```jldoctest; filter = r".*fclosure.jl:[0-9]+"
 julia> using DiscreteEvents
 
 julia> g(x; y=1) = x+y
@@ -89,7 +89,7 @@ julia> x += 1   # a becomes 2
 
 julia> gg()     # at execution g gets a current x and gives a warning
 ┌ Warning: Evaluating expressions is slow, use functions instead
-[...]
+└ @ DiscreteEvents ~/.julia/dev/DiscreteEvents/src/fclosure.jl:37
 4
 
 julia> hh = fun(g, fun(()->x), y=3);   # reference x with an anonymous fun

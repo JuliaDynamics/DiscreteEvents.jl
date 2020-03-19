@@ -9,6 +9,8 @@
 using DiscreteEvents, Random, Unitful, Test, .Threads, DataStructures
 import Unitful: Time, ms, s, minute, hr
 
+x = 2 # set global (Main) variable for mocking fclosure.jl doctest line 90
+
 println(".... testing DiscreteEvents.jl .....")
 @testset "clock.jl" begin
     include("test_clock.jl")
@@ -29,3 +31,12 @@ end
 @testset "resources.jl" begin
     include("test_resources.jl")
 end
+
+if (VERSION ≥ v"1.3") && (nthreads() > 1)
+    @testset "doctests" begin
+        include("test_docs.jl")
+    end
+else
+    println("... no doctests with Julia $VERSION, nthreads: $(nthreads()) ...")
+end
+println(".... finished testing DiscreteEvents.jl .....")

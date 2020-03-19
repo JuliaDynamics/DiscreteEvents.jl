@@ -1,5 +1,7 @@
 using Documenter, DiscreteEvents
 
+x = 2 # set global (Main) variable for mocking fclosure.jl doctest line 90 
+
 makedocs(
     modules = [DiscreteEvents],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),

@@ -22,7 +22,7 @@ conditions by explicitly wrapping modifying calls with `lock-unlock`.
 
 # Example
 ```jldoctest
-julia>
+julia> 
 ```
 !!! note
     In order to use the full interface to `Resource` you have to load `DataStructures`.

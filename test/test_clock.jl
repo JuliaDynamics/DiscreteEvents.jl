@@ -255,7 +255,7 @@ setUnit!(c, Unitful.m)
 @test c.unit == NoUnits
 
 setUnit!(c, s)
-@test_throws ErrorException run!(𝐶,1)
+# @test_throws ErrorException run!(𝐶,1)
 resetClock!(𝐶, t0=1)
 sync!(c)
 @test c.time == 1

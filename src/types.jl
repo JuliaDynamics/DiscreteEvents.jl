@@ -296,7 +296,7 @@ to pass `event!`s to the `ActiveClock`-variable. The communication then happens
 over the channel to the `ActiveClock` as it should be.
 
 # Example
-```jldoctest
+```jldoctest; filter = r"^.*[0-9]+ ac.*"
 julia> using DiscreteEvents
 
 julia> clk = Clock()

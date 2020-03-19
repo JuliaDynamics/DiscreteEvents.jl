@@ -95,21 +95,21 @@ Schedule ex as a conditional event, conditions cond get evaluated at each clock 
 julia> using DiscreteEvents
 
 julia> c = Clock()   # create a new clock
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
 
-# julia> c              # a conditional event turns sampling on  ⬇
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+julia> c                       # a conditional event turns sampling on  ⬇
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:1, sampl:0
 
 julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fire the event
 5.009999999999938: now I'm triggered
 "run! finished with 0 clock events, 501 sample steps, simulation time: 10.0"
 
-julia> c   # after the event sampling is again switched off ⬇
-Clock thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=10.0 , Δt=0.0 , prc:0
+julia> c           # after the event sampling is again switched off ⬇
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=10.0 , Δt=0.0 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
