@@ -7,17 +7,16 @@ version = "0.3.0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 DataStructures = "0.17"
-Tables = "0.2"
 Unitful = "0.17"
 julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 
 [targets]
 test = ["Test"]

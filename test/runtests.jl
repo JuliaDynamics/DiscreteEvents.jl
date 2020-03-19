@@ -9,6 +9,8 @@
 using DiscreteEvents, Random, Unitful, Test, .Threads, DataStructures
 import Unitful: Time, ms, s, minute, hr
 
+x = 2 # set global (Main) variable for mocking fclosure.jl doctest line 90
+
 println(".... testing DiscreteEvents.jl .....")
 @testset "clock.jl" begin
     include("test_clock.jl")
@@ -29,3 +31,8 @@ end
 @testset "resources.jl" begin
     include("test_resources.jl")
 end
+
+@testset "doctests" begin
+    include("test_docs.jl")
+end
+println(".... finished testing DiscreteEvents.jl .....")

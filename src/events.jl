@@ -76,11 +76,14 @@ end
         _tick!(c)
         c.tn += c.Δt
     else
-        error("_step!: nothing to evaluate")
+        (c.state == Busy()) && (c.state = Idle())
+        return 99
+        # error("_step!: nothing to evaluate")
     end
     !isempty(c.processes) && yield() # let processes run
     c.tev = !isempty(c.sc.events) ? _nextevtime(c) : c.end_time
     (c.state == Busy()) && (c.state = Idle())
+    return 0
 end
 
 # ----------------------------------------------------
