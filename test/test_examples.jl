@@ -3,7 +3,7 @@ println(".... run examples and notebooks ....")
 using NBInclude
 
 dir = pwd()
-cd("examples")
+cd("DiscreteEvents/examples")
 temp = pwd()
 
 ex = [x for x in readdir("src") if occursin(r".jl", x)]
