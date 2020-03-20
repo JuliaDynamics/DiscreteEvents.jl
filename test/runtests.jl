@@ -39,4 +39,9 @@ if (VERSION ≥ v"1.3") && (nthreads() > 1)
 else
     println("... no doctests with Julia $VERSION, nthreads: $(nthreads()) ...")
 end
-println(".... finished testing DiscreteEvents.jl .....")
+
+@testset "examples" begin
+    include("test_examples.jl")
+end
+
+println(".... finished testing DiscreteEvents.jl ....")
