@@ -2,21 +2,24 @@ println(".... run examples and notebooks ....")
 
 using NBInclude
 
-dir = pwd()
-cd("DiscreteEvents/examples")
-temp = pwd()
+const ex_dir = "../examples/src/"
+const nb_dir = "../examples/nb/"
 
-ex = [x for x in readdir("src") if occursin(r".jl", x)]
-nb = [x for x in readdir("nb") if occursin(r".ipynb", x)]
+dir = pwd()
+cd(@__DIR__)
+
+
+ex = [x for x in readdir(ex_dir) if occursin(r".jl", x)]
+nb = [x for x in readdir(nb_dir) if occursin(r".ipynb", x)]
 
 for x in ex
-    println("... include examples/src/$x:")
-    include(temp*"/src/"*x)
+    println("... include $ex_dir$x:")
+    include(ex_dir*x)
 end
 
 for x in nb
-    println("... @nbinclude examples/nb/$x:")
-    @nbinclude(temp*"/nb/"*x)
+    println("... @nbinclude $nb_dir$x:")
+    @nbinclude(nb_dir*x)
 end
 
 cd(dir)
