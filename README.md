@@ -2,6 +2,8 @@
 
 A Julia package for **discrete event generation and simulation**.
 
+**Note:** This package has been renamed. The registered package is still called `Simulate.jl`!
+
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/v0.2.0/)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/dev)
 [![Build Status](https://travis-ci.com/pbayer/DiscreteEvents.jl.svg?branch=master)](https://travis-ci.com/pbayer/DiscreteEvents.jl)
