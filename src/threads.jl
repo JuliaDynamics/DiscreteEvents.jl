@@ -38,16 +38,20 @@ end
 
 step!(A::ActiveClock, ::Union{Idle, Busy}, ::Sync) = nothing
 
+# query an active clock
 step!(A::ActiveClock, ::ClockState, ::Query) = put!(A.back, Response(A))
 
+# register an event to an active clock
 step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Register) = _assign(A, σ.x, A.id)
 
+# reset an active clock
 function step!(A::ActiveClock, ::Union{Idle, Busy}, σ::Reset)
     m = A.master[]
     resetClock!(A.clock, m.Δt, t0=m.time, hard=σ.type, unit=m.unit)
     put!(A.back, Response(1))
 end
 
+# fallback transition
 step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, σ=$σ not implemented")
 
 # -------------------------------------
@@ -252,9 +256,14 @@ function diagnose(master::Clock, id::Int)
 end
 
 """
-    onthread(f::F, tid::Int) where {F<:Function}
+    onthread(f::F, tid::Int; wait::Bool=true) where {F<:Function}
 
 Execute a function f on thread tid (to speed it up).
+
+# Arguments
+- `f::Function`:     function to execute
+- `tid::Int`:        thread id
+- `wait::Bool=true`: if true, it waits for function to finish
 
 # Example
 ```jldoctest
@@ -264,7 +273,7 @@ julia> onthread(2) do; threadid(); end
 2
 ```
 """
-function onthread(f::F, tid::Int) where {F<:Function}
+function onthread(f::F, tid::Int; wait::Bool=true) where {F<:Function}
     t = Task(nothing)
     @assert tid in 1:nthreads() "thread $tid not available!"
     @threads for i in 1:nthreads()
@@ -272,5 +281,5 @@ function onthread(f::F, tid::Int) where {F<:Function}
             t = @async f()
         end
     end
-    fetch(t)
+    wait && fetch(t)
 end

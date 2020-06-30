@@ -146,6 +146,7 @@ function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
 end
 periodic!(ex::T, Δt::U=𝐶.Δt; kw...) where {T<:Action,U<:Number} = periodic!(𝐶, ex, Δt; kw...)
 periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(ac.clock, ex, Δt; kw...)
+periodic!(rtc::RTClock, ex::T, Δt::U=rtc.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(rtc.clock, ex, Δt; kw...)
 
 # Return a random number out of the thread ids of all available parallel clocks.
 # This is used for `spawn`ing tasks or events to them.
@@ -174,13 +175,14 @@ end
 # assign and register events and samples to a clock
 # ---------------------------------------------------------------
 # There are several ways to do it:
-# 1. assign it directly to a clock or an active clock or
+# 1. assign it directly to a clock or
 # 2. assign it via a channel to another one, if given a different id.
 #    In this case the event is sent over the channel to the target clock.
 #    - The master clock (id=0) can directly send to an active clock.
 #    - An active clock can send directly to master.
 #    - An active clock can only send via master to another active clock.
-function _assign(c::S, ev::T, id::Int=c.id) where {S<:AbstractClock, T<:AbstractEvent}
+_assign(c::S, ev::T) where {S<:AbstractClock, T<:AbstractEvent} = _register!(c, ev)
+function _assign(c::S, ev::T, id::Int) where {S<:AbstractClock, T<:AbstractEvent}
     if id == c.id
         _register!(c, ev)       # 1: register it to yourself
     else
@@ -188,7 +190,7 @@ function _assign(c::S, ev::T, id::Int=c.id) where {S<:AbstractClock, T<:Abstract
     end
 end
 
-# function barrier: register a concrete event directly to a clock.
+# function barrier: register an event directly to a clock.
 function _register!(c::Clock, ev::DiscreteEvent)
     t = ev.t
     while any(i->i==t, values(c.sc.events)) # in case an event at that time exists
@@ -204,6 +206,7 @@ function _register!(c::Clock, cond::DiscreteCond)
 end
 _register!(c::Clock, sp::Sample) = ( push!(c.sc.samples, sp); nothing )
 _register!(ac::ActiveClock, ev::T) where {T<:AbstractEvent} = _register!(ac.clock, ev)
+_register!(rtc::RTClock, ev::T) where {T<:AbstractEvent} = _register!(rtc.clock, ev)
 
 # Register an event to another clock via a channel.
 # - c::Clock: a master clock can forward events to active clocks,
