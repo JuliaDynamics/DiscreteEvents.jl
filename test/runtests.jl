@@ -28,20 +28,24 @@ end
     include("test_process.jl")
 end
 
+@testset "timer.jl" begin
+    include("test_timer.jl")
+end
+
 @testset "resources.jl" begin
     include("test_resources.jl")
 end
 
-if (VERSION ≥ v"1.3") && (nthreads() > 1)
-    @testset "doctests" begin
-        include("test_docs.jl")
-    end
-else
-    println("... no doctests with Julia $VERSION, nthreads: $(nthreads()) ...")
-end
-
-@testset "examples" begin
-    include("test_examples.jl")
-end
+# if (VERSION ≥ v"1.3") && (nthreads() > 1)
+#     @testset "doctests" begin
+#         include("test_docs.jl")
+#     end
+# else
+#     println("... no doctests with Julia $VERSION, nthreads: $(nthreads()) ...")
+# end
+#
+# @testset "examples" begin
+#     include("test_examples.jl")
+# end
 
 println(".... finished testing DiscreteEvents.jl ....")

@@ -18,7 +18,7 @@ println("... parallel clock identification ...")
 c1 = pclock(clk, 1)
 @test c1.thread == 2
 @test c1.clock.id == 1
-m = match(r"Active clock 1 on thrd (\d+)\:", repr(c1))
+m = match(r"Active clock 1 on thread (\d+)\:", repr(c1))
 @test parse(Int, m.captures[1]) > 1
 
 if DiscreteEvents._handle_exceptions[1]

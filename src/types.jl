@@ -271,15 +271,15 @@ mutable struct Clock <: AbstractClock
 end
 
 """
-    ActiveClock(clock, master, cmd, ans)
+    ActiveClock{E <: ClockEvent} <: AbstractClock
 
 A thread specific clock which can be operated via a channel.
 
 # Fields
 - `clock::Clock`: the thread specific clock,
 - `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
-- `cmd::Channel{ClockEvent}`: the command channel from master,
-- `ans::Channel{ClockEvent}`: the response channel to master.
+- `cmd::Channel{E}`: the command channel from master,
+- `ans::Channel{E}`: the response channel to master.
 - `id::Int`: the id in master's ac array,
 - `thread::Int`: the thread, the active clock runs on.
 
@@ -319,35 +319,44 @@ Active clock 1 on thrd 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
    scheduled ev:0, cev:0, sampl:0
 ```
 """
-mutable struct ActiveClock{T <: ClockEvent} <: AbstractClock
+mutable struct ActiveClock{E <: ClockEvent} <: AbstractClock
     clock::Clock
     master::Ref{Clock}
-    forth::Channel{T}
-    back ::Channel{T}
+    forth::Channel{E}
+    back ::Channel{E}
     id::Int
     thread::Int
 end
 
 """
-    RTClock{T <: ClockEvent} <: AbstractClock
+    RTClock{E <: ClockEvent} <: AbstractClock
 
-Real time clocks use system time and are controlled over channels. They are independent
-from each other and other clocks and run asynchronously as tasks on arbitrary threads.
-Multiple real time clocks can be setup with arbitrary frequencies to do different things.
+A real time clock checks every given period for scheduled events and executes them. It has a
+time in seconds since its start or last reset and uses system time for updating.
+
+Real time clocks are controlled over channels. Multiple real time clocks can be setup with
+arbitrary periods (≥ 1 ms). Real time clocks should not be created directly but rather with
+`CreateRTClock`.
 
 # Fields
-- `clock::Clock`:
-- `cmd::Channel{T}`:
-- `back::Channel{T}`:
-- `id::Int`:
-- `thread::Int`:
-- `t0::Float64`:
+- `Timer::Timer`:     clock period in seconds, minimum is 0.001 (1 ms)
+- `clock::Clock`:     clock work
+- `cmd::Channel{T}`:  command channel to asynchronous clock
+- `back::Channel{T}`: back channel from async clock
+- `id::Int`:          arbitrary id number
+- `thread::Int`:      thread the async clock is living in
+- `time::Float64`:    clock time since start in seconds
+- `t0::Float64`:      system time at clock start in seconds
+- `T::Float64`:       clock period in seconds
 """
-mutable struct RTClock{T <: ClockEvent} <: AbstractClock
+mutable struct RTClock{E <: ClockEvent} <: AbstractClock
+    Timer::Timer
     clock::Clock
-    cmd::Channel{T}
-    back::Channel{T}
+    cmd::Channel{E}
+    back::Channel{E}
     id::Int
     thread::Int
+    time::Float64
     t0::Float64
+    T::Float64
 end

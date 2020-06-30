@@ -156,7 +156,7 @@ end
 """
     resetClock!(clk::Clock, Δt::T=0; t0::U=0; <keyword arguments>) where {T<:Number, U<:Number}
 
-Reset a clock
+Reset a clock.
 
 # Arguments
 - `clk::Clock`
@@ -244,6 +244,7 @@ function _tadjust(clk::Clock, t::Unitful.Time) :: Float64
 end
 _tadjust(clk::Clock, t::T) where {T<:Number} = t
 _tadjust(ac::ActiveClock, t::T) where {T<:Number} = _tadjust(ac.clock, t)
+_tadjust(rtc::RTClock, t::T) where {T<:Number} = _tadjust(rtc.clock, t)
 
 """
     sample_time!([clk::Clock], Δt::N) where {N<:Number}

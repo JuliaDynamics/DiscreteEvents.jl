@@ -16,8 +16,8 @@ _nextevtime(c::Clock) = peek(c.sc.events)[2]
 
 # Execute or evaluate the next timed event on a clock c.
 @inline function _event!(c::Clock)
-    c.time = c.tev
     ev = dequeue!(c.sc.events)
+    c.time = ev.t
     _evaluate(ev.ex)
     c.evcount += 1
     ev.Δt > 0.0 && event!(c, ev.ex, c.time + ev.Δt, cycle=ev.Δt)
