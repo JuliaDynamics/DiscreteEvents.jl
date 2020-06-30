@@ -28,8 +28,12 @@ end
     include("test_process.jl")
 end
 
-@testset "timer.jl" begin
-    include("test_timer.jl")
+if (VERSION ≥ v"1.3") && (nthreads() > 1)
+    @testset "timer.jl" begin
+        include("test_timer.jl")
+    end
+else
+    println("... timer requires Julia ≥ 1.3, nthreads() > 1")
 end
 
 @testset "resources.jl" begin
