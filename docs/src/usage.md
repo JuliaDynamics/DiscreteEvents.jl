@@ -58,6 +58,8 @@ fork!
 pclock
 collapse!
 diagnose
+createRTClock
+stopRTClock
 ```
 
 ## Events
@@ -82,11 +84,11 @@ function events()
 end
 ```
 
-Scheduled events are called or evaluated during simulation at a given time or when the
-given conditions become true.
+Events are called or evaluated at a their scheduled times or when their
+preconditions become true.
 
 !!! note
-    For conditions you should prefer inequalities like <, ≤, ≥, > to equality == in order to get sure that a fulfilled condition can be detected, e.g. `tau() ≥ 100` is preferable to `tau() == 100`.
+    For conditions you should prefer inequalities like <, ≤, ≥, > to equality == in order to make sure that a condition can be detected, e.g. `tau() ≥ 100` is preferable to `tau() == 100`.
 
 ## Continuous sampling
 
@@ -99,7 +101,7 @@ periodic!
 
 ## Processes
 
-Julia functions can be registered and run as processes (asynchronous tasks).
+Julia functions can run as processes (asynchronous tasks) registered to a clock.
 
 ```@docs
 Prc
@@ -109,7 +111,7 @@ interrupt!
 
 ### Delay and wait …
 
-Processes do not need to handle their events explicitly, but can call `delay!` or `wait!` or `take!` and `put!` … on their channels. They are then suspended until a given time or until certain conditions are met or requested resources are available.
+Processes then can call `delay!` or `wait!` or `take!` and `put!` … on their channels. They are then suspended until a given time or until certain conditions are met or requested resources are available.
 
 ```@docs
 delay!
@@ -118,7 +120,7 @@ wait!
 
 ### Now
 
-Processes in a simulation want their IO-operations to finish before the clock proceeds. Therefore they must enclose those operations in a `now!` call.
+Processes in a simulation enclose IO-operations in a `now!` call to make sure they finish before the clock proceeds.
 
 ```@docs
 now!
@@ -126,13 +128,12 @@ now!
 
 ## Running simulations
 
-If we run the clock, events are triggered, conditions are evaluated, sampling is done and delays are simulated … We can also step through a simulation, stop, resume or reset it.
+Virtual clocks can be run, stopped or stepped through and thereby used to simulate chains of events.
 
 ```@docs
-resetClock!
-incr!
 run!
-onthread
+incr!
+resetClock!
 stop!
 resume!
 sync!
@@ -167,4 +168,10 @@ lock
 unlock
 islocked
 trylock
+```
+
+## Utilities
+
+```@docs
+onthread
 ```

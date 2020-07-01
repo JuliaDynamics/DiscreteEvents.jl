@@ -4,10 +4,11 @@
 CurrentModule = DiscreteEvents
 ```
 
-Using `DiscreteEvents.jl` you want to schedule and execute Julia functions or expressions on a time line. Therefore you
-1. setup a virtual or a realtime clock,
-2. schedule functions (or expressions) as events to it,
-3. run the clock to trigger the events.
+`DiscreteEvents.jl` allows you to
+
+1. setup virtual or realtime clocks,
+2. schedule events (Julia functions or expressions) to them,
+3. run clocks to trigger events.
 
 ## Preparations
 
@@ -25,11 +26,11 @@ using DiscreteEvents
 ```
 
 ## Setup a clock
-Setting up a clock is as easy as
+Setting up a virtual clock is as easy as
 ```@repl intro
 clk = Clock()
 ```
-You created a [`Clock`](@ref) variable `clk` with a master clock 0 at thread 1 with 0 active clocks (ac) and pretty much everything set to 0, without any scheduled events (ev), conditional events (cev) or sampling events (sampl).
+You created a [`Clock`](@ref) variable `clk` with a master clock 0 at thread 1 with 0 active clocks (ac) and pretty much everything set to 0, without yet any scheduled events (ev), conditional events (cev) or sampling events (sampl).
 
 ## Schedule events
 You can now schedule events to your clock. In order to demonstrate how it works we setup a small simulation. We want to simulate the easy life of a pet in the morning. First we define some data structures for pets:
@@ -127,7 +128,7 @@ julia> run!(clk, 25)
 
 ## Processes and implicit events
 
-`DiscreteEvents` provides us also with another approach: process-based simulation. In this case we implement the pet behaviour in a single function. For such a simple example this comes out simpler and more convenient:
+`DiscreteEvents` provides also another approach: process-based simulation. In this case we implement the pet behaviour in a single function. For such a simple example this comes out simpler and more convenient:
 ```@example intro
 function pet(clk::Clock, p::Pet)
     setstate!(p, Running());  delay!(clk,  5*rand())
@@ -138,7 +139,7 @@ function pet(clk::Clock, p::Pet)
     setstate!(p, Sleeping()); delay!(clk, 10*rand())
 end
 ```
-This describes one pet cycle. After each status change the pet function calls [`delay!`](@ref) for a given timeout on the clock. Note that the `pet` function takes the clock as its first argument. This is required for calling `delay!` on it.
+This describes one pet cycle. After each status change the pet function calls [`delay!`](@ref) for a given timeout on the clock. Note that the `pet` function takes the clock as its first argument. This is required for calling `delay!`.
 
 We have to reimplement our `speak` and `setstate!` functions since now we print from an asynchronous process. With [`now!`](@ref) we let the clock do the printing:
 ```@example intro

@@ -82,16 +82,19 @@ end
 """
     createRTClock(T::Float64, thrd::Int=nthreads())::RTClock
 
-Create and start a real time Clock.
+Create, start and return a real time Clock.
+
+The clock takes the current system time and starts to count in seconds with
+the given period `T`. Events or sampling functions can then be scheduled to it.
 
 # Arguments
-- `T::Float64`:           period in seconds, T ≥ 0.001
+- `T::Float64`:           period (clock resolution) in seconds, T ≥ 0.001
 - `id::Int`:              clock identification number other than 0:(nthreads()-1)
 - `thrd::Int=nthreads()`: thread, the clock task should run in
 - `ch_size::Int=256`:     clock communication channel size
 """
 function createRTClock(T::Float64, id::Int, thrd::Int=nthreads(); ch_size::Int=256)
-    T ≥ 0.001 || throw(ArgumentError("RTClock cannot have a period of $T ≤ 0.001 seconds"))
+    T ≥ 0.001 || throw(ArgumentError("RTClock cannot have a period of $T < 0.001 seconds"))
     id ∉ 0:(nthreads()-1) || throw(ArgumentError("RTClock id $id forbidden!"))
     rtc = RTClock(
             Timer(T, interval=T), Clock(),

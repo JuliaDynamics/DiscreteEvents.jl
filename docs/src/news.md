@@ -36,6 +36,8 @@ multithreading, resource handling and a streamlined documentation.
 - [`onthread`](@ref) allows simulations with processes to run much faster on
   threads other than 1,
 - [`Resource`](@ref) provides an API for modeling limited resources.
+- You can now create a real time clock [`RTClock`](@ref) and schedule events
+  to it.
 
 ### Multithreading (still in the making)
 - The data structure of [`Clock`](@ref) has been changed, it now has a field
