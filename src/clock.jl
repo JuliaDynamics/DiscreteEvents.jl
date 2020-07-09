@@ -400,6 +400,7 @@ end
 Run a simulation for a given duration.
 """
 function run!(clk::Clock, duration::T) where {T<:Number}
+    yield()      # allow eventually processes to start
     duration = duration isa Unitful.Time ? _tadjust(clk, duration) : duration
     step!(clk, clk.state, Run(duration, false))
 end

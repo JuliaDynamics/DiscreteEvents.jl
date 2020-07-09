@@ -33,10 +33,8 @@ end
 
 # Put a [`Prc`](@ref) in a loop which can be broken by a `ClockException`.
 # - `p::Prc`:
-# - `start::Channel`: a channel to ensure that a process starts,
 # - `cycles=Inf`: determine, how often the loop should be run.
-function _loop(p::Prc, start::Channel{Int}, cycles::T) where {T<:Number}
-    take!(start)
+function _loop(p::Prc, cycles::T) where {T<:Number}
     if threadid() > 1 && !isempty(p.clk.ac)
         p.clk = pclock(p.clk, threadid())
     end
@@ -59,9 +57,8 @@ end
 function _startup!(c::C, p::Prc, cycles::T, spawn::Bool) where {C<:AbstractClock,T<:Number}
 
     function startit()
-        start = Channel{Int}(0)
-        p.task = @async _loop(p, start, cycles)
-        put!(start, 1)  # block until the process has started
+        p.task = @task _loop(p, cycles)
+        yield(p.task)
     end
 
     if spawn
