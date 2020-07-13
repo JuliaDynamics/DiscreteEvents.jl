@@ -32,12 +32,7 @@ function _tick!(c::Clock)
     ix = findfirst(x->all(_evaluate(x.cond)), c.sc.cevents)
     while ix !== nothing
         _evaluate(splice!(c.sc.cevents, ix).ex)
-        if isempty(c.sc.cevents)
-            if isempty(c.sc.samples) && isempty(c.ac) # no sampling and active clocks
-                c.Δt = 0.0 # delete sample rate
-            end
-            break
-        end
+        isempty(c.sc.cevents) && break
         ix = findfirst(x->all(_evaluate(x.cond)), c.sc.cevents)
     end
     c.scount +=1
