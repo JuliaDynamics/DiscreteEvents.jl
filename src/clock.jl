@@ -269,13 +269,6 @@ _busy(clk::Clock) = clk.state == Busy()
 # If sampling rate Δt==0, c.tn is set to 0
 # If no events are present, c.tev is set to c.end_time
 function _setTimes(clk::Clock)
-    # if !isempty(clk.sc.events)
-    #     clk.tev = _nextevtime(clk)
-    #     clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : 0.0
-    # else
-    #     clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : 0.0
-    #     clk.tev = clk.end_time
-    # end
     clk.tev = isempty(clk.sc.events) ? clk.end_time : _nextevtime(clk)
     clk.tn  = isempty(clk.sc.samples) ? 0.0 : clk.time + clk.Δt
 end
@@ -305,7 +298,6 @@ function _run!(c::Clock, Δt::Float64)
         end
     end
     !isempty(c.sc.events) && (c.tev == c.end_time) && _event!(c)
-    # (c.Δt > 0) && (c.tn == c.end_time) && _tick!(c)
     !isempty(c.sc.samples) && (c.tn == c.end_time) && _tick!(c)
     c.time = c.end_time
 end
@@ -360,7 +352,7 @@ function step!(clk::Clock, ::Idle, σ::Run)
         end
     end
     if clk.state == Halted()
-        return
+        return "run! halted with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(round(clk.time, digits=2))"
     end
     clk.time = clk.end_time
     _finish!(clk, tend)
