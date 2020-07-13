@@ -18,10 +18,10 @@ simulation at a time, you can use it for time keeping.
 julia> using DiscreteEvents
 
 julia> resetClock!(𝐶)
-"clock reset to t₀=0.0, sampling rate Δt=0.0."
+"clock reset to t₀=0.0, sampling rate Δt=0.01."
 
 julia> 𝐶  # default clock
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -49,7 +49,7 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60)     # setup a new clock with t0=60
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> tau(c) # current time is 60.0 NoUnits
@@ -116,7 +116,7 @@ Return the current simulation time.
 julia> using DiscreteEvents
 
 julia> resetClock!(𝐶)
-"clock reset to t₀=0.0, sampling rate Δt=0.0."
+"clock reset to t₀=0.0, sampling rate Δt=0.01."
 julia> tau() # gives the central time
 0.0
 ```
@@ -154,13 +154,13 @@ function sync!(clk::Clock, to::Clock=𝐶)
 end
 
 """
-    resetClock!(clk::Clock, Δt::T=0; t0::U=0; <keyword arguments>) where {T<:Number, U<:Number}
+    resetClock!(clk::Clock, Δt::T=0.01; t0::U=0; <keyword arguments>) where {T<:Number, U<:Number}
 
 Reset a clock.
 
 # Arguments
 - `clk::Clock`
-- `Δt::T=0`: time increment
+- `Δt::T=0.01`: sample rate
 - `t0::Float64=0` or `t0::Time`: start time
 - `hard::Bool=true`: time is reset, all scheduled events and sampling are
     deleted. If hard=false, then only time is reset, event and
@@ -181,14 +181,14 @@ Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=1.0 s,
   scheduled ev:0, cev:0, sampl:0
 
 julia> resetClock!(c)
-"clock reset to t₀=0.0, sampling rate Δt=0.0."
+"clock reset to t₀=0.0, sampling rate Δt=0.01."
 
 julia> c
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
-function resetClock!(clk::Clock, Δt::T=0;
+function resetClock!(clk::Clock, Δt::T=0.01;
                 t0::U=0, hard::Bool=true, unit=NoUnits) where {T<:Number,U<:Number}
     if (Δt == 0) && !isempty(clk.ac)
         Δt = clk.Δt
@@ -269,13 +269,15 @@ _busy(clk::Clock) = clk.state == Busy()
 # If sampling rate Δt==0, c.tn is set to 0
 # If no events are present, c.tev is set to c.end_time
 function _setTimes(clk::Clock)
-    if !isempty(clk.sc.events)
-        clk.tev = _nextevtime(clk)
-        clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : 0.0
-    else
-        clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : 0.0
-        clk.tev = clk.end_time
-    end
+    # if !isempty(clk.sc.events)
+    #     clk.tev = _nextevtime(clk)
+    #     clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : 0.0
+    # else
+    #     clk.tn = clk.Δt > 0 ? clk.time + clk.Δt : 0.0
+    #     clk.tev = clk.end_time
+    # end
+    clk.tev = isempty(clk.sc.events) ? clk.end_time : _nextevtime(clk)
+    clk.tn  = isempty(clk.sc.samples) ? 0.0 : clk.time + clk.Δt
 end
 
 # ----------------------------------------------------
@@ -303,7 +305,8 @@ function _run!(c::Clock, Δt::Float64)
         end
     end
     !isempty(c.sc.events) && (c.tev == c.end_time) && _event!(c)
-    (c.Δt > 0) && (c.tn == c.end_time) && _tick!(c)
+    # (c.Δt > 0) && (c.tn == c.end_time) && _tick!(c)
+    !isempty(c.sc.samples) && (c.tn == c.end_time) && _tick!(c)
     c.time = c.end_time
 end
 

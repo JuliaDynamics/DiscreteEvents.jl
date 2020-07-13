@@ -95,22 +95,14 @@ Schedule ex as a conditional event, conditions cond get evaluated at each clock 
 julia> using DiscreteEvents
 
 julia> c = Clock()   # create a new clock
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
 
-julia> c                       # a conditional event turns sampling on  ⬇
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:1, sampl:0
-
-julia> run!(c, 10)   # sampling is not exact, so it takes 501 sample steps to fire the event
+julia> run!(c, 10)   # sampling is not exact, so it takes 502 sample steps to fire the event
 5.009999999999938: now I'm triggered
-"run! finished with 0 clock events, 501 sample steps, simulation time: 10.0"
-
-julia> c           # after the event sampling is again switched off ⬇
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=10.0 , Δt=0.0 , prc:0
-  scheduled ev:0, cev:0, sampl:0
+"run! finished with 0 clock events, 502 sample steps, simulation time: 10.0"
 ```
 """
 function event!(clk::T, ex::A, cond::C;
@@ -141,7 +133,10 @@ Register a function or expression for periodic execution at the clock`s sample r
 """
 function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
                    spawn=false) where {T<:Action,U<:Number}
-    clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
+   # clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
+   if Δt == 0  # pick a sample rate
+       clk.Δt = clk.evcount == 0 ? 0.01 : _scale(clk.time/clk.evcount)/100
+   end
     _assign(clk, Sample(ex), spawn ? _spawnid(clk) : 0)
 end
 periodic!(ex::T, Δt::U=𝐶.Δt; kw...) where {T<:Action,U<:Number} = periodic!(𝐶, ex, Δt; kw...)
@@ -200,7 +195,10 @@ function _register!(c::Clock, ev::DiscreteEvent)
     return
 end
 function _register!(c::Clock, cond::DiscreteCond)
-    (c.Δt == 0) && (c.Δt = _scale(c.end_time - c.time)/100)
+    # (c.Δt == 0) && (c.Δt = _scale(c.end_time - c.time)/100)
+    if c.Δt == 0  # pick a sample rate
+        c.Δt = c.evcount == 0 ? 0.01 : _scale(c.time/c.evcount)/100
+    end
     push!(c.sc.cevents, cond)
     return
 end

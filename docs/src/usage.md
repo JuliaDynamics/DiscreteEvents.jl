@@ -44,12 +44,6 @@ There is a default clock `𝐶`, which can be used for experimental work.
 𝐶
 ```
 
-`RTC` can be used to setup and control real time Clocks.
-
-```@docs
-RTC
-```
-
 You can create a clock with parallel active clocks on all available threads or fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel [`ActiveClock`](@ref)s and diagnose them.
 
 ```@docs
@@ -80,11 +74,11 @@ Functions and expressions can be given to events on their own or in tuples, even
 function events()
     event!(:(i += 1), after, 10)  # one expression
     event!(fun(f, 1, 2, 3, diff=pi), every, 1)  # one fun
-    event!((:(i += 1), fun(g, j)), [:(tau() ≥ 50), fun(isready, input), :(a ≤ 10)]) # two funs under three conditions
+    event!((:(i += 1), fun(g, j)), (()->tau() ≥ 50, fun(isready, input), :(a ≤ 10))) # two funs under three conditions
 end
 ```
 
-Events are called or evaluated at a their scheduled times or when their
+Events are called or evaluated at a their scheduled times or by sampling when their
 preconditions become true.
 
 !!! note
@@ -92,7 +86,7 @@ preconditions become true.
 
 ## Continuous sampling
 
-Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt.
+Functions or expressions can register for sampling and are then executed "continuously" at each clock increment Δt. The default clock sample rate Δt is 0.01 time units.
 
 ```@docs
 sample_time!

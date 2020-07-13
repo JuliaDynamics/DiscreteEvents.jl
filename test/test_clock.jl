@@ -7,12 +7,12 @@
 #
 
 println("... basic tests: printing  ...")
-str = "Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.0 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
+str = "Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 resetClock!(𝐶)
 if DiscreteEvents._show_default[1] == false
     @test repr(𝐶) == str
     DiscreteEvents._show_default[1] = true
-    str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.0, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+    str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
     @test repr(𝐶) == str
     DiscreteEvents._show_default[1] = false
 end
@@ -106,11 +106,18 @@ end
 event!(sim, :(a += 1), every, 1)
 
 # conditional events
-@test sim.Δt == 0
+sim.Δt = 0.0
 event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20)))
+
+# mock sim.state = Busy
+state = sim.state
+sim.state = DiscreteEvents.Busy()
 event!(sim, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
+@test b == 1
+sim.state = state
+
 event!(sim, fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
-@test length(sim.sc.cevents) == 2
+@test length(sim.sc.cevents) == 1
 @test DiscreteEvents._evaluate(sim.sc.cevents[1].cond) == (false, false)
 @test sim.Δt == 0.01
 
@@ -120,7 +127,6 @@ event!(sim, fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 
 incr!(sim)
 @test tau(sim) == 100
 @test a == 1
-@test b == 1
 @test DiscreteEvents._nextevent(sim).t == 101
 
 run!(sim, 5)

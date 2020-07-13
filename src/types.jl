@@ -180,13 +180,12 @@ end
 
 """
 ```
-Clock(Δt::T=0; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
+Clock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
 ```
 Create a new simulation clock.
 
 # Arguments
-- `Δt::T=0`: time increment. If no Δt is given, the simulation doesn't tick,
-    but jumps from event to event. Δt can be set later with `sample_time!`.
+- `Δt::T=0.01`: time increment for sampling. Δt can be set later with `sample_time!`.
 - `t0::U=0`: start time for simulation
 - `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
     setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
@@ -215,7 +214,7 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()                 # create a unitless clock (standard)
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c1 = Clock(1s, unit=minute)  # create a clock with unit [minute]
@@ -227,7 +226,7 @@ Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, 
   scheduled ev:0, cev:0, sampl:0
 
 julia> c3 = Clock(t0=60s)           # another clock with implicit unit [s]
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.0 s, prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.01 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
@@ -250,7 +249,7 @@ mutable struct Clock <: AbstractClock
     evcount::Int
     scount::Int
 
-    function Clock(Δt::T=0;
+    function Clock(Δt::T=0.01;
                    t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
         if 1unit isa Time
             Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
@@ -300,13 +299,13 @@ over the channel to the `ActiveClock` as it should be.
 julia> using DiscreteEvents
 
 julia> clk = Clock()
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> fork!(clk)
 
 julia> clk    #  ⬇ here you got 3 parallel active clocks
-Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.0 , prc:0
+Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 
@@ -315,7 +314,7 @@ Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , p
   scheduled ev:0, cev:0, sampl:0
 
 julia> ac1 = pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
-Active clock 1 on thrd 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
+Active clock 1 on thread 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
    scheduled ev:0, cev:0, sampl:0
 ```
 """

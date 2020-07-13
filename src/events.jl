@@ -43,6 +43,8 @@ function _tick!(c::Clock)
     c.scount +=1
 end
 
+_sampling(c::Clock) = !isempty(c.sc.samples) || !isempty(c.sc.cevents)
+
 # ------------------------------------------------------
 # step forward to next tick or scheduled event. At a tick evaluate
 # 1) all sampling functions or expressions,
@@ -54,12 +56,9 @@ end
 # -------------------------------------------------------
 @inline function _step!(c::Clock)
     c.state = Busy()
-    if (c.tev ≤ c.time) && (length(c.sc.events) > 0)
-        c.tev = _nextevtime(c)
-    end
-
     if !isempty(c.sc.events)
-        if c.Δt > 0.0
+        c.tev ≤ c.time && (c.tev = _nextevtime(c))
+        if _sampling(c)
             if c.tn <= c.tev     # if t_next_tick  ≤ t_next_event
                 _tick!(c)
                 if c.tn == c.tev # an event is scheduled at the same time
