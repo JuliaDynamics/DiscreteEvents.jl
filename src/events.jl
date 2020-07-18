@@ -66,7 +66,7 @@ _sampling(c::Clock) = !isempty(c.sc.samples) || !isempty(c.sc.cevents)
         else
             _event!(c)
         end
-    elseif c.Δt > 0.0
+    elseif _sampling(c)
         _tick!(c)
         c.tn += c.Δt
     else

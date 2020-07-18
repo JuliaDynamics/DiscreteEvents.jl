@@ -80,7 +80,7 @@ end
 # starting and destroying real time clocks
 # ---------------------------------------------------------
 """
-    createRTClock(T::Float64, thrd::Int=nthreads())::RTClock
+    createRTClock(T::Float64, id::Int, thrd::Int=nthreads(); ch_size::Int=256)
 
 Create, start and return a real time Clock.
 

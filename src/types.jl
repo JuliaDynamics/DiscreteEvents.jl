@@ -214,23 +214,23 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()                 # create a unitless clock (standard)
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c1 = Clock(1s, unit=minute)  # create a clock with unit [minute]
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
+Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c2 = Clock(1s)               # create a clock with implicit unit [s]
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
+Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c3 = Clock(t0=60s)           # another clock with implicit unit [s]
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.01 s, prc:0
+Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.01 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
+Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -299,18 +299,18 @@ over the channel to the `ActiveClock` as it should be.
 julia> using DiscreteEvents
 
 julia> clk = Clock()
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> fork!(clk)
 
 julia> clk    #  ⬇ here you got 3 parallel active clocks
-Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 0, thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 
 julia> clk = PClock()
-Clock 0, thrd 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 0, thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> ac1 = pclock(clk, 1)    # get access to the 1st active clock (on thread 2)

@@ -7,15 +7,14 @@
 #
 
 println("... basic tests: printing  ...")
-str = "Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 resetClock!(𝐶)
-if DiscreteEvents._show_default[1] == false
-    @test repr(𝐶) == str
-    DiscreteEvents._show_default[1] = true
-    str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
-    @test repr(𝐶) == str
-    DiscreteEvents._show_default[1] = false
-end
+DiscreteEvents.prettyClock(true)
+str = "Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
+@test repr(𝐶) == str
+DiscreteEvents.prettyClock(false)
+str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+@test repr(𝐶) == str
+DiscreteEvents.prettyClock(true)
 @test tau() == 0
 
 println("... basic tests: only events  ...")
