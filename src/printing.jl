@@ -6,10 +6,6 @@
 # This is a Julia package for discrete event simulation
 #
 
-# - `_show_default[1] = false`: switch pretty printing on,
-# - `_show_default[1] = true`: pretty printing off, Julia default on.
-const _show_default = [false]
-
 function c_info(c::Clock)
     s1 = "state=$(c.state), "
     s2 = "t=$(round(c.time, sigdigits=4)) $(c.unit), "
@@ -35,7 +31,7 @@ function pretty_print(c::Clock)
     if c.id in 1:(nthreads()-1)
         return pretty_print(pclock(c, c.id))
     else
-        info = c.id == 0 ? "$(c.id), thrd 1 (+ $(length(c.ac)) ac)" : "$(c.id)"
+        info = c.id == 0 ? "$(c.id), thread 1 (+ $(length(c.ac)) ac)" : "$(c.id)"
         s1 = "Clock $info: "
         s2 = c_info(c)
         s3 = ", prc:$(length(c.processes))"
@@ -57,10 +53,20 @@ function pretty_print(rtc::RTClock)
     return s1*s2*s3*"\n   scheduled "*sc_info(rtc.clock)*"\n"
 end
 
-function Base.show(io::IO, c::AbstractClock)
-    if _show_default[end]
-        return Base.show_default(IOContext(io, :compact => false), c)
+Base.show(io::IO, c::CLK) where {CLK<:AbstractClock} = print(io, pretty_print(c))
+
+"""
+    prettyClock(on::Bool)
+
+Switch pritty printing for clocks on and off.
+"""
+function prettyClock(on::Bool)
+    m = which(show, (IO, AbstractClock))
+    if on &&  m.module == Base
+        eval(:(Base.show(io::IO, c::CLK) where {CLK<:AbstractClock} = print(io, pretty_print(c))))
+    elseif !on && m.module == DiscreteEvents
+        Base.delete_method(m)
     else
-        return print(io, pretty_print(c))
+        nothing
     end
 end

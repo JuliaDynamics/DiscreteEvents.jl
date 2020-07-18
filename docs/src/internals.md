@@ -19,11 +19,12 @@ ClockException
 
 ## Clock
 
-`ActiveClock`s are internal since the should not be setup explicitly.
-
 ```@docs
+prettyClock
 AbstractClock
 ActiveClock
 Schedule
 ClockChannel
 ```
+
+`ActiveClock`s are internal since the should not be setup explicitly.

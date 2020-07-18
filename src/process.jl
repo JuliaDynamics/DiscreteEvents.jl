@@ -112,18 +112,19 @@ _wakeup(c::Condition) = (notify(c); yield())
 
 """
 ```
-delay!(clk, t)
+delay!(clk, Δt)
 delay!(clk, T, t)
 ```
-Delay (suspend) a process for a time interval `t` on the clock `clk`.
+Delay (suspend) a process for a time interval `Δt` on the clock `clk`.
 
 # Arguments
+- `Δt<:Number`: time interval,
 - `T::Timing`: only `until` is accepted,
 - `t<:Number`: delay until time t if t > clk.time, else give a warning.
 """
-function delay!(clk::Clock, t::N) where {N<:Number}
+function delay!(clk::Clock, Δt::N) where {N<:Number}
     c = Condition()
-    event!(clk, ()->_wakeup(c), after, t)
+    event!(clk, ()->_wakeup(c), after, Δt)
     wait(c)
 end
 function delay!(clk::Clock, T::Timing, t::N) where {N<:Number}

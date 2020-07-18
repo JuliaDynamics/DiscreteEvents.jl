@@ -9,7 +9,7 @@ sleep(sleeptime)
 
 print(clk)
 @test clk.id == 0
-m = match(r"Clock 0, thrd 1 \(\+ (\d+) ac\)", repr(clk))
+m = match(r"Clock 0, thread 1 \(\+ (\d+) ac\)", repr(clk))
 @test parse(Int, m.captures[1]) > 0
 @test length(clk.ac) == nthreads()-1
 @test clk.ac[1].thread == 2
