@@ -191,13 +191,6 @@ Test whether a channel is full.
 DataStructures.isfull(ch::Channel) = length(ch) ≥ capacity(ch)
 
 """
-    isempty(ch::Channel)
-
-Test whether a channel is empty.
-"""
-Base.isempty(ch::Channel) = isempty(ch.data)
-
-"""
     first(ch::Channel)
 
 Get the first item in a channel without removing it. Throws an error if the channel is empty.
