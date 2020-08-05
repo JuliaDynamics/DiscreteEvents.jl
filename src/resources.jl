@@ -113,6 +113,15 @@ Remove an element from the front of a resource deque.
 """
 Base.popfirst!(r::Resource) = popfirst!(r.items)
 
+if VERSION < v"1.5"
+    """
+     isempty(ch::Channel)
+
+    Test whether a channel is empty.
+    """
+    Base.isempty(ch::Channel) = isempty(ch.data)
+end
+
 """
     first(r::Resource)
 
@@ -189,13 +198,6 @@ Base.length(ch::Channel) = length(ch.data)
 Test whether a channel is full.
 """
 DataStructures.isfull(ch::Channel) = length(ch) ≥ capacity(ch)
-
-"""
-    isempty(ch::Channel)
-
-Test whether a channel is empty.
-"""
-Base.isempty(ch::Channel) = isempty(ch.data)
 
 """
     first(ch::Channel)

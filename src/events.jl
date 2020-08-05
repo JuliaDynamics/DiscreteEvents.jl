@@ -9,10 +9,10 @@
 #
 
 # Return the next scheduled event.
-_nextevent(c::Clock) = peek(c.sc.events)[1]
+_nextevent(c::Clock) = DataStructures.peek(c.sc.events)[1]
 
 # Return the internal time (unitless) of next scheduled event.
-_nextevtime(c::Clock) = peek(c.sc.events)[2]
+_nextevtime(c::Clock) = DataStructures.peek(c.sc.events)[2]
 
 # Execute or evaluate the next timed event on a clock c.
 @inline function _event!(c::Clock)
