@@ -21,7 +21,8 @@ under given conditions.
   threads.
 - `RTClock`s schedule and execute events on a real (system) time line.
 
-Clocks have an ident number:
+Clocks have an identification number:
+
 - a master `Clock` on thread has id = 0,
 - worker [`ActiveClock`](@ref)s on parallel threads have id ≥ 1,
 - real time `RTClock`s have id ≤ -1.
@@ -59,6 +60,7 @@ stopRTClock
 ## Events
 
 Julia functions and expressions can be scheduled for execution
+
 1. at given clock times and
 2. under specified conditions.
 
@@ -68,6 +70,7 @@ Timing
 fun
 event!
 ```
+
 Functions and expressions can be given to events on their own or in tuples, even mixed:
 
 ```julia
@@ -120,6 +123,16 @@ Processes in a simulation enclose IO-operations in a `now!` call to make sure th
 now!
 ```
 
+## Actors
+
+Actors are not bound to typical sequences of events like processes, but can operate as finite state machines. They run as Julia tasks listening on a channel.
+
+In order to integrate into the event scheduling framework, they can register their channel to the clock. Then the clock will only proceed to the next event if the channel is empty and the actor has completed the current step.
+
+```@docs
+register!
+```
+
 ## Running simulations
 
 Virtual clocks can be run, stopped or stepped through and thereby used to simulate chains of events.
@@ -137,7 +150,7 @@ sync!
 
 Shared resources with limited capacity are often needed in simulations.
 
-1. One approach to model them is to use Julia [`Channel`](https://docs.julialang.org/en/v1/base/parallel/#Base.Channel)s with its API. This is threadsafe and thus should be preferred for multithreading applications.
+1. One approach to model them is to use Julia [`Channel`](https://docs.julialang.org/en/v1/base/parallel/#Base.Channel)s with its API. This is thread-safe and thus should be preferred for multithreading applications.
 2. Using `Resource` is a second possibility to model shared resources. Its interface gives more flexibility and is faster in single threaded applications, but in multithreading the user must avoid race conditions by explicitly wrapping access with `lock -… access …- unlock`.
 
 ```@docs
@@ -157,6 +170,7 @@ last
 ```
 
 `Resource` provides a `lock-unlock` API for multithreading applications.
+
 ```@docs
 lock
 unlock

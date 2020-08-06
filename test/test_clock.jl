@@ -12,7 +12,7 @@ DiscreteEvents.prettyClock(true)
 str = "Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(false)
-str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), 0.0, 0.0, 0.0, 0, 0)"
+str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), Channel[], 0.0, 0.0, 0.0, 0, 0)"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(true)
 @test tau() == 0
@@ -133,7 +133,7 @@ run!(sim, 5)
 @test a == 11
 @test b == 11
 @test length(sim.sc.events) == 6
-event!(sim, :(stop!(sim)), 108)
+event!(sim, :(DiscreteEvents.stop!(sim)), 108)
 run!(sim, 6)
 @test a == 16
 @test sim.state == DiscreteEvents.Halted()

@@ -113,15 +113,6 @@ Remove an element from the front of a resource deque.
 """
 Base.popfirst!(r::Resource) = popfirst!(r.items)
 
-if VERSION < v"1.5"
-    """
-     isempty(ch::Channel)
-
-    Test whether a channel is empty.
-    """
-    Base.isempty(ch::Channel) = isempty(ch.data)
-end
-
 """
     first(r::Resource)
 
@@ -186,13 +177,6 @@ Get the capacity of a channel.
 DataStructures.capacity(ch::Channel) = ch.sz_max
 
 """
-    length(ch::Channel)
-
-Get the number of items in a channel.
-"""
-Base.length(ch::Channel) = length(ch.data)
-
-"""
     isfull(ch::Channel)
 
 Test whether a channel is full.
@@ -200,12 +184,21 @@ Test whether a channel is full.
 DataStructures.isfull(ch::Channel) = length(ch) ≥ capacity(ch)
 
 """
-    first(ch::Channel)
+length(ch::Channel)
 
-Get the first item in a channel without removing it. Throws an error if the channel is empty.
-If you want a blocking operation, use [`fetch`](https://docs.julialang.org/en/v1/base/parallel/#Base.fetch-Tuple{Channel}).
+Get the number of items in a channel.
 """
-Base.first(ch::Channel) = first(ch.data)
+Base.length(ch::Channel) = length(ch.data)
+
+
+if VERSION < v"1.5"
+    """
+     isempty(ch::Channel)
+
+    Test whether a channel is empty.
+    """
+    Base.isempty(ch::Channel) = isempty(ch.data)
+end
 
 """
     empty!(ch::Channel)

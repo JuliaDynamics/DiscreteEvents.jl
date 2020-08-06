@@ -46,6 +46,7 @@ include("components.jl")
 include("fclosure.jl")
 include("schedule.jl")
 include("events.jl")
+include("actor.jl")
 include("clock.jl")
 include("process.jl")
 include("threads.jl")
@@ -55,7 +56,7 @@ include("resources.jl")
 
 export  Clock, PClock, RTClock, setUnit!, 𝐶,
         Action, Timing, at, after, every, before, until,
-        tau, sample_time!, fun, event!, periodic!,
+        tau, sample_time!, fun, event!, periodic!, register!,
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
         fork!, collapse!, pclock, diagnose, onthread,

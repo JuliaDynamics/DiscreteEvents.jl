@@ -56,7 +56,6 @@ ch = Channel{Int}(5)
 for i in 1:5
     put!(ch, i)
 end
-@test first(ch) == 1
 @test length(ch) == 5
 @test isfull(ch)
 @test take!(ch) == 1

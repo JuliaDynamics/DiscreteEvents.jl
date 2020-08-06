@@ -201,6 +201,7 @@ Create a new simulation clock.
 - `ac::Vector{ClockChannel}`: [`channels`](@ref ClockChannel) to active clocks on parallel threads,
 - `sc::Schedule`: the clock [`Schedule`](@ref) (events, cond events and sampling),
 - `processes::Dict{Any, Prc}`: registered `Prc`es,
+- `channels::Vector{ClockChannel}`: registered channels,
 - `tn::Float64`: next timestep,
 - `tev::Float64`: next event time,
 - `evcount::Int`: event counter,
@@ -243,6 +244,7 @@ mutable struct Clock <: AbstractClock
     ac::Vector{ClockChannel}
     sc::Schedule
     processes::Dict{Any, Prc}
+    channels::Vector{Channel}
     tn::Float64
     tev::Float64
     end_time::Float64
@@ -265,7 +267,7 @@ mutable struct Clock <: AbstractClock
             nothing
         end
         new(0, Undefined(), t0, unit, Δt, ClockChannel[], Schedule(),
-            Dict{Any, Prc}(), t0 + Δt, t0, t0, 0, 0)
+            Dict{Any, Prc}(), Channel[], t0 + Δt, t0, t0, 0, 0)
     end
 end
 
