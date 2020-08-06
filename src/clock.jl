@@ -219,6 +219,7 @@ function resetClock!(clk::Clock, Δt::T=0.01;
         clk.sc.events = PriorityQueue{DiscreteEvent,Float64}()
         clk.sc.cevents = DiscreteCond[]
         clk.processes = Dict{Any, Prc}()
+        clk.channels = Channel[]
         clk.sc.samples = Sample[]
     else
         sync!(clk, Clock(Δt, t0=t0, unit=unit))

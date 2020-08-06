@@ -1,7 +1,7 @@
 #
 # This file is part of the DiscreteEvents.jl Julia package, MIT license
 #
-# Paul Bayer, 2019
+# Paul Bayer, 2020
 #
 # This is a Julia package for discrete event simulation
 #
@@ -14,8 +14,16 @@ _nextevent(c::Clock) = DataStructures.peek(c.sc.events)[1]
 # Return the internal time (unitless) of next scheduled event.
 _nextevtime(c::Clock) = DataStructures.peek(c.sc.events)[2]
 
+# wait until all registered channels are empty
+function _waitchannels(c::Clock)
+    while any(ch->!isempty(ch), c.channels)
+        yield()
+    end
+end
+
 # Execute or evaluate the next timed event on a clock c.
 @inline function _event!(c::Clock)
+    _waitchannels(c)
     ev = dequeue!(c.sc.events)
     c.time = ev.t
     _evaluate(ev.ex)
@@ -74,10 +82,11 @@ _sampling(c::Clock) = !isempty(c.sc.samples) || !isempty(c.sc.cevents)
         return 99
         # error("_step!: nothing to evaluate")
     end
-    for i ∈ 1:10   # brute fix of clock overrunnig other tasks
-        isempty(c.sc.events) ? yield() : break
-    end
-    # !isempty(c.processes) && yield() # let processes run
+    # for i ∈ 1:10   # brute fix of clock overrunnig other tasks
+    #     isempty(c.sc.events) ? yield() : break
+    # end
+    _waitchannels(c)
+    !isempty(c.processes) && yield() # let processes run
     c.tev = !isempty(c.sc.events) ? _nextevtime(c) : c.end_time
     (c.state == Busy()) && (c.state = Idle())
     return 0

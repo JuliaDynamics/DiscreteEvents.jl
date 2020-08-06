@@ -69,7 +69,7 @@ delete!(𝐶.processes, 8)
 
 for p in values(𝐶.processes)
     @test istaskstarted(p.task)
-    stop!(p, DiscreteEvents.Stop())
+    DiscreteEvents.stop!(p, DiscreteEvents.Stop())
     @test istaskdone(p.task)
 end
 

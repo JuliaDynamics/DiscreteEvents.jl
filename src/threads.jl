@@ -97,7 +97,7 @@ end
 # - `f::Function`: function to start, has to take two channels as arguments,
 # - `ch_size=256`: channel capacity for event transfer between clocks during
 #                  each time step.
-function _start_threads(f::F, ch_size=256)::Vector{ClockChannel} where {F<:Function}
+function _start_threads(f::F, ch_size=256)::Vector{ClockChannel} where F<:Function
     ac = ClockChannel[]
     for i in 1:nthreads()
         if i > 1
