@@ -108,7 +108,9 @@ end
 process!(p::Prc, cycles::T=Inf) where {T<:Number} = process!(𝐶, p, cycles)
 
 # wakeup a process waiting for a `Condition`
-_wakeup(c::Condition) = (notify(c); yield())
+# two yields for giving back control first and then enabling a
+# take! on a channel (heuristic solution of the clock overrun problem)
+_wakeup(c::Condition) = (notify(c); yield(); yield())
 
 """
 ```
