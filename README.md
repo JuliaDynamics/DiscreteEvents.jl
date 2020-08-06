@@ -1,8 +1,8 @@
-# DiscreteEvents.jl
+# DiscreteEvents
 
 A Julia package for **discrete event generation and simulation**.
 
-**Note:** This package has been renamed and its code and examples have been updated to upcoming `v0.3`. The registered package is [`Simulate.jl`](https://github.com/pbayer/DiscreteEvents.jl/tree/v0.2.0)
+**Note:** This package has been renamed and its code and examples have been updated to upcoming `v0.3`. The registered package is [`Simulate`](https://github.com/pbayer/DiscreteEvents.jl/tree/v0.2.0)
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/v0.2.0/)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/dev)
@@ -11,7 +11,7 @@ A Julia package for **discrete event generation and simulation**.
 [![codecov](https://codecov.io/gh/pbayer/DiscreteEvents.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/DiscreteEvents.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/DiscreteEvents.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/DiscreteEvents.jl?branch=master)
 
-`DiscreteEvents.jl` provides *three schemes* for modeling and simulating discrete event systems (DES): 1) event scheduling, 2) interacting processes and 3) continuous sampling. It introduces a *clock* and allows to schedule arbitrary Julia functions or expressions as *events*, *processes* or *sampling* operations on the clock's timeline. Thus it provides simplicity and flexibility in building models and performance in simulation.
+`DiscreteEvents` introduces a *clock* and allows to schedule arbitrary functions or expressions as *actions* on the clock's timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
 ## A first example
 
@@ -64,7 +64,7 @@ julia> include("docs/examples/channels.jl")
 "run! finished with 43 clock events, 0 sample steps, simulation time: 10.0"
 ```
 
-For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion package [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
+For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion site [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
 
 ## Installation
 
@@ -80,6 +80,7 @@ The stable, registered version is installed with:
 pkg> add DiscreteEvents
 ```
 
-Please use, test and help to develop `DiscreteEvents.jl`! 😄
+Please use, test and help to develop `DiscreteEvents`! 😄
 
-**Author:** Paul Bayer
+**Author:** Paul Bayer,\
+**License:** MIT
