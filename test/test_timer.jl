@@ -9,7 +9,7 @@
 println("... testing real time clock ...")
 
 rtc = createRTClock(0.01, 4711)
-sleep(1)
+sleep(1.01)
 @test tau(rtc) ≥ 1
 
 a = 0
