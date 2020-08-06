@@ -74,7 +74,10 @@ _sampling(c::Clock) = !isempty(c.sc.samples) || !isempty(c.sc.cevents)
         return 99
         # error("_step!: nothing to evaluate")
     end
-    !isempty(c.processes) && yield() # let processes run
+    for i ∈ 1:10   # brute fix of clock overrunnig other tasks
+        isempty(c.sc.events) ? yield() : break
+    end
+    # !isempty(c.processes) && yield() # let processes run
     c.tev = !isempty(c.sc.events) ? _nextevtime(c) : c.end_time
     (c.state == Busy()) && (c.state = Idle())
     return 0
