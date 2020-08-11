@@ -35,7 +35,8 @@ multithreading, resource handling and a streamlined documentation.
 - [`onthread`](@ref) allows simulations with processes to run much faster on threads other than 1,
 - [`Resource`](@ref) provides an API for modeling limited resources,
 - You can now create a real time clock [`RTClock`](@ref) and schedule events to it,
-- Actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty.
+- Actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty,
+- Processes and actors (asynchronous tasks) can transfer IO-operations to the clock with [`now!`](@ref) or print directly via the clock.
 
 ### Multithreading (still in the making)
 

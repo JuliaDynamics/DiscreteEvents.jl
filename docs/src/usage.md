@@ -115,10 +115,13 @@ wait!
 
 ### Now
 
-Processes (or asynchronous tasks in general) transfer IO-operations with a `now!` call to the clock so that they get executed at the current clock time.
+Processes (or asynchronous tasks in general) transfer IO-operations with a `now!` call to the clock so that they get executed at the current clock time. As a convenience you can print directly to the
+clock.
 
 ```@docs
 now!
+print(::Clock, ::Any)
+println(::Clock, ::Any)
 ```
 
 ## Actors
@@ -129,7 +132,7 @@ In order to integrate into the `DiscreteEvents` framework, they can `push!` thei
 
 !!! note "Actor support is minimal"
 
-    `DiscreteEvents` currently does not provide more actor support. See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors.
+    `DiscreteEvents` currently does not provide more actor support. See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors and [`YAActL`](https://github.com/pbayer/YAActL.jl).
 
 ## Running simulations
 

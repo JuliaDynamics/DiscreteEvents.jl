@@ -177,3 +177,32 @@ stop!(p::Prc, value=nothing) = interrupt!(p, Stop(), value)
 Tell the clock to execute an IO-operation ex and not to proceed before ex is finished.
 """
 now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time)
+
+"""
+```
+print(clk::Clock, [io::IO], xs...)
+```
+Let the clock `clk` print out `xs` to `io` (or to `stdout`).
+"""
+Base.print(clk::Clock, x) = now!(clk, fun(print, x))
+Base.print(clk::Clock, io::IO, x) = now!(clk, fun(print, io, x))
+function Base.print(clk::Clock, io::IO, xs...)
+    for x in xs
+        print(clk, io, x)
+    end
+end
+function Base.print(clk::Clock, xs...)
+    for x in xs
+        print(clk, x)
+    end
+end
+
+"""
+```
+println(clk::Clock, [io::IO], xs...)
+```
+Let the clock `clk` print out `xs` to `io` (or to `stdout`)
+followed by a newline.
+"""
+Base.println(clk, xs...) = print(clk, xs..., '\n')
+Base.println(clk, io::IO, xs...) = print(clk, io, xs..., '\n')
