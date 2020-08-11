@@ -13,8 +13,7 @@ version
 
 ## Clocks
 
-Clock schedule and execute Julia functions or expressions as events at given times or
-under given conditions.
+Clocks schedule and execute *events*. They make given computations happen at a specified time (or under specified conditions).
 
 - `Clock`s have virtual time and precede as fast as possible when they simulate chains of events. For parallel simulations they can control [`ActiveClock`](@ref)s on parallel threads.
 - `RTClock`s schedule and execute events on a real (system) time line.
@@ -124,17 +123,13 @@ now!
 
 ## Actors
 
-Actors are not bound to typical event sequences like processes, but can operate as finite state machines and are more reactive. They run as Julia tasks listening to a channel.
+[Actors](https://en.wikipedia.org/wiki/Actor_model) can operate as finite state machines and are more reactive than processes. They run as Julia tasks listening to a (message) channel.
 
-In order to integrate into the event scheduling framework, they can register their channel to the clock. Then the clock will only proceed to the next event if the channel is empty and the actor has completed the current step.
-
-```@docs
-register!
-```
+In order to integrate into the `DiscreteEvents` framework, they can `push!` their channels to the `clock.channel` vector. Then the clock will only proceed to the next event if all pushed channels are empty and the associated actors have finished processing the current event.
 
 !!! note "Actor support is minimal"
 
-    `DiscreteEvents` does not provide more actor support at the moment. See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors.
+    `DiscreteEvents` currently does not provide more actor support. See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors.
 
 ## Running simulations
 

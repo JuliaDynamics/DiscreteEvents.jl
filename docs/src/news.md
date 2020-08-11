@@ -22,7 +22,7 @@ multithreading, resource handling and a streamlined documentation.
 ## Streamlined documentation
 
 - the documentation has been reduced to minimal introductory examples and API documentation,
-- everything else (further examples, notebooks, explanations, benchmarks) has been moved to a companion site: DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
+- everything else (further examples, notebooks, explanations, benchmarks) has been moved to a companion site: DiscreteEventsCompanion]("https://github.com/pbayer/DiscreteEventsCompanion.jl").
 
 ## New functionality in v0.3.0
 
@@ -35,7 +35,7 @@ multithreading, resource handling and a streamlined documentation.
 - [`onthread`](@ref) allows simulations with processes to run much faster on threads other than 1,
 - [`Resource`](@ref) provides an API for modeling limited resources,
 - You can now create a real time clock [`RTClock`](@ref) and schedule events to it,
-- Actors can register their channels with [`register!`](@ref) to the clock and the clock will not proceed before they run.
+- Actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty.
 
 ### Multithreading (still in the making)
 
@@ -45,7 +45,7 @@ multithreading, resource handling and a streamlined documentation.
 - [`process!`](@ref) can now start tasks on parallel threads,
 - [`event!`](@ref) can now schedule events for execution on parallel threads,
 - [`periodic!`](@ref) can now register sampling functions or expressions to parallel clocks,
-- if setup with parallel clocks, [`Clock`](@ref) becomes the master to drive them and synchronize with them at each `Δt` timestep,
+- if setup with parallel clocks, [`Clock`](@ref) becomes the master to drive them and synchronize with them at each `Δt` time step,
 
 ## Other breaking changes in v0.3.0
 
