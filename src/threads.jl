@@ -59,8 +59,9 @@ step!(A::ActiveClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, �
 # -------------------------------------
 function _activeClock(cmd::Channel, resp::Channel)
     info = take!(cmd) # get a pointer to the master clock and id
-    ac = ActiveClock(Clock(), info.m, cmd, resp, info.id, threadid())
-    ac.clock.id = info.id
+    ac = ActiveClock(Clock(), info.m, cmd, resp, threadid())
+    ac.clock.id = ac.id
+    ac.clock.master = ac.master
     sf = Array{Base.StackTraces.StackFrame,1}[]
     exc = nothing
     ac.clock.state = Idle()
@@ -77,7 +78,7 @@ function _activeClock(cmd::Channel, resp::Channel)
                 step!(ac, ac.clock.state, σ)
             catch exc
                 sf = stacktrace(catch_backtrace())
-                @warn "clock $(ac.id), thread $(ac.thread) exception: $exc"
+                @warn "clock $(ac.id) exception: $exc"
                 put!(resp, Error(exc))  # send error to avoid master hangs
             end
         else
@@ -99,14 +100,12 @@ end
 #                  each time step.
 function _start_threads(f::F, ch_size=256)::Vector{ClockChannel} where F<:Function
     ac = ClockChannel[]
-    for i in 1:nthreads()
-        if i > 1
-            ai = ClockChannel(Ref{Task}(),
-                    Channel{ClockEvent}(ch_size),
-                    Channel{ClockEvent}(ch_size),
-                    i, false, 0)
-            push!(ac, ai)
-        end
+    for i in 2:nthreads()
+        ai = ClockChannel(Ref{Task}(),
+                Channel{ClockEvent}(ch_size),
+                Channel{ClockEvent}(ch_size),
+                i, false, 0)
+        push!(ac, ai)
     end
     @threads for i in 1:nthreads()
         i > 1 && (ai = ac[i-1]; ai.ref = Ref(@async f(ai.forth, ai.back)))
@@ -120,13 +119,13 @@ end
 Establish copies of a master clock (thread 1) on all parallel threads.
 """
 function fork!(master::Clock)
-    if (master.id == 0) && (threadid() == 1)
+    if (master.id == 1) && (threadid() == 1)
         if VERSION >= v"1.3"
             if nthreads() > 1
                 if isempty(master.ac)
                     master.ac = _start_threads(_activeClock)           # startup steps
-                    for i in eachindex(master.ac)                    # to all active clocks …
-                        put!(master.ac[i].forth, Startup(Ref(master), i)) # send pointer and id
+                    for i in eachindex(master.ac)                      # to all active clocks …
+                        put!(master.ac[i].forth, Startup(Ref(master))) # send pointer and id
                     end
                 else
                     println(stderr, "clock already has $(length(clk.ac)) active clocks!")
@@ -153,7 +152,7 @@ Transfer the schedules of the parallel clocks to master and them stop them.
     are not transferred to and cannot be controlled by master.
 """
 function collapse!(master::Clock)
-    if (master.id == 0) && (threadid() == 1)
+    if (master.id == 1) && (threadid() == 1)
         for ac in master.ac
             put!(ac.forth, Query())
             c = take!(ac.back).x.clock
@@ -214,23 +213,22 @@ Get a parallel clock to a given clock.
 - the master `Clock` if id==0,
 - a parallel `ActiveClock` else
 """
-function pclock(clk::Clock, id::Int) ::AbstractClock
-    if id == 0
-        @assert clk.id == 0 "you cannot get master from a local clock!"
-        return clk
-    elseif id in eachindex(clk.ac)
-        put!(clk.ac[id].forth, Query())
-        return take!(clk.ac[id].back).x
+function pclock(clk::Clock, id::Int)
+    if clk.id == id
+        return(clk)
+    elseif clk.id == 1
+        if id in [x.thread for x in clk.ac]
+            put!(clk.ac[id-1].forth, Query())
+            return take!(clk.ac[id-1].back).x
+        else
+            println(stderr, "parallel clock $id not available!")
+        end
     else
-        println(stderr, "parallel clock $id not available!")
+        pclock(clk.master[], id)
     end
 end
-function pclock(ac::ActiveClock, id::Int) ::AbstractClock
-    if id == ac.clock.id
-        return ac
-    else
-        return pclock(ac.master[], id)
-    end
+function pclock(ac::ActiveClock, id::Int)
+    id == ac.clock.id ? ac : pclock(ac.master[], id)
 end
 
 """
@@ -239,16 +237,16 @@ end
 Return the stacktrace from parallel clock id.
 """
 function diagnose(master::Clock, id::Int)
-    if id in eachindex(master.ac)
-        if istaskfailed(master.ac[id].ref[])
-            return master.ac[id].ref[]
+    if id-1 in eachindex(master.ac)
+        if istaskfailed(master.ac[id-1].ref[])
+            return master.ac[id-1].ref[]
         else
-            while isready(master.ac[id].back)
-                msg = take!(master.ac[id].back)
+            while isready(master.ac[id-1].back)
+                msg = take!(master.ac[id-1].back)
                 println(msg)
             end
-            put!(master.ac[id].forth, Diag())
-            return take!(master.ac[id].back).x
+            put!(master.ac[id-1].forth, Diag())
+            return take!(master.ac[id-1].back).x
         end
     else
         println(stderr, "parallel clock $id not available!")

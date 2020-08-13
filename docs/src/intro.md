@@ -115,14 +115,14 @@ end
 We use here two features of `DiscreteEvents`:
 
 - with [`event!`](@ref) we schedule functions to the clock,
-- [`fun`](@ref) encapsulates those functions and their arguments in a function closure, so that they can be executed at event time. In this case – in order to have a current state at event time – we encapsulate `state(p)` into another `fun` closure.
+- [`fun`](@ref) encapsulates functions and their arguments in a function closure, so that they can be executed at event time. In this case – in order to have a current state at event time – we encapsulate `state(p)` into another `fun` closure.
 
 ## Run the clock
 
 Then we setup a pet, schedule the first event on it and run the clock:
 
 ```@example intro
-using Random; Random.seed!(123)     # we seed the random number generator for reprodicibility
+using Random; Random.seed!(123)     # seed the random number generator for reproducibility
 snoopy = Pet(clk, "Snoopy", Sleeping(), "huff")
 event!(clk, fun(doit!, snoopy, snoopy.state, LeapUp()), after, 5)
 ```
@@ -146,7 +146,7 @@ julia> run!(clk, 25)
 
 ## Processes and implicit events
 
-`DiscreteEvents` provides also another approach: process-based simulation. In this case we implement the pet behaviour in a single function. For such a simple example this comes out simpler and more convenient:
+`DiscreteEvents` provides also another approach: process-based simulation. A process is a typical sequence of events. In this case we implement the pet behavior in a single function. For such a simple example this comes out simpler and more convenient:
 
 ```@example intro
 function pet(clk::Clock, p::Pet)
@@ -161,14 +161,14 @@ end
 
 This describes one pet cycle. After each status change the pet function calls [`delay!`](@ref) for a given timeout on the clock. Note that the `pet` function takes the clock as its first argument. This is required for calling `delay!`.
 
-We have to reimplement our `speak` and `setstate!` functions since now we print from an asynchronous process. With [`now!`](@ref) we let the clock do the printing:
+We have to reimplement our `speak` and `setstate!` functions since now we print from an asynchronous process. Note that we let the clock do the printing:
 
 ```@example intro
-speak(p, n) = now!(p.clk, fun(println, @sprintf("%5.2f %s: %s", tau(p.clk), p.name, p.speak^n)))
+speak(p, n) = println(p.clk, @sprintf("%5.2f %s: %s", tau(p.clk), p.name, p.speak^n))
 
 function setstate!(p::Pet, q::PetState)
     p.state = q
-    now!(p.clk, fun(println, @sprintf("%5.2f %s: %s", tau(p.clk), p.name, repr(p.state))))
+    println(p.clk, @sprintf("%5.2f %s: %s", tau(p.clk), p.name, repr(p.state)))
 end
 ```
 
@@ -200,8 +200,8 @@ julia> run!(clk, 20)
 "run! finished with 24 clock events, 0 sample steps, simulation time: 25.0"
 ```
 
-We got the same output – with some more events for the `now!` calls.
+We got the same output – with some more events for the printing via the clock.
 
 ## Evaluation
 
-There is no point in doing simulations with such simple sequential examples, but if we do the same with more pets operating in parallel, things get messy very quickly and there is no way to do sequential programming for it. For such simulations we need parallel state machines, processes, actors etc. and their coordination on a time line. Our first approaches above scale well for such requirements.
+There is no point in doing simulations with such simple sequential examples, but if we do the same with more pets operating in parallel, things get messy very quickly and there is no way to code it sequentially. For such simulations we need parallel processes, state machines, actors etc. and their coordination on a time line. Our first approaches above scale well for such requirements.

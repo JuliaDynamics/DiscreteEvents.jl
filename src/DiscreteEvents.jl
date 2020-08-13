@@ -25,7 +25,7 @@ pkg> add("https://github.com/pbayer/DiscreteEvents.jl")
 module DiscreteEvents
 
 """
-    version
+    DiscreteEvents.version
 
 Gives the package version:
 
