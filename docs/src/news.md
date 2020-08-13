@@ -22,21 +22,21 @@ multithreading, resource handling and a streamlined documentation.
 ## Streamlined documentation
 
 - the documentation has been reduced to minimal introductory examples and API documentation,
-- everything else (further examples, notebooks, explanations, benchmarks) has been moved to a companion site: DiscreteEventsCompanion]("https://github.com/pbayer/DiscreteEventsCompanion.jl").
+- everything else (explanations, further examples, notebooks, benchmarks) has been moved to a companion site: [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
 
 ## New functionality in v0.3.0
 
 - [`Action`](@ref) is introduced as synonym for `Union{Function,Expr,Tuple}`,
-- thereby in addition to `funs`, you can now schedule arbitrary function closures as events,  
-- [`periodic!`](@ref) takes now an `Action` as argument,
-- Arguments to [`fun`](@ref) can now be symbols, expressions or other `fun`s or function closures. They get evaluated at event time before being passed to the event function,
+- thereby in addition to `fun`, you can now schedule arbitrary function closures as events,  
+- [`periodic!`](@ref) takes an `Action` as argument,
+- you can pass also symbols, expressions or other `fun`s or function closures as arguments to [`fun`](@ref). They get evaluated at event time before being passed to the event function,
 - [`DiscreteEvents.version`](@ref) gives now the package version,
 - `DiscreteEvents.jl` is now much faster due to optimizations,
-- [`onthread`](@ref) allows simulations with processes to run much faster on threads other than 1,
+- [`onthread`](@ref) allows simulations with asynchronous tasks (processes and actors) to run much faster on threads other than 1,
 - [`Resource`](@ref) provides an API for modeling limited resources,
-- You can now create a real time clock [`RTClock`](@ref) and schedule events to it,
-- Actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty,
-- Processes and actors (asynchronous tasks) can transfer IO-operations to the clock with [`now!`](@ref) or print directly via the clock.
+- you can now create a real time clock [`RTClock`](@ref) and schedule events to it,
+- actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty,
+- processes and actors (asynchronous tasks) can transfer IO-operations to the clock with [`now!`](@ref) or print directly via the clock.
 
 ### Multithreading (still in the making)
 
