@@ -7,7 +7,7 @@
 #
 
 function c_id(c::Clock)
-    if (c.id == 1) && (length(c.ac) > 1)
+    if (c.id == 1) && !isempty(c.ac)
         return "Clock 1 (+$(length(c.ac))): "
     else
         return "Clock $(c.id): "
