@@ -9,10 +9,10 @@
 println("... basic tests: printing  ...")
 resetClock!(𝐶)
 DiscreteEvents.prettyClock(true)
-str = "Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
+str = "Clock 1: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(false)
-str = "Clock(0, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), Channel[], 0.0, 0.0, 0.0, 0, 0)"
+str = "Clock(1, nothing, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), Channel[], 0.0, 0.0, 0.0, 0, 0)"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(true)
 @test tau() == 0
@@ -76,127 +76,127 @@ ev = DiscreteEvents.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), 10.0, 0
 @test DiscreteEvents._scale(0) == 1
 @test DiscreteEvents._scale(pi*1e7) == 1e7
 
-sim = Clock()  # set up clock without sampling
-@test_warn "undefined transition" DiscreteEvents.step!(sim, sim.state, DiscreteEvents.Resume())
-DiscreteEvents.init!(sim)
-@test sim.state == DiscreteEvents.Idle()
-@test tau(sim) == 0
-sim = Clock(t0=100)
-@test tau(sim) == 100
-# @test_warn "nothing to _evaluate" incr!(sim)
+clk = Clock()  # set up clock without sampling
+@test_warn "undefined transition" DiscreteEvents.step!(clk, clk.state, DiscreteEvents.Resume())
+DiscreteEvents.init!(clk)
+@test clk.state == DiscreteEvents.Idle()
+@test tau(clk) == 0
+clk = Clock(t0=100)
+@test tau(clk) == 100
+# @test_warn "nothing to _evaluate" incr!(clk)
 
 a = 0
 b = 0
 
 for i ∈ 1:4
-    t = i + tau(sim)
-    event!(sim, :(a += 1), t)
+    t = i + tau(clk)
+    event!(clk, :(a += 1), t)
 end
 
 for i ∈ 5:7
-    t = i + tau(sim)
-    event!(sim, :(a += 1), at, t)
+    t = i + tau(clk)
+    event!(clk, :(a += 1), at, t)
 end
 
 for i ∈ 8:10
-    event!(sim, :(a += 1), after, i)
+    event!(clk, :(a += 1), after, i)
 end
 
-event!(sim, :(a += 1), every, 1)
+event!(clk, :(a += 1), every, 1)
 
 # conditional events
-sim.Δt = 0.0
-event!(sim, :(a +=1), (:(tau(sim)>110), :(a>20)))
+clk.Δt = 0.0
+event!(clk, :(a +=1), (:(tau(clk)>110), :(a>20)))
 
-# mock sim.state = Busy
-state = sim.state
-sim.state = DiscreteEvents.Busy()
-event!(sim, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
+# mock clk.state = Busy
+state = clk.state
+clk.state = DiscreteEvents.Busy()
+event!(clk, :(b +=1), (:(a==0), :(b==0)))              # execute immediately
 @test b == 1
-sim.state = state
+clk.state = state
 
-event!(sim, fun(event!, sim, :(b +=10), :(b==1)), 103) # execute immediately at 103
-@test length(sim.sc.cevents) == 1
-@test DiscreteEvents._evaluate(sim.sc.cevents[1].cond) == (false, false)
-@test sim.Δt == 0.01
+event!(clk, fun(event!, clk, :(b +=10), :(b==1)), 103) # execute immediately at 103
+@test length(clk.sc.cevents) == 1
+@test DiscreteEvents._evaluate(clk.sc.cevents[1].cond) == (false, false)
+@test clk.Δt == 0.01
 
-@test length(sim.sc.events) == 12
-@test DiscreteEvents._nextevent(sim).t == 100
+@test length(clk.sc.events) == 12
+@test DiscreteEvents._nextevent(clk).t == 100
 
-incr!(sim)
-@test tau(sim) == 100
+incr!(clk)
+@test tau(clk) == 100
 @test a == 1
-@test DiscreteEvents._nextevent(sim).t == 101
+@test DiscreteEvents._nextevent(clk).t == 101
 
-run!(sim, 5)
-@test tau(sim) == 105
+run!(clk, 5)
+@test tau(clk) == 105
 @test a == 11
 @test b == 11
-@test length(sim.sc.events) == 6
-event!(sim, :(DiscreteEvents.stop!(sim)), 108)
-run!(sim, 6)
+@test length(clk.sc.events) == 6
+event!(clk, :(DiscreteEvents.stop!(clk)), 108)
+run!(clk, 6)
 @test a == 16
-@test sim.state == DiscreteEvents.Halted()
-@test length(sim.sc.cevents) == 1
-resume!(sim)
-@test tau(sim) == 111
-@test length(sim.sc.cevents) == 0
+@test clk.state == DiscreteEvents.Halted()
+@test length(clk.sc.cevents) == 1
+resume!(clk)
+@test tau(clk) == 111
+@test length(clk.sc.cevents) == 0
 @test a == 23
-@test length(sim.sc.events) == 1
+@test length(clk.sc.events) == 1
 
 t = 121.0
 for i ∈ 1:10
-    event!(sim, :(a += 1), 10 + tau(sim))
+    event!(clk, :(a += 1), 10 + tau(clk))
 end
-run!(sim,14)
-@test tau(sim) == 125
+run!(clk,14)
+@test tau(clk) == 125
 @test a == 47
-@test length(sim.sc.events) == 1
-resetClock!(sim)
-@test tau(sim) == 0
+@test length(clk.sc.events) == 1
+resetClock!(clk)
+@test tau(clk) == 0
 
 println("... basic tests: sampling ...")
-sim = Clock(1)  # clock with sample rate 1
-@test sim.time == 0
-@test sim.tn == 1
-@test sim.Δt == 1
+clk = Clock(1)  # clock with sample rate 1
+@test clk.time == 0
+@test clk.tn == 1
+@test clk.Δt == 1
 
 b = 0
-periodic!(sim, :(b += 1))
-@test length(sim.sc.samples) == 1
-incr!(sim)
-@test sim.time == 1
+periodic!(clk, :(b += 1))
+@test length(clk.sc.samples) == 1
+incr!(clk)
+@test clk.time == 1
 @test b == 1
-run!(sim, 9)
-@test sim.time == 10
+run!(clk, 9)
+@test clk.time == 10
 @test b == 10
-sample_time!(sim, 0.5)
-run!(sim, 10)
-@test sim.time == 20
+sample_time!(clk, 0.5)
+run!(clk, 10)
+@test clk.time == 20
 @test b == 30
-resetClock!(sim, hard=false)
-@test sim.time == 0
+resetClock!(clk, hard=false)
+@test clk.time == 0
 
 println("... basic tests: events and sampling ...")
 function foo()
     global a += 1
-    event!(sim, :(foo()), after, rand())
+    event!(clk, :(foo()), after, rand())
 end
 function bar()
     global b += 1
 end
 a = 0
 b = 0
-sim = Clock(0.5)
-event!(sim, :(foo()), at, 0.5)
-event!(sim, :(foo()), at, 1)
-periodic!(sim, :(bar()))
-run!(sim, 10000)
-@test a == sim.evcount
+clk = Clock(0.5)
+event!(clk, :(foo()), at, 0.5)
+event!(clk, :(foo()), at, 1)
+periodic!(clk, :(bar()))
+run!(clk, 10000)
+@test a == clk.evcount
 @test b == 20000
 
-sync!(sim, 𝐶)
-@test sim.time == 𝐶.time
+sync!(clk, 𝐶)
+@test clk.time == 𝐶.time
 
 println("... basic tests with fun, now with 𝐶 ...")
 D = Dict(:a=>0, :b=>0, :c=>0)

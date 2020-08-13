@@ -50,7 +50,6 @@ end
 struct Start <: ClockEvent end
 struct Startup <: ClockEvent
     m::Ref{Clock}
-    id::Int
 end
 struct Step <: ClockEvent end
 struct Stop <: ClockEvent end

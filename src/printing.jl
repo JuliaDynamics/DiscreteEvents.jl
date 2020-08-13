@@ -6,6 +6,14 @@
 # This is a Julia package for discrete event simulation
 #
 
+function c_id(c::Clock)
+    if (c.id == 1) && (length(c.ac) > 1)
+        return "Clock 1 (+$(length(c.ac))): "
+    else
+        return "Clock $(c.id): "
+    end
+end
+
 function c_info(c::Clock)
     s1 = "state=$(c.state), "
     s2 = "t=$(round(c.time, sigdigits=4)) $(c.unit), "
@@ -28,26 +36,21 @@ function sc_info(c::Clock)
 end
 
 function pretty_print(c::Clock)
-    if c.id in 1:(nthreads()-1)
-        return pretty_print(pclock(c, c.id))
-    else
-        info = c.id == 0 ? "$(c.id), thread 1 (+ $(length(c.ac)) ac)" : "$(c.id)"
-        s1 = "Clock $info: "
-        s2 = c_info(c)
-        s3 = ", prc:$(length(c.processes))"
-        return s1*s2*s3*"\n  scheduled "*sc_info(c)*"\n"
-    end
+    s1 = c_id(c)
+    s2 = c_info(c)
+    s3 = ", prc:$(length(c.processes))"
+    return s1*s2*s3*"\n  scheduled "*sc_info(c)*"\n"
 end
 
 function pretty_print(ac::ActiveClock)
-    s1 = "Active clock $(ac.id) on thread $(ac.thread): "
+    s1 = "Active clock $(ac.id): "
     s2 = c_info(ac.clock)
     s3 = ", prc:$(length(ac.clock.processes))"
     return s1*s2*s3*"\n   scheduled "*sc_info(ac.clock)*"\n"
 end
 
 function pretty_print(rtc::RTClock)
-    s1 = "Real time clock $(rtc.id) on thread $(rtc.thread): "
+    s1 = "RTClock $(rtc.id) on thread $(rtc.thread): "
     s2 = c_info(rtc)
     s3 = ", prc:$(length(rtc.clock.processes))"
     return s1*s2*s3*"\n   scheduled "*sc_info(rtc.clock)*"\n"

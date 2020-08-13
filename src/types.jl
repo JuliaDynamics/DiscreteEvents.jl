@@ -166,7 +166,7 @@ Provide a channel to an active clock or a real time clock.
 # Fields
 - `ref::Ref{Task}`: a pointer to an active clock,
 - `ch::Channel`: a communication channel to an active clock,
-- `id::Int`: the thread id of the active clock.
+- `id::Int`: the thread id of the active clock,
 - `done::Bool`: flag indicating if the active clock has completed its cycle.
 """
 mutable struct ClockChannel{T <: ClockEvent}
@@ -192,7 +192,8 @@ Create a new simulation clock.
     t0 to a time, e.g. `t0=60s`.
 
 # Fields
-- `id::Int`: clock ident number, 0: master clock, ≥ 1: parallel clock,
+- `id::Int`: clock ident number 1: master clock, > 1: parallel clock,
+- `master::Union{Nothing,Ref{Clock}}`: reference to master clock if id > 1,
 - `state::ClockState`: clock state,
 - `time::Float64`: clock time,
 - `unit::FreeUnits`: time unit,
@@ -215,28 +216,29 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: s, minute, hr
 
 julia> c = Clock()                 # create a unitless clock (standard)
-Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c1 = Clock(1s, unit=minute)  # create a clock with unit [minute]
-Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c2 = Clock(1s)               # create a clock with implicit unit [s]
-Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c3 = Clock(t0=60s)           # another clock with implicit unit [s]
-Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.01 s, prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.01 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
-Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
 mutable struct Clock <: AbstractClock
     id::Int
+    master::Union{Nothing,Ref{Clock}}
     state::ClockState
     time::Float64
     unit::FreeUnits
@@ -266,7 +268,7 @@ mutable struct Clock <: AbstractClock
         else
             nothing
         end
-        new(0, Undefined(), t0, unit, Δt, ClockChannel[], Schedule(),
+        new(1, nothing, Undefined(), t0, unit, Δt, ClockChannel[], Schedule(),
             Dict{Any, Prc}(), Channel[], t0 + Δt, t0, t0, 0, 0)
     end
 end
@@ -280,9 +282,9 @@ A thread specific clock which can be operated via a channel.
 - `clock::Clock`: the thread specific clock,
 - `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
 - `cmd::Channel{E}`: the command channel from master,
-- `ans::Channel{E}`: the response channel to master.
-- `id::Int`: the id in master's ac array,
-- `thread::Int`: the thread, the active clock runs on.
+- `ans::Channel{E}`: the response channel to master,
+- `id::Int`: the clocks id/thread number,
+- `task::Task`: the active clock`s task.
 
 !!! note
 You should not setup an `ActiveClock` explicitly. Rather this is done
@@ -301,22 +303,22 @@ over the channel to the `ActiveClock` as it should be.
 julia> using DiscreteEvents
 
 julia> clk = Clock()
-Clock 0, thread 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> fork!(clk)
 
-julia> clk    #  ⬇ here you got 3 parallel active clocks
-Clock 0, thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+julia> clk    #  now you get parallel active clocks
+Clock 1 (+7): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 
 julia> clk = PClock()
-Clock 0, thread 1 (+ 3 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 1 (+7): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> ac1 = pclock(clk, 1)    # get access to the 1st active clock (on thread 2)
-Active clock 1 on thread 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
+julia> ac2 = pclock(clk, 2)  # get access to the active clock on thread 2
+Active clock 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
    scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -326,7 +328,6 @@ mutable struct ActiveClock{E <: ClockEvent} <: AbstractClock
     forth::Channel{E}
     back ::Channel{E}
     id::Int
-    thread::Int
 end
 
 """

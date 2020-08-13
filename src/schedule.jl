@@ -95,7 +95,7 @@ Schedule ex as a conditional event, conditions cond get evaluated at each clock 
 julia> using DiscreteEvents
 
 julia> c = Clock()   # create a new clock
-Clock 0, thrd 1 (+ 0 ac): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
@@ -213,21 +213,15 @@ _register!(rtc::RTClock, ev::T) where {T<:AbstractEvent} = _register!(rtc.clock,
 # - ev<:AbstractEvent: the event to register,
 # - id::Int: the id of the clock it should get registered to.
 function _register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
-    if id > 0 && threadid() == 1       # only master can forward events
-        if id ≤ length(c.ac)
-            @inbounds put!(c.ac[id].forth, Register(ev))
-            return
-        end
+    if c.id == id
+        _register!(c, ev)
+    elseif c.id == 1
+        i = findfirst(x->x.thread==id, c.ac)
+        isnothing(i) ? _register!(c, ev) : put!(c.ac[i].forth, Register(ev))
+    else
+        _register(c.master[], ev, id)
     end
-    _register!(c, ev)                   # otherwise take it yourself
 end
 function _register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
-    if ac.id == id                     # if id is your id
-        _register!(ac.clock, ev)       # take it yourself
-    elseif ac.clock.state == Busy()    # if master handles its channels
-        put!(ac.back, Forward(ev, id)) # put it over the channel
-        return
-    else
-        _register(ac.master[], ev, id) # otherwise call him directly
-    end
+    _register(ac.clock, ev, id)
 end
