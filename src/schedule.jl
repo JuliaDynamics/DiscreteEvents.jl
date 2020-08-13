@@ -217,7 +217,7 @@ function _register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
         _register!(c, ev)
     elseif c.id == 1
         i = findfirst(x->x.thread==id, c.ac)
-        isnothing(i) ? _register!(c, ev) : put!(c.ac[i].forth, Register(ev))
+        i === nothing ? _register!(c, ev) : put!(c.ac[i].forth, Register(ev))
     else
         _register(c.master[], ev, id)
     end

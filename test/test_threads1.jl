@@ -7,7 +7,7 @@ clk = PClock()
 Δt = clk.Δt
 sleep(sleeptime)
 
-print(clk)
+print(repr(clk))
 @test clk.id == 1
 m = match(r"Clock 1 \(\+(\d+)\)", repr(clk))
 @test parse(Int, m.captures[1]) == nthreads()-1
