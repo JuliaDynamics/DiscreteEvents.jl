@@ -24,16 +24,22 @@ Clocks have an identification number:
 - worker [`ActiveClock`](@ref)s on parallel threads have id > 1 identical with the thread number,
 - real time `RTClock`s have id ≤ -1.
 
+### Virtual clocks
+
 ```@docs
 Clock
-RTClock
 ```
 
-You can set time units and query the current clock time.
+You can create clocks easily:
 
-```@docs
-setUnit!
-tau
+```@repl usage
+using DiscreteEvents, Unitful, .Threads
+import Unitful: s, minute, hr
+c = Clock()                  # create a unitless clock (standard)
+c1 = Clock(1s, unit=minute)  # create a clock with unit [minute]
+c2 = Clock(1s)               # create a clock with implicit unit [s]
+c3 = Clock(t0=60s)           # another clock with implicit unit [s]
+c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
 ```
 
 There is a default clock `𝐶`, which can be used for experimental work.
@@ -42,20 +48,37 @@ There is a default clock `𝐶`, which can be used for experimental work.
 𝐶
 ```
 
+You can query the current clock time and set time units.
+
+```@docs
+tau
+setUnit!
+```
+
 ### Parallel clocks
 
-You can create a clock with parallel active clocks on all available threads. Parallel operations (processes and actors) can get their local clock from it. 
+A clock can have parallel active clocks on all available threads. Parallel operations (processes and actors) then can get their local clock and synchronized thread local time from it.
 
 ```@docs
 PClock
-localClock
+pclock
 ```
 
-Furthermore you can fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel [`ActiveClock`](@ref)s and diagnose them.
+Parallel clocks can be setup and accessed easily:
+
+```@repl usage
+@show x=nthreads()-1;
+clk = PClock()       # now the clock has (+x) active parallel clocks
+ac2 = pclock(clk, 2) # they can be accessed by their thread id
+ac2.clock            # access their thread local clock, usually you don't do that!
+```
+
+Tasks on parallel threads can get access to the thread local clock by `pclock(clk)`. Then they can schedule events, `delay!` or `wait!` on it as usual.
+
+You can fork explicitly existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel [`ActiveClock`](@ref)s and diagnose them.
 
 ```@docs
 fork!
-pclock
 collapse!
 diagnose
 ```
@@ -65,9 +88,12 @@ diagnose
 Real time clocks allow to schedule and execute events on a physical time line.
 
 ```@docs
+RTClock
 createRTClock
 stopRTClock
 ```
+
+example
 
 ## Events
 
@@ -141,11 +167,15 @@ println(::Clock, ::Any)
 
 ## Actors
 
-[Actors](https://en.wikipedia.org/wiki/Actor_model) can operate as finite state machines, are more reactive than processes and can compose. They run as Julia tasks listening to a (message) channel. In order to integrate into the `DiscreteEvents` framework, they can `push!` their channels to the `clock.channel` vector. Then the clock will only proceed to the next event if all pushed channels are empty and the associated actors have finished processing the current event.
+[Actors](https://en.wikipedia.org/wiki/Actor_model) can operate as finite state machines, are more reactive than processes and can assemble into systems. They run as Julia tasks listening to a (message) channel. In order to integrate into the `DiscreteEvents` framework, they can register their channels to the `clock.channels` vector. Then the clock will only proceed to the next event if all registered channels are empty and the associated actors have finished to process the current event.
 
 !!! note "Actor support is minimal"
 
     See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors and [`YAActL`](https://github.com/pbayer/YAActL.jl). `YAActL` provides `register!` for integration into the `DiscreteEvents` framework.
+
+!!! warning "Don't use `delay!` or `wait!` with actors"
+
+    Those are blocking operations and will make an actor non-responsive, just as a process.
 
 Despite of minimal actor support a lot can be done yet with actors. Actors push the boundaries of discrete event simulation.
 
