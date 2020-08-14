@@ -276,7 +276,10 @@ end
 """
     ActiveClock{E <: ClockEvent} <: AbstractClock
 
-A thread specific clock which can be operated via a channel.
+An active clock is a wrapper around a worker [`Clock`](@ref) on a 
+parallel thread. Worker clocks are operated by actors and the master 
+clock on thread 1 communicates with them through messages over the
+active clock channels. 
 
 # Fields
 - `clock::Clock`: the thread specific clock,
@@ -286,17 +289,22 @@ A thread specific clock which can be operated via a channel.
 - `id::Int`: the clocks id/thread number,
 - `task::Task`: the active clock`s task.
 
-!!! note
-You should not setup an `ActiveClock` explicitly. Rather this is done
-implicitly by [`fork!`](@ref)ing a [`Clock`](@ref) to other available threads
-or directly with [`PClock`](@ref).
-It then can be accessed via [`pclock`](@ref) as in the following example.
+!!! note "Don't setup an `ActiveClock` explicitly!"
 
-!!! note
-Directly accessing the `clock`-field of parallel `ActiveClock`s in simulations is
-possible but not recommended since it breaks parallel operation. The right way is
-to pass `event!`s to the `ActiveClock`-variable. The communication then happens
-over the channel to the `ActiveClock` as it should be.
+    It is done implicitly with [`PClock`](@ref) or by [`fork!`](@ref)ing 
+    a [`Clock`](@ref) to other available threads.
+
+An active clock can be accessed via [`pclock`](@ref) as in the following example.
+
+!!! note "Don't access the `clock`-field of `ActiveClock`s!"
+
+    This is possible but not recommended since it can break parallel 
+    operation. On a parallel thread processes and actors can access 
+    their local clock with `pclock(master, threadid()).clock`. 
+    
+Events can be scheduled with `event!` to an `ActiveClock`-variable. 
+The communication then happens over the channel to the `ActiveClock` 
+as it should be.
 
 # Example
 ```jldoctest; filter = r"^.*[0-9]+ ac.*"
@@ -308,18 +316,21 @@ Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
 
 julia> fork!(clk)
 
-julia> clk    #  now you get parallel active clocks
+julia> clk    #  now you see parallel active clocks
 Clock 1 (+7): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
-
-julia> clk = PClock()
+julia> clk = PClock()  # create a parallel clock structure
 Clock 1 (+7): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> ac2 = pclock(clk, 2)  # get access to the active clock on thread 2
 Active clock 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
    scheduled ev:0, cev:0, sampl:0
+
+julia> ac2.clock  # not recommended, access the parallel clock 2 
+Clock 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
+  scheduled ev:0, cev:0, sampl:0
 ```
 """
 mutable struct ActiveClock{E <: ClockEvent} <: AbstractClock
