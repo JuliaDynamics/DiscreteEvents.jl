@@ -232,6 +232,15 @@ function pclock(ac::ActiveClock, id::Int)
 end
 
 """
+    localClock(clk::Clock)
+
+Get the thread local clock from a master clock. Since it involves a
+communication over the threads, it should only called once for
+setting up a parallel operation.
+"""
+localClock(clk::Clock) = pclock(clk, threadid()).clock
+
+"""
     diagnose(master::Clock, id::Int)
 
 Return the stacktrace from parallel clock id.

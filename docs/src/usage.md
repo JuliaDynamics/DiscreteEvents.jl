@@ -13,15 +13,15 @@ version
 
 ## Clocks
 
-Clocks schedule and execute *events*. They make given computations happen at a specified time (or under specified conditions).
+Clocks schedule and execute *actions*, computations that happen as *events* at specified times (or under specified conditions).
 
-- `Clock`s have virtual time and precede as fast as possible when they simulate chains of events. For parallel simulations they can control [`ActiveClock`](@ref)s on parallel threads.
-- `RTClock`s schedule and execute events on a real (system) time line.
+- `Clock`s have virtual time and precede as fast as possible. They can control [`ActiveClock`](@ref)s on parallel threads to support parallel simulations.
+- `RTClock`s schedule and execute actions on a real (system) time line.
 
 Clocks have an identification number:
 
-- a master `Clock` on thread has id = 0,
-- worker [`ActiveClock`](@ref)s on parallel threads have id ≥ 1,
+- a master `Clock` on thread 1 has id = 1,
+- worker [`ActiveClock`](@ref)s on parallel threads have id > 1 identical with the thread number,
 - real time `RTClock`s have id ≤ -1.
 
 ```@docs
@@ -42,14 +42,29 @@ There is a default clock `𝐶`, which can be used for experimental work.
 𝐶
 ```
 
-You can create a clock with parallel active clocks on all available threads or fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel [`ActiveClock`](@ref)s and diagnose them.
+### Parallel clocks
+
+You can create a clock with parallel active clocks on all available threads. Parallel operations (processes and actors) can get their local clock from it. 
 
 ```@docs
 PClock
+localClock
+```
+
+Furthermore you can fork existing clocks to other threads or collapse them if no longer needed. You can get direct access to parallel [`ActiveClock`](@ref)s and diagnose them.
+
+```@docs
 fork!
 pclock
 collapse!
 diagnose
+```
+
+### Real time clocks
+
+Real time clocks allow to schedule and execute events on a physical time line.
+
+```@docs
 createRTClock
 stopRTClock
 ```
@@ -126,13 +141,13 @@ println(::Clock, ::Any)
 
 ## Actors
 
-[Actors](https://en.wikipedia.org/wiki/Actor_model) can operate as finite state machines and are more reactive than processes. They run as Julia tasks listening to a (message) channel.
-
-In order to integrate into the `DiscreteEvents` framework, they can `push!` their channels to the `clock.channel` vector. Then the clock will only proceed to the next event if all pushed channels are empty and the associated actors have finished processing the current event.
+[Actors](https://en.wikipedia.org/wiki/Actor_model) can operate as finite state machines, are more reactive than processes and can compose. They run as Julia tasks listening to a (message) channel. In order to integrate into the `DiscreteEvents` framework, they can `push!` their channels to the `clock.channel` vector. Then the clock will only proceed to the next event if all pushed channels are empty and the associated actors have finished processing the current event.
 
 !!! note "Actor support is minimal"
 
-    `DiscreteEvents` currently does not provide more actor support. See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors and [`YAActL`](https://github.com/pbayer/YAActL.jl).
+    See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for code examples with actors and [`YAActL`](https://github.com/pbayer/YAActL.jl). `YAActL` provides `register!` for integration into the `DiscreteEvents` framework.
+
+Despite of minimal actor support a lot can be done yet with actors. Actors push the boundaries of discrete event simulation.
 
 ## Running simulations
 

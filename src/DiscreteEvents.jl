@@ -58,7 +58,7 @@ export  Clock, PClock, RTClock, setUnit!, 𝐶,
         tau, sample_time!, fun, event!, periodic!, register!,
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
-        fork!, collapse!, pclock, diagnose, onthread,
+        fork!, collapse!, pclock, localClock, diagnose, onthread,
         createRTClock, stopRTClock,
         Resource
 
