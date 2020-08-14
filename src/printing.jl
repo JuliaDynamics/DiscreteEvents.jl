@@ -73,7 +73,7 @@ Switch pritty printing for clocks on and off.
 function prettyClock(on::Bool)
     m = which(show, (IO, AbstractClock))
     if on &&  m.module == Base
-        eval(@__MODULE__, :(Base.show(io::IO, c::CLK) where {CLK<:AbstractClock} = print(io, pretty_print(c))))
+        eval(:(Base.show(io::IO, c::CLK) where {CLK<:AbstractClock} = print(io, pretty_print(c))))
     elseif !on && m.module == DiscreteEvents
         Base.delete_method(m)
     else
