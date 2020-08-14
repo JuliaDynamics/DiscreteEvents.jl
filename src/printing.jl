@@ -6,6 +6,13 @@
 # This is a Julia package for discrete event simulation
 #
 
+const state = Dict(
+    Undefined() => :undefined,
+    Idle() => :idle,
+    Busy() => :busy,
+    Halted() => :halted
+    )
+
 function c_id(c::Clock)
     if (c.id == 1) && !isempty(c.ac)
         return "Clock 1 (+$(length(c.ac))): "
@@ -15,14 +22,14 @@ function c_id(c::Clock)
 end
 
 function c_info(c::Clock)
-    s1 = "state=$(c.state), "
-    s2 = "t=$(round(c.time, sigdigits=4)) $(c.unit), "
-    s3 = "Δt=$(round(c.Δt, sigdigits=4)) $(c.unit)"
+    s1 = "state=$(repr(state[c.state])), "
+    s2 = "t=$(round(c.time, sigdigits=4))$(c.unit), "
+    s3 = "Δt=$(round(c.Δt, sigdigits=4))$(c.unit)"
     return s1*s2*s3
 end
 
 function c_info(rtc::RTClock)
-    s1 = "state=$(rtc.clock.state), "
+    s1 = "state=$(repr(state[rtc.clock.state])), "
     s2 = "t=$(round(rtc.time, sigdigits=4)) s, "
     s3 = "T=$(round(rtc.T, sigdigits=4)) s"
     return s1*s2*s3

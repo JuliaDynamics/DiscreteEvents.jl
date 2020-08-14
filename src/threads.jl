@@ -210,10 +210,10 @@ Get a parallel clock to a given clock.
 - `id::Int=threadid()`: thread id, defaults to the caller's current thread.
 
 # Returns
-- the master `Clock` if id==0,
+- the master `Clock` if id==1,
 - a parallel `ActiveClock` else
 """
-function pclock(clk::Clock, id::Int)
+function pclock(clk::Clock, id::Int=threadid())
     if clk.id == id
         return(clk)
     elseif clk.id == 1
@@ -227,18 +227,9 @@ function pclock(clk::Clock, id::Int)
         pclock(clk.master[], id)
     end
 end
-function pclock(ac::ActiveClock, id::Int)
+function pclock(ac::ActiveClock, id::Int=threadid())
     id == ac.clock.id ? ac : pclock(ac.master[], id)
 end
-
-"""
-    localClock(clk::Clock)
-
-Get the thread local clock from a master clock. Since it involves a
-communication over the threads, it should only called once for
-setting up a parallel operation.
-"""
-localClock(clk::Clock) = pclock(clk, threadid()).clock
 
 """
     diagnose(master::Clock, id::Int)

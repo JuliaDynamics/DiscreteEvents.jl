@@ -207,34 +207,6 @@ Create a new simulation clock.
 - `tev::Float64`: next event time,
 - `evcount::Int`: event counter,
 - `scount::Int`: sample counter
-
-# Examples
-
-```jldoctest
-julia> using DiscreteEvents, Unitful
-
-julia> import Unitful: s, minute, hr
-
-julia> c = Clock()                 # create a unitless clock (standard)
-Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> c1 = Clock(1s, unit=minute)  # create a clock with unit [minute]
-Clock 1: state=DiscreteEvents.Undefined(), t=0.0 minute, Δt=0.01667 minute, prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> c2 = Clock(1s)               # create a clock with implicit unit [s]
-Clock 1: state=DiscreteEvents.Undefined(), t=0.0 s, Δt=1.0 s, prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> c3 = Clock(t0=60s)           # another clock with implicit unit [s]
-Clock 1: state=DiscreteEvents.Undefined(), t=60.0 s, Δt=0.01 s, prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
-Clock 1: state=DiscreteEvents.Undefined(), t=3600.0 s, Δt=1.0 s, prc:0
-  scheduled ev:0, cev:0, sampl:0
-```
 """
 mutable struct Clock <: AbstractClock
     id::Int
@@ -268,7 +240,7 @@ mutable struct Clock <: AbstractClock
         else
             nothing
         end
-        new(1, nothing, Undefined(), t0, unit, Δt, ClockChannel[], Schedule(),
+        new(1, nothing, Idle(), t0, unit, Δt, ClockChannel[], Schedule(),
             Dict{Any, Prc}(), Channel[], t0 + Δt, t0, t0, 0, 0)
     end
 end
@@ -300,38 +272,10 @@ An active clock can be accessed via [`pclock`](@ref) as in the following example
 
     This is possible but not recommended since it can break parallel 
     operation. On a parallel thread processes and actors can access 
-    their local clock with `pclock(master, threadid()).clock`. 
+    their local clock with [`pclock(clk)`](@ref pclock). 
     
-Events can be scheduled with `event!` to an `ActiveClock`-variable. 
-The communication then happens over the channel to the `ActiveClock` 
-as it should be.
-
-# Example
-```jldoctest; filter = r"^.*[0-9]+ ac.*"
-julia> using DiscreteEvents
-
-julia> clk = Clock()
-Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> fork!(clk)
-
-julia> clk    #  now you see parallel active clocks
-Clock 1 (+7): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> clk = PClock()  # create a parallel clock structure
-Clock 1 (+7): state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-
-julia> ac2 = pclock(clk, 2)  # get access to the active clock on thread 2
-Active clock 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
-   scheduled ev:0, cev:0, sampl:0
-
-julia> ac2.clock  # not recommended, access the parallel clock 2 
-Clock 2: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
-  scheduled ev:0, cev:0, sampl:0
-```
+Events can be scheduled with `event!` to an `ActiveClock. They are 
+then communicated over the channel to the `ActiveClock` actor.
 """
 mutable struct ActiveClock{E <: ClockEvent} <: AbstractClock
     clock::Clock

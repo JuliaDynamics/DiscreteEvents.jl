@@ -9,7 +9,7 @@
 println("... basic tests: printing  ...")
 resetClock!(𝐶)
 DiscreteEvents.prettyClock(true)
-str = "Clock 1: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
+str = "Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(false)
 str = "Clock(1, nothing, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), Channel[], 0.0, 0.0, 0.0, 0, 0)"

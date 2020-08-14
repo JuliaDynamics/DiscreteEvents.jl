@@ -9,8 +9,7 @@
 """
     𝐶
 
-`𝐶` (𝐶 = `\\itC`+`tab`) is the default simulation clock. If you do one
-simulation at a time, you can use it for time keeping.
+`𝐶` (𝐶 = `\\itC+tab`) is a default clock, ready to use. 
 
 # Examples
 
@@ -21,7 +20,7 @@ julia> resetClock!(𝐶)
 "clock reset to t₀=0.0, sampling rate Δt=0.01."
 
 julia> 𝐶  # default clock
-Clock 1: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
+Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
@@ -49,16 +48,16 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: Time, s, minute, hr
 
 julia> c = Clock(t0=60)     # setup a new clock with t0=60
-Clock 1: state=DiscreteEvents.Undefined(), t=60.0 , Δt=0.01 , prc:0
+Clock 1: state=:idle, t=60.0, Δt=0.01, prc:0
   scheduled ev:0, cev:0, sampl:0
 
-julia> tau(c) # current time is 60.0 NoUnits
+julia> tau(c)               # current time is 60.0 NoUnits
 60.0
 
 julia> setUnit!(c, s)       # set clock unit to Unitful.s
 60.0 s
 
-julia> tau(c) # current time is now 60.0 s
+julia> tau(c)               # current time is now 60.0 s
 60.0 s
 
 julia> setUnit!(c, minute)  # set clock unit to Unitful.minute
@@ -115,9 +114,9 @@ Return the current simulation time.
 ```jldoctest
 julia> using DiscreteEvents
 
-julia> resetClock!(𝐶)
+julia> resetClock!(𝐶)   # reset the default clock
 "clock reset to t₀=0.0, sampling rate Δt=0.01."
-julia> tau() # gives the central time
+julia> tau()            # gives the default clock's time
 0.0
 ```
 """
@@ -177,14 +176,14 @@ julia> using DiscreteEvents, Unitful
 julia> import Unitful: s
 
 julia> c = Clock(1s, t0=60s)
-Clock 1: state=DiscreteEvents.Undefined(), t=60.0 s, Δt=1.0 s, prc:0
+Clock 1: state=:idle, t=60.0s, Δt=1.0s, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> resetClock!(c)
 "clock reset to t₀=0.0, sampling rate Δt=0.01."
 
 julia> c
-Clock 1: state=DiscreteEvents.Idle(), t=0.0 , Δt=0.01 , prc:0
+Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0
   scheduled ev:0, cev:0, sampl:0
 ```
 """
