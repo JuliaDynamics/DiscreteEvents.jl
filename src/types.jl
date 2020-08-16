@@ -266,13 +266,15 @@ active clock channels.
     It is done implicitly with [`PClock`](@ref) or by [`fork!`](@ref)ing 
     a [`Clock`](@ref) to other available threads.
 
-An active clock can be accessed via [`pclock`](@ref) as in the following example.
+An active clock can be accessed via [`pclock`](@ref). On a parallel 
+thread tasks can get access to their local clock with 
+[`pclock(clk)`](@ref pclock).
 
-!!! note "Don't access the `clock`-field of `ActiveClock`s!"
+!!! note "Don't share `ActiveClock`s between threads!"
 
-    This is possible but not recommended since it can break parallel 
-    operation. On a parallel thread processes and actors can access 
-    their local clock with [`pclock(clk)`](@ref pclock). 
+    In multithreading we don't want to share variables between 
+    threads but we communicate over channels. We can access them 
+    for diagnostic purposes.
     
 Events can be scheduled with `event!` to an `ActiveClock. They are 
 then communicated over the channel to the `ActiveClock` actor.

@@ -95,7 +95,7 @@ Schedule ex as a conditional event, conditions cond get evaluated at each clock 
 julia> using DiscreteEvents
 
 julia> c = Clock()   # create a new clock
-Clock 1: state=DiscreteEvents.Undefined(), t=0.0 , Δt=0.01 , prc:0
+Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0
   scheduled ev:0, cev:0, sampl:0
 
 julia> event!(c, fun((x)->println(tau(x), ": now I'm triggered"), c), fun(>=, fun(tau, c), 5))
@@ -219,9 +219,22 @@ function _register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
         i = findfirst(x->x.thread==id, c.ac)
         i === nothing ? _register!(c, ev) : put!(c.ac[i].forth, Register(ev))
     else
-        _register(c.master[], ev, id)
+        if c.master[].state == Busy()      # uses shared variable  ↯↯↯
+            ac = pclock(c.master[])        # shouldn't happen often
+            put!(ac.back, Forward(ev, id)) # but still is ugly
+        else
+            _register(c.master[], ev, id)
+        end
     end
 end
 function _register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
-    _register(ac.clock, ev, id)
+    if ac.id == id
+        _register!(ac.clock, ev)
+    else
+        if ac.master[].state == Busy()      # uses shared variable ↯↯↯
+             put!(ac.back, Forward(ev, id)) 
+        else
+            _register(ac.master[], ev, id)
+        end
+    end
 end
