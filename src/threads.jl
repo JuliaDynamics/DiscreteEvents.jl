@@ -59,9 +59,9 @@ step!(A::ActiveClock, q::ClockState, Ïƒ::ClockEvent) = error("transition q=$q, Ï
 # -------------------------------------
 function _activeClock(cmd::Channel, resp::Channel)
     info = take!(cmd) # get a pointer to the master clock and id
-    ac = ActiveClock(Clock(), info.m, cmd, resp, threadid())
-    ac.clock.id = ac.id
-    ac.clock.master = ac.master
+    ac = ActiveClock(localClock(info.m[]), info.m, cmd, resp, 
+                     threadid(), current_task())
+    ac.clock.ac = Ref(ac)
     sf = Array{Base.StackTraces.StackFrame,1}[]
     exc = nothing
     ac.clock.state = Idle()
@@ -214,21 +214,21 @@ Get a parallel clock to a given clock.
 - a parallel `ActiveClock` else
 """
 function pclock(clk::Clock, id::Int=threadid())
-    if clk.id == id
-        return(clk)
-    elseif clk.id == 1
+    if clk.id == 1
         if id in [x.thread for x in clk.ac]
             put!(clk.ac[id-1].forth, Query())
             return take!(clk.ac[id-1].back).x
         else
             println(stderr, "parallel clock $id not available!")
         end
+    elseif clk.id == id
+        return clk.ac[]
     else
-        pclock(clk.master[], id)
+        pclock(clk.ac[], id)
     end
 end
 function pclock(ac::ActiveClock, id::Int=threadid())
-    id == ac.clock.id ? ac : pclock(ac.master[], id)
+    id == ac.id ? ac : pclock(ac.master[], id)
 end
 
 """

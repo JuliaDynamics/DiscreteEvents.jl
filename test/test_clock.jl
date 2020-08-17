@@ -12,7 +12,7 @@ DiscreteEvents.prettyClock(true)
 str = "Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(false)
-str = "Clock(1, nothing, DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.ClockChannel[], DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), Channel[], 0.0, 0.0, 0.0, 0, 0)"
+str = "Clock{Array{DiscreteEvents.ClockChannel,1}}(1, DiscreteEvents.ClockChannel[], DiscreteEvents.Idle(), 0.0, , 0.01, DiscreteEvents.Schedule(PriorityQueue{DiscreteEvents.DiscreteEvent,Float64,Base.Order.ForwardOrdering}(), DiscreteEvents.DiscreteCond[], DiscreteEvents.Sample[]), Dict{Any,Prc}(), Channel[], 0.0, 0.0, 0.0, 0, 0)"
 @test repr(𝐶) == str
 DiscreteEvents.prettyClock(true)
 @test tau() == 0

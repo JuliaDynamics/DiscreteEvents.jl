@@ -14,7 +14,7 @@ const state = Dict(
     )
 
 function c_id(c::Clock)
-    if (c.id == 1) && !isempty(c.ac)
+    if (c.id == 1) && isa(c.ac, Vector{ClockChannel}) && !isempty(c.ac)
         return "Clock 1 (+$(length(c.ac))): "
     else
         return "Clock $(c.id): "

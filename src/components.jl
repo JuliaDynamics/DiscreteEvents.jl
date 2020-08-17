@@ -49,7 +49,7 @@ struct Run <: ClockEvent
 end
 struct Start <: ClockEvent end
 struct Startup <: ClockEvent
-    m::Ref{Clock}
+    m::Ref{GlobalClock}
 end
 struct Step <: ClockEvent end
 struct Stop <: ClockEvent end
