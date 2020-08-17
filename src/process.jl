@@ -174,9 +174,10 @@ stop!(p::Prc, value=nothing) = interrupt!(p, Stop(), value)
 """
     now!(clk::Clock, ex::A) where {A<:Action}
 
-Tell the clock to execute an IO-operation ex and not to proceed before ex is finished.
+Transfer an IO-operation `ex` to the master clock (on thread 1). 
+The clock executes it before proceeding to the next time step.
 """
-now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time)
+now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time, cid=1)
 
 """
 ```
