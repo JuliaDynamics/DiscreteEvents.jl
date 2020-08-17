@@ -18,7 +18,7 @@ println("... parallel clock identification ...")
 c2 = pclock(clk, 2)
 @test c2.id == 2
 @test c2.clock.id == 2
-@test c2.clock.master[].id == 1
+@test c2.clock.ac[].master[].id == 1
 m = match(r"Active clock (\d+)\:", repr(c2))
 @test parse(Int, m.captures[1]) == 2
 

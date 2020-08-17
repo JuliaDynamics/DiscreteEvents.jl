@@ -28,6 +28,7 @@ Clocks have an identification number:
 
 ```@docs
 Clock
+Clock(::T) where T<:Number
 ```
 
 You can create clocks easily:

@@ -179,21 +179,13 @@ mutable struct ClockChannel{T <: ClockEvent}
 end
 
 """
-```
-Clock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
-```
-Create a new simulation clock.
+    Clock{AC} <: AbstractClock
 
-# Arguments
-- `Δt::T=0.01`: time increment for sampling. Δt can be set later with `sample_time!`.
-- `t0::U=0`: start time for simulation
-- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
-    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
-    t0 to a time, e.g. `t0=60s`.
+A virtual clock structure, used for global and thread local clocks.
 
 # Fields
 - `id::Int`: clock ident number 1: master clock, > 1: parallel clock,
-- `master::Union{Nothing,Ref{Clock}}`: reference to master clock if id > 1,
+- `ref::Union{Nothing,Ref{AbstractClock}}`: if id > 1 : *activeClock else: nothing
 - `state::ClockState`: clock state,
 - `time::Float64`: clock time,
 - `unit::FreeUnits`: time unit,
@@ -208,14 +200,13 @@ Create a new simulation clock.
 - `evcount::Int`: event counter,
 - `scount::Int`: sample counter
 """
-mutable struct Clock <: AbstractClock
+mutable struct Clock{AC} <: AbstractClock
     id::Int
-    master::Union{Nothing,Ref{Clock}}
+    ac::AC
     state::ClockState
     time::Float64
     unit::FreeUnits
     Δt::Float64
-    ac::Vector{ClockChannel}
     sc::Schedule
     processes::Dict{Any, Prc}
     channels::Vector{Channel}
@@ -224,68 +215,100 @@ mutable struct Clock <: AbstractClock
     end_time::Float64
     evcount::Int
     scount::Int
+end
 
-    function Clock(Δt::T=0.01;
-                   t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
-        if 1unit isa Time
-            Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
-            t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
-        elseif Δt isa Time
-            unit = Unitful.unit(Δt)
-            t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
-            Δt = Δt.val
-        elseif t0 isa Time
-            unit = Unitful.unit(t0)
-            t0 = t0.val
-        else
-            nothing
-        end
-        new(1, nothing, Idle(), t0, unit, Δt, ClockChannel[], Schedule(),
-            Dict{Any, Prc}(), Channel[], t0 + Δt, t0, t0, 0, 0)
+"Global clock with vector of active clocks."
+const GlobalClock = Clock{Vector{ClockChannel}}
+
+"""
+```
+Clock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
+```
+Create a new virtual clock with id 1 (master).
+
+# Arguments
+- `Δt::T=0.01`: time increment for sampling. Δt can be set later with `sample_time!`.
+- `t0::U=0`: start time for simulation
+- `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
+    setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
+    t0 to a time, e.g. `t0=60s`.
+"""
+function Clock(Δt::T=0.01;
+    t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
+    if 1unit isa Time
+        Δt = isa(Δt, Time) ? uconvert(unit, Δt).val : Δt
+        t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
+    elseif Δt isa Time
+        unit = Unitful.unit(Δt)
+        t0 = isa(t0, Time) ? uconvert(unit, t0).val : t0
+        Δt = Δt.val
+    elseif t0 isa Time
+        unit = Unitful.unit(t0)
+        t0 = t0.val
+    else
+        nothing
     end
+    GlobalClock(1, ClockChannel[], Idle(), 
+        t0, unit, Δt, Schedule(), Dict{Any, Prc}(), Channel[], 
+        t0 + Δt, t0, t0, 0, 0)
 end
 
 """
     ActiveClock{E <: ClockEvent} <: AbstractClock
 
-An active clock is a wrapper around a worker [`Clock`](@ref) on a 
-parallel thread. Worker clocks are operated by actors and the master 
-clock on thread 1 communicates with them through messages over the
-active clock channels. 
+An active clock is a wrapper around a local [`Clock`](@ref) on a 
+parallel thread. It is operated by a thread local task. The master 
+clock on thread 1 communicates with it through messages over its
+channels. 
 
 # Fields
-- `clock::Clock`: the thread specific clock,
+- `clock::Clock`: the thread specific local clock,
 - `master::Ref{Clock}`: a pointer to the master clock (on thread 1),
-- `cmd::Channel{E}`: the command channel from master,
-- `ans::Channel{E}`: the response channel to master,
+- `forth::Channel{E}`: the command channel from master,
+- `back::Channel{E}`: the response channel to master,
 - `id::Int`: the clocks id/thread number,
 - `task::Task`: the active clock`s task.
 
-!!! note "Don't setup an `ActiveClock` explicitly!"
+!!! note "Don't setup an active clock explicitly!"
 
     It is done implicitly with [`PClock`](@ref) or by [`fork!`](@ref)ing 
     a [`Clock`](@ref) to other available threads.
 
-An active clock can be accessed via [`pclock`](@ref). On a parallel 
-thread tasks can get access to their local clock with 
-[`pclock(clk)`](@ref pclock).
+On a parallel thread tasks can access their local clock with 
+[`pclock(clk)`](@ref pclock). Then they can schedule 'thread local' 
+events, `delay!` or `wait!` on it.
 
-!!! note "Don't share `ActiveClock`s between threads!"
+!!! note "Don't share active clocks between threads!"
 
-    In multithreading we don't want to share variables between 
-    threads but we communicate over channels. We can access them 
-    for diagnostic purposes.
-    
-Events can be scheduled with `event!` to an `ActiveClock. They are 
-then communicated over the channel to the `ActiveClock` actor.
+    In multithreading we communicate over channels and don't want 
+    to share variables between threads. A user can still access 
+    active clocks for diagnostic purposes.
 """
 mutable struct ActiveClock{E <: ClockEvent} <: AbstractClock
     clock::Clock
-    master::Ref{Clock}
+    master::Ref{Clock{Vector{ClockChannel}}}
     forth::Channel{E}
     back ::Channel{E}
     id::Int
+    task::Task
 end
+
+"Local clock with reference to a wrapping active clock."
+const LocalClock = Clock{Ref{ActiveClock{ClockEvent}}}
+
+"""
+    localClock(c::Clock)
+
+Create a thread local clock with an undefined reference to an
+active clock which inherits parameters of the master clock `c`.
+"""
+function localClock(c::Clock)
+    LocalClock(threadid(), 
+        Ref{ActiveClock{ClockEvent}}(), Idle(),
+        c.time, c.unit, c.Δt, Schedule(), Dict{Any, Prc}(), Channel[],
+        c.time + c.Δt, c.time, c.time, 0, 0)
+end
+
 
 """
     RTClock{E <: ClockEvent} <: AbstractClock

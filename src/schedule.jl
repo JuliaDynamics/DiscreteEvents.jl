@@ -208,6 +208,7 @@ _register!(rtc::RTClock, ev::T) where {T<:AbstractEvent} = _register!(rtc.clock,
 
 # Register an event to another clock via a channel.
 # - c::Clock: a master clock can forward events to active clocks,
+#             a local clock needs to access the wrapping active clock,
 # - ac::ActiveClock: active clocks can forward events only through master,
 #                    he then does the distribution for them,
 # - ev<:AbstractEvent: the event to register,
@@ -219,12 +220,7 @@ function _register(c::Clock, ev::T, id::Int) where {T<:AbstractEvent}
         i = findfirst(x->x.thread==id, c.ac)
         i === nothing ? _register!(c, ev) : put!(c.ac[i].forth, Register(ev))
     else
-        if c.master[].state == Busy()      # uses shared variable  ↯↯↯
-            ac = pclock(c.master[])        # shouldn't happen often
-            put!(ac.back, Forward(ev, id)) # but still is ugly
-        else
-            _register(c.master[], ev, id)
-        end
+        _register(c.ac[], ev, id)  # let the active clock do it
     end
 end
 function _register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
@@ -232,9 +228,9 @@ function _register(ac::ActiveClock, ev::T, id::Int) where {T<:AbstractEvent}
         _register!(ac.clock, ev)
     else
         if ac.master[].state == Busy()      # uses shared variable ↯↯↯
-             put!(ac.back, Forward(ev, id)) 
-        else
-            _register(ac.master[], ev, id)
-        end
+             put!(ac.back, Forward(ev, id)) # shouldn't happen often
+        else                                # but still can go wrong !!!
+            _register(ac.master[], ev, id)  # needs responsive master
+        end                                 # to be solved !!!
     end
 end
