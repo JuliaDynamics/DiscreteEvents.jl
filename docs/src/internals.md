@@ -21,7 +21,10 @@ There is an abstract type for clocks and an active clock, used for controlling p
 
 ```@docs
 AbstractClock
+GlobalClock
 ActiveClock
+LocalClock
+localClock
 ```
 
 **An example on active clocks:**
