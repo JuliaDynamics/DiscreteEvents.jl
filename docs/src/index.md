@@ -10,7 +10,7 @@ A Julia package for **discrete event generation and simulation**.
 
 - [**NEWS**](news.md): What is new about this version?
 - [**Getting started**](intro.md): Get an overview and learn the basics.
-- [**Usage**](usage.md): Get detailed informations about types, functions and macros.
+- [**Manual**](clocks.md): Get detailed informations about types, functions and macros.
 - [**Internals**](internals.md): some internal types and functions.
 - [**Troubleshooting**](troubleshooting.md): If something doesn't work as expected.
 - [**Version history**](history.md): A list of features and changes.
