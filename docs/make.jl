@@ -12,7 +12,14 @@ makedocs(
         "News" => "news.md",
         "Manual" => [
             "intro.md",
-            "usage.md",
+            "setup.md",
+            "clocks.md",
+            "events.md",
+            "processes.md",
+            "actors.md",
+            "resources.md",
+            "usage.md"],
+        "Internals" => [
             "internals.md",
             "troubleshooting.md",
             "history.md"]
