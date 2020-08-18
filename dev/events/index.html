@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Events · DiscreteEvents.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>DiscreteEvents.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li><a class="toctext" href="../news/">News</a></li><li><span class="toctext">Manual</span><ul><li><a class="toctext" href="../intro/">Introduction</a></li><li><a class="toctext" href="../setup/">Installation</a></li><li><a class="toctext" href="../clocks/">Clocks</a></li><li class="current"><a class="toctext" href>Events</a><ul class="internal"><li><a class="toctext" href="#Actions-1">Actions</a></li><li><a class="toctext" href="#Timed-events-1">Timed events</a></li><li><a class="toctext" href="#Conditional-events-1">Conditional events</a></li><li><a class="toctext" href="#Continuous-sampling-1">Continuous sampling</a></li></ul></li><li><a class="toctext" href="../processes/">Processes</a></li><li><a class="toctext" href="../actors/">Actors</a></li><li><a class="toctext" href="../resources/">Resources</a></li><li><a class="toctext" href="../usage/">Utilities</a></li></ul></li><li><span class="toctext">Internals</span><ul><li><a class="toctext" href="../internals/">Internals</a></li><li><a class="toctext" href="../troubleshooting/">Troubleshooting</a></li><li><a class="toctext" href="../history/">Version history</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href>Events</a></li></ul><a class="edit-page" href="https://github.com/pbayer/DiscreteEvents.jl/blob/master/docs/src/events.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Events</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Events-1" href="#Events-1">Events</a></h1><p>In <code>DiscreteEvents</code> events can be considered as computations <span>$\,α,β,γ,...\,$</span> happening at times <span>$\,t_1,t_2,t_3,...$</span> Those computations are called <em>actions</em>.</p><h2><a class="nav-anchor" id="Actions-1" href="#Actions-1">Actions</a></h2><p>Actions are Julia functions or expressions to be executed later:</p><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.Action" href="#DiscreteEvents.Action"><code>DiscreteEvents.Action</code></a> — <span class="docstring-category">Constant</span>.</div><div><div><pre><code class="language-julia">Action</code></pre><p>An action is either  a <code>Function</code> or an <code>Expr</code> or a <code>Tuple</code> of them.  It can be scheduled in an event for later execution.</p><div class="admonition warning"><div class="admonition-title">Evaluating expressions is slow!</div><div class="admonition-text"><p>Expr should be avoided in time critical parts of applications. You will get a one time warning if you use them. They can be replaced easily by <code>fun</code>s or function closures. They are evaluated at global scope in Module <code>Main</code> only. Other modules using <code>DiscreteEvents.jl</code> cannot use Expr in events and have to use functions.</p></div></div></div></div><a class="source-link" target="_blank" href="https://github.com/pbayer/DiscreteEvents.jl/blob/8a655620816a14899024654eeafd977b6bd1c507/src/types.jl#L33-L45">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.fun" href="#DiscreteEvents.fun"><code>DiscreteEvents.fun</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">fun(f::Function, args...; kwargs...)</code></pre><p>Save a function <code>f</code> and its arguments in a closure for later execution.</p><p><strong>Arguments</strong></p><p>The arguments <code>args...</code> and keyword arguments <code>kwargs...</code> to fun are passed to <code>f</code> at execution but may change their values between beeing captured in <code>fun</code> and <code>f</code>s later execution. If <code>f</code> needs their current values at execution time there are two possibilities:</p><ol><li><code>fun</code> can take <code>fun</code>s, function closures, symbols or expressions at the place of values  or variable arguments. They are evaluated at event time just before being passed to f.  There is one exception: if <code>f</code> is an <code>event!</code>, its arguments are passed on unevaluated.</li><li>A mutable type argument (Array, struct ...) is always current. You can  also change its content from within a function.</li></ol><div class="admonition warning"><div class="admonition-title">Evaluating symbols and expressions is slow</div><div class="admonition-text"><p>Symbols and Expr should be avoided in time critical parts of applications. You will get a one time warning if you use that feature. They can be replaced easily by <code>fun</code>s or function closures. They are evaluated at global scope in Module <code>Main</code> only. Other modules using <code>DiscreteEvents.jl</code> cannot use this feature and have to use functions.</p></div></div><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DiscreteEvents
+
+julia&gt; g(x; y=1) = x+y
+g (generic function with 1 method)
+
+julia&gt; x = 1
+1
+
+julia&gt; gg = fun(g, :x, y=2);   # we pass x as a symbol to fun
+
+julia&gt; x += 1   # a becomes 2
+2
+
+julia&gt; gg()     # at execution g gets a current x and gives a warning
+┌ Warning: Evaluating expressions is slow, use functions instead
+└ @ DiscreteEvents ~/.julia/dev/DiscreteEvents/src/fclosure.jl:37
+4
+
+julia&gt; hh = fun(g, fun(()-&gt;x), y=3);   # reference x with an anonymous fun
+
+julia&gt; x += 1   # x becomes 3
+3
+
+julia&gt; hh()     # at execution g gets again a current x
+6
+
+julia&gt; ii = fun(g, ()-&gt;x, y=4);  # reference x with an anonymous function
+
+julia&gt; x += 1   # x becomes 4
+4
+
+julia&gt; ii()     # ok, g gets an updated x
+8</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/pbayer/DiscreteEvents.jl/blob/8a655620816a14899024654eeafd977b6bd1c507/src/fclosure.jl#L53-L111">source</a></section><p>Actions can be combined into tuples:</p><pre><code class="language-julia-repl">julia&gt; using DiscreteEvents
+
+julia&gt; a = 1
+1
+
+julia&gt; println(a) isa Action        # a function call is not an action
+1
+false
+
+julia&gt; fun(println, a) isa Action   # wrapped in a fun it is an action
+true
+
+julia&gt; isa(()-&gt;println(a), Action)
+true
+
+julia&gt; :(println(a)) isa Action
+true
+
+julia&gt; (()-&gt;println(a), fun(println, a), :(println(a))) isa Action
+true</code></pre><p>Actions can be scheduled for execution</p><ol><li>at given clock times and</li><li>under specified conditions.</li></ol><h2><a class="nav-anchor" id="Timed-events-1" href="#Timed-events-1">Timed events</a></h2><p>Actions can be scheduled as events at given times:</p><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.Timing" href="#DiscreteEvents.Timing"><code>DiscreteEvents.Timing</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-julia">Timing</code></pre><p>Enumeration type for scheduling events and timed conditions:</p><ul><li><code>at</code>: schedule an event at a given time,</li><li><code>after</code>: schedule an event a given time after current time,</li><li><code>every</code>: schedule an event every given time from now on,</li><li><code>before</code>: a timed condition is true before a given time,</li><li><code>until</code>: delay until t.</li></ul></div></div><a class="source-link" target="_blank" href="https://github.com/JuliaLang/julia/blob/96786e22ccabfdafd073122abb1fb69cea921e17/base/#L0-L10">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.event!-Union{Tuple{U}, Tuple{A}, Tuple{CL}, Tuple{CL,A,U}} where U&lt;:Number where A&lt;:Union{Expr, Function, Tuple} where CL&lt;:DiscreteEvents.AbstractClock" href="#DiscreteEvents.event!-Union{Tuple{U}, Tuple{A}, Tuple{CL}, Tuple{CL,A,U}} where U&lt;:Number where A&lt;:Union{Expr, Function, Tuple} where CL&lt;:DiscreteEvents.AbstractClock"><code>DiscreteEvents.event!</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-julia">event!([clk], ex, t; &lt;keyword arguments&gt;)
+event!([clk], ex, T, t; &lt;keyword arguments&gt;)</code></pre><p>Schedule an event for a given simulation time.</p><p><strong>Arguments</strong></p><ul><li><code>clk&lt;:AbstractClock</code>: clock, it not supplied, the event is scheduled to 𝐶,</li><li><code>ex&lt;:Action</code>: an expression or function or a tuple of them,</li><li><code>T::Timing</code>: a timing, one of <code>at</code>, <code>after</code> or <code>every</code>,</li><li><code>t&lt;:Number</code>: simulation time, if t &lt; clk.time set t = clk.time,</li></ul><p><strong>Keyword arguments</strong></p><ul><li><code>cycle&lt;:Number=0.0</code>: repeat cycle time for an event,</li><li><code>cid::Int=clk.id</code>: if cid ≠ clk.id, assign the event to the parallel clock   with id == cid. This overrides <code>spawn</code>,</li><li><code>spawn::Bool=false</code>: if true, spawn the event at other available threads,</li><li><code>sync::Bool=false</code>: if true, force a synchronization of all parallel clocks   before executing the event.</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DiscreteEvents, Unitful
+
+julia&gt; import Unitful: s, minute, hr
+
+julia&gt; myfunc(a, b) = a+b
+myfunc (generic function with 1 method)
+
+julia&gt; event!(𝐶, fun(myfunc, 1, 2), 1) # a 1st event to 1
+
+julia&gt; event!(𝐶, fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
+
+julia&gt; event!(𝐶, fun(myfunc, 3, 4), 1s)
+Warning: clock has no time unit, ignoring units
+
+julia&gt; setUnit!(𝐶, s)
+0.0 s
+
+julia&gt; event!(𝐶, fun(myfunc, 4, 5), 1minute)
+
+julia&gt; event!(fun(myfunc, 5, 6), after, 1hr)
+</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/pbayer/DiscreteEvents.jl/blob/8a655620816a14899024654eeafd977b6bd1c507/src/schedule.jl#L9-L54">source</a></section><h2><a class="nav-anchor" id="Conditional-events-1" href="#Conditional-events-1">Conditional events</a></h2><p>Actions can be scheduled as events under given conditions:</p><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.event!-Union{Tuple{C}, Tuple{A}, Tuple{T}, Tuple{T,A,C}} where C&lt;:Union{Expr, Function, Tuple} where A&lt;:Union{Expr, Function, Tuple} where T&lt;:DiscreteEvents.AbstractClock" href="#DiscreteEvents.event!-Union{Tuple{C}, Tuple{A}, Tuple{T}, Tuple{T,A,C}} where C&lt;:Union{Expr, Function, Tuple} where A&lt;:Union{Expr, Function, Tuple} where T&lt;:DiscreteEvents.AbstractClock"><code>DiscreteEvents.event!</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-julia">event!([clk], ex, cond; &lt;keyword arguments&gt;)</code></pre><p>Schedule ex as a conditional event, conditions cond get evaluated at each clock tick.</p><p><strong>Arguments</strong></p><ul><li><code>clk&lt;:AbstractClock</code>: if no clock is supplied, the event is scheduled to 𝐶,</li><li><code>ex&lt;:Action</code>: an expression or function or a tuple of them,</li><li><code>cond&lt;:Action</code>: a condition is true if all functions or expressions therein return true,</li><li><code>cid::Int=clk.id</code>: assign the event to the parallel clock cid. This overrides <code>spawn</code>,</li><li><code>spawn::Bool=false</code>: if true, spawn the event at other available threads.</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DiscreteEvents
+
+julia&gt; c = Clock()   # create a new clock
+Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0
+  scheduled ev:0, cev:0, sampl:0
+
+julia&gt; event!(c, fun((x)-&gt;println(tau(x), &quot;: now I&#39;m triggered&quot;), c), fun(&gt;=, fun(tau, c), 5))
+
+julia&gt; run!(c, 10)   # sampling is not exact, so it takes 502 sample steps to fire the event
+5.009999999999938: now I&#39;m triggered
+&quot;run! finished with 0 clock events, 502 sample steps, simulation time: 10.0&quot;</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/pbayer/DiscreteEvents.jl/blob/8a655620816a14899024654eeafd977b6bd1c507/src/schedule.jl#L81-L107">source</a></section><div class="admonition note"><div class="admonition-title">Use inequalities to express conditions</div><div class="admonition-text"><p>For conditions you should prefer inequalities like &lt;, ≤, ≥, &gt; to equality == in order to make sure that a condition can be detected, e.g. <code>tau() ≥ 100</code> is preferable to <code>tau() == 100</code>.</p></div></div><h2><a class="nav-anchor" id="Continuous-sampling-1" href="#Continuous-sampling-1">Continuous sampling</a></h2><p>Actions can be registered for sampling and are then executed &quot;continuously&quot; at each clock increment Δt. The default clock sample rate Δt is 0.01 time units.</p><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.sample_time!" href="#DiscreteEvents.sample_time!"><code>DiscreteEvents.sample_time!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">sample_time!([clk::Clock], Δt::N) where {N&lt;:Number}</code></pre><p>Set the clock&#39;s sample rate starting from now (<code>tau(clk)</code>).</p><p><strong>Arguments</strong></p><ul><li><code>clk::Clock</code>: if not supplied, set the sample rate on 𝐶,</li><li><code>Δt::N</code>: sample rate, time interval for sampling</li></ul></div></div><a class="source-link" target="_blank" href="https://github.com/pbayer/DiscreteEvents.jl/blob/8a655620816a14899024654eeafd977b6bd1c507/src/clock.jl#L249-L257">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="DiscreteEvents.periodic!" href="#DiscreteEvents.periodic!"><code>DiscreteEvents.periodic!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-julia">periodic!([clk], ex, Δt; spawn)</code></pre><p>Register a function or expression for periodic execution at the clock`s sample rate.</p><p><strong>Arguments</strong></p><ul><li><code>clk&lt;:AbstractClock</code>: if not supplied, it registers on 𝐶,</li><li><code>ex&lt;:Action</code>: an expression or function or a tuple of them,</li><li><code>Δt&lt;:Number=clk.Δt</code>: set the clock&#39;s sampling rate, if no Δt is given, it takes   the current sampling rate, if that is 0, it calculates one,</li><li><code>spawn::Bool=false</code>: if true, spawn the periodic event to other available threads.</li></ul></div></div><a class="source-link" target="_blank" href="https://github.com/pbayer/DiscreteEvents.jl/blob/8a655620816a14899024654eeafd977b6bd1c507/src/schedule.jl#L122-L133">source</a></section><footer><hr/><a class="previous" href="../clocks/"><span class="direction">Previous</span><span class="title">Clocks</span></a><a class="next" href="../processes/"><span class="direction">Next</span><span class="title">Processes</span></a></footer></article></body></html>
