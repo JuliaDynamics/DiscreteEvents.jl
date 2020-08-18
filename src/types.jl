@@ -6,10 +6,10 @@
 # This is a Julia package for discrete event simulation
 #
 
-"supertype for clocks in `DiscreteEvents.jl`"
+"Supertype for clocks."
 abstract type AbstractClock end
 
-"supertype for events"
+"Supertype for events."
 abstract type AbstractEvent end
 
 # abstract types for clock state machines
@@ -33,10 +33,11 @@ Enumeration type for scheduling events and timed conditions:
 """
     Action
 
-An action is either  a `Function` or an `Expr` or a `Tuple` of them. It can
-be scheduled in an event for later execution.
+An action is either  a `Function` or an `Expr` or a `Tuple` of them. 
+It can be scheduled in an event for later execution.
 
-!!! warning "Evaluating expressions is slow"
+!!! warning "Evaluating expressions is slow!"
+
     Expr should be avoided in time critical parts of applications. You will get a one
     time warning if you use them. They can be replaced easily by `fun`s or function
     closures. They are evaluated at global scope in Module `Main` only. Other modules using
@@ -52,7 +53,7 @@ A discrete event is an `Action` to be executed at an event time.
 # Arguments, fields
 - `ex::T`: a function or an expression or a tuple of them,
 - `t::Float64`: event time,
-- `Δt::Float64`: repeat rate with for repeating events.
+- `Δt::Float64`: repeat rate for repeating events.
 """
 struct DiscreteEvent{T<:Action} <: AbstractEvent
     ex::T
@@ -94,7 +95,7 @@ end
 """
     ClockException(ev::ClockEvent, value=nothing)
 
-Define a ClockException, which can be thrown to processes.
+A ClockException to be thrown at processes.
 
 # Arguments, fields
 - `ev::ClockEvent`: delivers an event to the interrupted task
@@ -109,12 +110,13 @@ end
 """
     Prc(id, f, arg...; kw...)
 
-Prepare a function to run as a process (asynchronous task) in a simulation.
+Prepare a function to run as a process (asynchronous task) in a 
+simulation.
 
 # Arguments, fields
 - `id`: some unique identification for registration,
-- `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` (a [`Clock`](@ref))
-    as its first argument,
+- `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` 
+    (a [`Clock`](@ref)) as its first argument,
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
@@ -123,7 +125,8 @@ Prepare a function to run as a process (asynchronous task) in a simulation.
 - `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
 - `state::ClockState`: process state,
 
-!!! note
+!!! note "Processes must yield!"
+
     A function started as a Prc runs in a loop. It has to give back control
     by e.g. doing a `take!(input)` or by calling [`delay!`](@ref) or [`wait!`](@ref),
     which will `yield` it. Otherwise it will starve everything else!
@@ -142,8 +145,8 @@ end
 """
     Schedule()
 
-A Schedule contains events, conditional events and sampling functions to be
-executed or evaluated on the clock's time line.
+A schedule contains events, conditional events and sampling functions 
+to be executed or evaluated on the clock's time line.
 
 # Fields
 - `events::PriorityQueue{DiscreteEvent,Float64}`: scheduled events,
@@ -159,15 +162,17 @@ mutable struct Schedule
 end
 
 """
-    ClockChannel
+    ClockChannel{T <: ClockEvent}
 
-Provide a channel to an active clock or a real time clock.
+Provide a message channel to an active clock or a real time clock.
 
 # Fields
-- `ref::Ref{Task}`: a pointer to an active clock,
-- `ch::Channel`: a communication channel to an active clock,
-- `id::Int`: the thread id of the active clock,
-- `done::Bool`: flag indicating if the active clock has completed its cycle.
+- `ref::Ref{Task}`: a reference to an active clock task, useful for diagnosis,
+- `forth::Channel{T}`: a communication channel to an active clock,
+- `back::Channel{T}`: response channel from the active clock,
+- `thread::Int`: the thread id of the active clock,
+- `done::Bool`: flag indicating if the active clock has completed its cycle,
+- `load::Int`: internal flag.
 """
 mutable struct ClockChannel{T <: ClockEvent}
     ref::Ref{Task}
@@ -185,13 +190,12 @@ A virtual clock structure, used for global and thread local clocks.
 
 # Fields
 - `id::Int`: clock ident number 1: master clock, > 1: parallel clock,
-- `ref::Union{Nothing,Ref{AbstractClock}}`: if id > 1 : *activeClock else: nothing
+- `ac::AC`: if id > 1: communication channels else: reference to active clock(s),
 - `state::ClockState`: clock state,
 - `time::Float64`: clock time,
 - `unit::FreeUnits`: time unit,
 - `end_time::Float64`: end time for simulation,
 - `Δt::Float64`: sampling time, timestep between ticks,
-- `ac::Vector{ClockChannel}`: [`channels`](@ref ClockChannel) to active clocks on parallel threads,
 - `sc::Schedule`: the clock [`Schedule`](@ref) (events, cond events and sampling),
 - `processes::Dict{Any, Prc}`: registered `Prc`es,
 - `channels::Vector{ClockChannel}`: registered channels,
