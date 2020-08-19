@@ -86,13 +86,14 @@ end
 """
     process!([clk], prc, cycles; spawn)
 
-Register a [`Prc`](@ref) to a clock, start it as an asynchronous process and
-return the `id` it was registered with. It can then be found under `clk.processes[id]`.
+Register a [`Prc`](@ref) to a clock, start an asynchronous task 
+executing the process function in a loop and return the `id` it 
+was registered with. It can then be found under `clk.processes[id]`.
 
 # Arguments
 - `c<:AbstractClock`: if not provided, the process runs under `𝐶`,
 - `prc::Prc`: it contains a function and its arguments,
-- `cycles<:Number=Inf`: number of cycles the process should run,
+- `cycles<:Number=Inf`: number of loop cycles the process should run,
 - `spawn::Bool=false`: if true, the process may be scheduled on another thread
     in parallel and registered to the thread specific clock.
 

@@ -8,7 +8,7 @@ Clocks schedule and execute *actions*, computations that happen as *events* at s
 
 ## Virtual clocks
 
-`Clock`s have virtual time and precede as fast as possible. A virtual (single-threaded) clock has always an identification number 1.
+A `Clock` is not bound to physical time and executes an event sequence as fast as possible.
 
 ```@docs
 Clock
@@ -17,7 +17,7 @@ Clock(::T) where T<:Number
 
 You can create clocks easily:
 
-```@repl usage
+```@repl clocks
 using DiscreteEvents, Unitful, .Threads
 import Unitful: s, minute, hr
 c = Clock()                  # create a unitless clock (standard)
@@ -27,28 +27,27 @@ c3 = Clock(t0=60s)           # another clock with implicit unit [s]
 c4 = Clock(1s, t0=1hr)       # here Δt's unit [s] takes precedence
 ```
 
-There is a default clock `𝐶`, which can be used for experimental work.
+There is a default clock `𝐶` for experimental work:
 
 ```@docs
 𝐶
 ```
 
-You can query the current clock time and set time units.
+You can query the current clock time:
 
 ```@docs
 tau
-setUnit!
 ```
 
 ## Parallel clocks
 
-Parallel clocks control [`ActiveClock`](@ref)s on parallel threads to support parallel simulations.
+Parallel clocks are virtual clocks with local clocks on parallel threads to support parallel simulations.
 
 !!! warning "Parallel clocks are experimental!"
 
     Working with parallel clocks over multiple threads is a new feature in v0.3 and cannot yet considered to be stable. Please develop your applications first single-threaded before going parallel. Please report any failures.
 
-A parallel clock structure consists of a master (global) clock on thread 1 and [`ActiveClock`](@ref)s on all available threads > 1. An active clock is a task running a thread local clock. The thread local clock provides the same functionality for applications as does master.
+A parallel clock structure consists of a master (global) clock on thread 1 and [`ActiveClock`](@ref)s on all available threads > 1. An active clock is a task running a thread local clock. The thread local clock can schedule and execute events locally.
 
 The master clock communicates with its parallel active clocks via message channels. It synchronizes time with the local clocks. Tasks (processes and actors) can get access to their thread local clock from it and then need to work only with the local clock.
 
@@ -59,7 +58,7 @@ pclock
 
 Parallel clocks can be identified by their thread number: the master clock works on thread 1, local clocks on parallel threads ≥ 2. They can be setup and accessed easily:
 
-```@repl usage
+```@repl clocks
 @show x=nthreads()-1;
 clk = PClock()       # now the clock has (+x) active parallel clocks
 ac2 = pclock(clk, 2) # access the active clock on thread 2
@@ -79,7 +78,7 @@ diagnose
 
 ## Real time clocks
 
-`RTClock`s schedule and execute actions on a real (system) time line. They have user defined id numbers.
+`RTClock`s schedule and execute actions on a real (system) time line.
 
 !!! warning "Real time clocks are experimental!"
 
@@ -91,7 +90,19 @@ createRTClock
 stopRTClock
 ```
 
-example
+You can work with real time clocks easily:
+
+```@repl clocks
+rtc = createRTClock(0.01, 99)     # create a real time clock
+sleep(1)
+tau(rtc)                          # query its time after a sleep
+a = [1]                           # create a mutable variable
+f(x) = x[1] += 1                  # an incrementing function 
+event!(rtc, fun(f, a), every, 1)  # increment now and then every second 
+sleep(3)                          # sleep 3 seconds
+a[1]                              # query a
+stopRTClock(rtc)                  # stop the clock
+```
 
 ## Clock operation
 
@@ -105,3 +116,15 @@ stop!
 resume!
 sync!
 ```
+
+## Units
+
+You can set time units of a virtual clock:
+
+```@docs
+setUnit!
+```
+
+!!! note
+
+    This is not yet implemented for parallel clocks!

@@ -35,13 +35,6 @@ Enumeration type for scheduling events and timed conditions:
 
 An action is either  a `Function` or an `Expr` or a `Tuple` of them. 
 It can be scheduled in an event for later execution.
-
-!!! warning "Evaluating expressions is slow!"
-
-    Expr should be avoided in time critical parts of applications. You will get a one
-    time warning if you use them. They can be replaced easily by `fun`s or function
-    closures. They are evaluated at global scope in Module `Main` only. Other modules using
-    `DiscreteEvents.jl` cannot use Expr in events and have to use functions.
 """
 const Action = Union{Function, Expr, Tuple}
 
@@ -110,8 +103,7 @@ end
 """
     Prc(id, f, arg...; kw...)
 
-Prepare a function to run as a process (asynchronous task) in a 
-simulation.
+Prepare a function to run as a process registered to a clock.
 
 # Arguments, fields
 - `id`: some unique identification for registration,
@@ -124,12 +116,6 @@ simulation.
 - `task::Union{Task,Nothing}`: a task structure,
 - `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
 - `state::ClockState`: process state,
-
-!!! note "Processes must yield!"
-
-    A function started as a Prc runs in a loop. It has to give back control
-    by e.g. doing a `take!(input)` or by calling [`delay!`](@ref) or [`wait!`](@ref),
-    which will `yield` it. Otherwise it will starve everything else!
 """
 mutable struct Prc
     id::Any
@@ -228,7 +214,7 @@ const GlobalClock = Clock{Vector{ClockChannel}}
 ```
 Clock(Δt::T=0.01; t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}
 ```
-Create a new virtual clock with id 1 (master).
+Create a new virtual clock.
 
 # Arguments
 - `Δt::T=0.01`: time increment for sampling. Δt can be set later with `sample_time!`.
@@ -236,6 +222,8 @@ Create a new virtual clock with id 1 (master).
 - `unit::FreeUnits=NoUnits`: clock time unit. Units can be set explicitely by
     setting e.g. `unit=minute` or implicitly by giving Δt as a time or else setting
     t0 to a time, e.g. `t0=60s`.
+
+The created clock has id==1 (master).
 """
 function Clock(Δt::T=0.01;
     t0::U=0, unit::FreeUnits=NoUnits) where {T<:Number,U<:Number}

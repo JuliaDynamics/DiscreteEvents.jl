@@ -14,15 +14,6 @@ function event! end
 # keywords of a `fun`. It allows Expr, Symbol and `fun` as arguments for `fun`.
 _evaluate(y) = y    # catchall, gives back the argument
 function _evaluate(y::T) where {T<:Function}
-    # try
-    #     y()
-    # catch exc
-    #     if exc isa MethodError
-    #         invokelatest(y)
-    #     else
-    #         rethrow(exc)
-    #     end
-    # end
     if (threadid() == 1) # || (parentmodule(y) != Main)
         y()
     else
@@ -65,49 +56,9 @@ execution. If `f` needs their current values at execution time there are two pos
 2.  A mutable type argument (Array, struct ...) is always current. You can
     also change its content from within a function.
 
-!!! warning "Evaluating symbols and expressions is slow"
-    Symbols and Expr should be avoided in time critical parts of applications. You will
-    get a one time warning if you use that feature. They can be replaced easily by
-    `fun`s or function closures. They are evaluated at global scope in Module `Main` only.
-    Other modules using `DiscreteEvents.jl` cannot use this feature and have to use
-    functions.
-
-# Examples
-```jldoctest; filter = r".*fclosure.jl:[0-9]+"
-julia> using DiscreteEvents
-
-julia> g(x; y=1) = x+y
-g (generic function with 1 method)
-
-julia> x = 1
-1
-
-julia> gg = fun(g, :x, y=2);   # we pass x as a symbol to fun
-
-julia> x += 1   # a becomes 2
-2
-
-julia> gg()     # at execution g gets a current x and gives a warning
-┌ Warning: Evaluating expressions is slow, use functions instead
-└ @ DiscreteEvents ~/.julia/dev/DiscreteEvents/src/fclosure.jl:37
-4
-
-julia> hh = fun(g, fun(()->x), y=3);   # reference x with an anonymous fun
-
-julia> x += 1   # x becomes 3
-3
-
-julia> hh()     # at execution g gets again a current x
-6
-
-julia> ii = fun(g, ()->x, y=4);  # reference x with an anonymous function
-
-julia> x += 1   # x becomes 4
-4
-
-julia> ii()     # ok, g gets an updated x
-8
-```
+If using `Symbol`s or `Expr` in `fun` you get a one time warning. They are 
+evaluated at global scope in Module `Main` only and therefore cannot
+be used by other modules.
 """
 @inline function fun(f::F, args::Vararg{Any, N}; kwargs...) where {F<:Function,N}
     args = ifelse(isempty(args), nothing, args)

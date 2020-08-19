@@ -177,6 +177,9 @@ end
 
 Setup a clock with parallel clocks on all available threads.
 
+When running the master clock on thread 1 will synchronize 
+time between parallel clocks every time increment `Δt`.
+
 # Arguments
 
 - `Δt::T=0.01`: time increment > 0. If given Δt ≤ 0, it gets set to 0.01.
@@ -210,8 +213,8 @@ Get a parallel clock to a given clock.
 - `id::Int=threadid()`: thread id, defaults to the caller's current thread.
 
 # Returns
-- the master `Clock` if id==1,
-- a parallel `ActiveClock` else
+- the master [`Clock`](@ref) if id==1,
+- a parallel [`ActiveClock`](@ref) else
 """
 function pclock(clk::Clock, id::Int=threadid())
     if clk.id == 1
@@ -256,7 +259,10 @@ end
 """
     onthread(f::F, tid::Int; wait::Bool=true) where {F<:Function}
 
-Execute a function f on thread tid (to speed it up).
+Execute a function `f` on thread `tid`. 
+    
+To execute `f` on a thread other than 1 can speed it up 
+significantly if it depends on asynchronous tasks.
 
 # Arguments
 - `f::Function`:     function to execute
