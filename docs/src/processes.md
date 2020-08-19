@@ -1,13 +1,17 @@
 # Processes
 
 Processes are typical event sequences implemented in a function. They
-run as asynchronous tasks and get registered to a clock.
+are run by asynchronous tasks in a loop and get registered to a clock.
 
 ```@docs
 Prc
 process!
 interrupt!
 ```
+
+!!! warning "Processes must yield!"
+
+    A process has to `yield` to Julia by e.g. doing a `take!(input)` or by calling [`delay!`](@ref) or [`wait!`](@ref). Otherwise it will starve everything else!
 
 ## Delay and wait …
 
