@@ -17,7 +17,9 @@ fun
 
 !!! warning "Evaluating expressions is slow!"
 
-    `Expr` should be avoided. You will get a one time warning if you use them. They can be replaced easily by `fun`s or function closures. They are evaluated at global scope in Module `Main` only. Other modules using `DiscreteEvents` cannot use `Expr` in events and have to use functions.
+    The use of expressions (`Expr`) and symbols (`Symbol`) in actions should be avoided. You will get a one time warning if you use them. They can be replaced easily by `fun`s or function closures. 
+    
+    They are evaluated at global scope in Module `Main` only. Other modules using `DiscreteEvents` cannot use `Expr` in events and have to use functions.
 
 Actions can be combined into tuples:
 
@@ -84,16 +86,16 @@ If for some reason and against [better advise](https://docs.julialang.org/en/v1/
 
 ```@repl events
 g(x; y=1) = x+y                 # define a function g
-x = 1;                          # define x = 1
+x = 1;                          # define a global variable x = 1
 gg = fun(g, :x, y=2);           # pass x as a symbol to g
 x += 1                          # increment x
 2
 gg()                            # now g gets a current x and gives a warning
 hh = fun(g, fun(()->x), y=3);   # reference x with an anonymous fun
-x += 1                          # x becomes 3
+x += 1                          # increment x
 hh()                            # g gets again a current x
 ii = fun(g, ()->x, y=4);        # reference x with an anonymous function
-x += 1                          # x becomes 4
+x += 1                          # increment x
 ii()                            # g gets an updated x
 ```
 

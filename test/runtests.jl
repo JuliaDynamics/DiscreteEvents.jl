@@ -48,8 +48,8 @@ end
 #     println("... no doctests with Julia $VERSION, nthreads: $(nthreads()) ...")
 # end
 #
-# @testset "examples" begin
-#     include("test_examples.jl")
-# end
+@testset "examples" begin
+    include("test_examples.jl")
+end
 
 println(".... finished testing DiscreteEvents.jl ....")
