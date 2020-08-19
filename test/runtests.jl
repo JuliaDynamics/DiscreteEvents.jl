@@ -6,7 +6,7 @@
 # This is a Julia package for discrete event simulation
 #
 
-using DiscreteEvents, Random, Unitful, Test, SafeTestsets, .Threads, DataStructures
+using DiscreteEvents, Random, Unitful, Test, .Threads, DataStructures
 import Unitful: Time, ms, s, minute, hr
 
 x = 2 # set global (Main) variable for mocking fclosure.jl doctest line 90
