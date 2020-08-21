@@ -14,11 +14,11 @@ DataStructures = "0.17"
 julia = "1"
 
 [extras]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 NBInclude = "0db19996-df87-5ea3-a455-e3a50d440464"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 
 [targets]
 test = ["Documenter", "NBInclude", "Printf", "Test", "Distributions"]

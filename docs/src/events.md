@@ -44,7 +44,7 @@ Actions can be scheduled as events at given times:
 
 ```@docs
 Timing
-event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number}
+event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
 ```
 
 ## Conditional events

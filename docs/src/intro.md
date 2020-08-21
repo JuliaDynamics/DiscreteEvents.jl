@@ -44,7 +44,7 @@ You can now schedule events to your clock. In order to demonstrate how it works 
 
 ## Inventory Control Problem
 
-An inflammable is stored in a special tank at a filling station. Customers arrive according to a Poisson process with rate ``λ`` and ask for an amount ``\,X \sim \mathcal{N}(μ, σ^2)\,|\, a<X\,`` of the product. Any demand that cannot be met is lost. Opportunities to replenish the stock in the tank occur according to a Poisson process with rate ``ρ``. The two Poisson processes are assumed to be independent of each other. For reasons of security replenishment is only allowed when the tank is empty. At those opportunities it is replenished with a fixed amount ``Q``. [^1]
+An inflammable is stored in a special tank at a filling station. Customers arrive according to a Poisson process with rate ``λ`` and ask for an amount ``\,X \sim \mathcal{N}(μ, σ^2)\,|\, a<X\,`` of the product. Any demand that cannot be met is lost. Opportunities to replenish the stock in the tank occur according to a Poisson process with rate ``ρ``. The two Poisson processes are assumed to be independent of each other. For security reasons replenishment is only allowed when the tank is empty. At those opportunities it is replenished with a fixed amount ``Q``. [^1]
 
 We are interested to study the stock in the tank and the fraction of demand that is lost.
 
@@ -64,7 +64,7 @@ mutable struct Station
 end
 ```
 
-We have two events: `customer` and `replenishment` happening in the two interacting Poisson processes:
+We have two events: `customer` and `replenishment` happening in two interacting Poisson processes:
 
 ```julia
 function customer(c::Clock, s::Station, A::Distribution, X::Distribution)
@@ -101,9 +101,9 @@ function replenish(c::Clock, s::Station, A::Distribution, Q::Float64)
 end
 ```
 
-We pass our event functions a `Clock` variable and schedule a repeat `event!` at the end of each of them.
+We pass our event functions a [`Clock`](@ref) variable, wrap them in a [`fun`](@ref) closure and schedule a repeat [`event!`](@ref) at  their end.
 
-Now we setup our constants and a simulation environment and run for 5000 virtual minutes:
+Now we setup our constants, a simulation environment, schedule our first event functions (with [`event!`](@ref) and [`fun`](@ref)) and [`run!`](@ref) for 5000 virtual minutes:
 
 ```julia
 Random.seed(123)
@@ -117,11 +117,11 @@ const M₁ = Exponential(1/λ)  # customer arrival time distribution
 const M₂ = Exponential(1/ρ)  # replenishment time distribution
 const X = TruncatedNormal(μ, σ, a, Inf)  # demand distribution
 
-clock = Clock()
+clock = Clock()    # create a clock, a fuel station and events
 s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
 event!(clock, fun(replenish, clock, s, M₂, Q), after, rand(M₂))
 event!(clock, fun(customer, clock, s, M₁, X), after, rand(M₁))
-println(run!(clock, 5000))
+println(run!(clock, 5000))   # run the clock
 
 @show fuel_sold = s.qs;
 @show loss_rate = s.ql/s.qs;
@@ -147,7 +147,7 @@ savefig("invctrl.png")
 
 ![](img/invctrl.png)
 
-If we could manage the replenishment immediately after the tank is empty, we would be much better off.
+If we could manage to replenish immediately after the tank is empty, we would be much better off.
 
 ## A-B Call Center Problem
 
@@ -174,7 +174,7 @@ mutable struct Server
 end
 ```
 
-We have two processes in our system: `serve` and `arrive`. We describe them as functions:
+We describe the processes in our system as two functions `serve` and `arrive`:
 
 ```julia
 function serve(c::Clock, s::Server, input::Channel, output::Vector{Caller}, limit::Int)
@@ -197,7 +197,9 @@ function arrive(c::Clock, A::Distribution, input::Channel, N::Int)
 end
 ```
 
-Here the two functions call a `delay!` from the clock. This will suspend the process for the required simulation time. Then we initialize our constants and simulation environment and run:
+We realize our queue as a `Channel` eventually blocking a process if it calls `take!`. Both functions call a [`delay!`](@ref) from the [`Clock`](@ref). This also suspends their process for the required simulation time. Note that the `serve` process [`stop!`](@ref)s the clock after the last caller is finished.
+
+Then we initialize our constants, setup a simulation environment, wrap our functions in a [`Prc`](@ref) and start them as [`process!`](@ref)es and [`run!`](@ref) them:
 
 ```julia
 Random.seed!(123)
@@ -213,7 +215,7 @@ s1 = Server(1, M_a, 0.0)
 s2 = Server(2, M_b, 0.0)
 process!(clock, Prc(1, serve, s1, input, output, N))
 process!(clock, Prc(2, serve, s2, input, output, N))
-process!(clock, Prc(0, arrive, M_arr, input, N), 1)
+process!(clock, Prc(0, arrive, M_arr, input, N), 1) # this runs only once
 run!(clock, 5000)
 ```
 
@@ -221,7 +223,7 @@ run!(clock, 5000)
 "run! halted with 2000 clock events, 0 sample steps, simulation time: 2302.09"
 ```
 
-We could serve 1000 callers in 2302 minutes. This is an average lead time of 2.3 min. Doesn't seem so bad.
+The clock stopped at 2302. We could serve 1000 callers in 2302 minutes. This is an average lead time of 2.3 min. Doesn't seem so bad.
 
 ```julia
 julia> s1.tbusy / clock.time
@@ -231,7 +233,7 @@ julia> s2.tbusy / clock.time
 0.7392916075330213
 ```
 
-Also our servers have been busy only about 73% of the time. But how about waiting times for callers?
+Also our servers have been busy only about 73% of the time. Could we give them some other work to do? But how about waiting times for callers?
 
 ```julia
 using Plots
@@ -242,7 +244,7 @@ savefig("ccenter.png")
 
 ![](img/ccenter.png)
 
-Waiting times often get way too long. If we want to shorten them, we must improve our service times or add more servers.
+Given the average values, here something unexpected emerges: The responsiveness of our call center is not good and waiting times often get way too long. If we want to shorten them, we must improve our service times or add more servers.
 
 ## Evaluation
 

@@ -2,14 +2,12 @@
 
 A Julia package for **discrete event generation and simulation**.
 
-**Note:** This package has been renamed and its code and examples have been updated to upcoming `v0.3`. The registered package is [`Simulate`](https://github.com/pbayer/DiscreteEvents.jl/tree/v0.2.0)
-
 `DiscreteEvents` introduces a *clock* and allows to schedule arbitrary functions or expressions as *actions* on the clock's timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
 ## Overview
 
 - [**NEWS**](news.md): What is new about this version?
-- [**Getting started**](intro.md): Get an overview and learn the basics.
+- [**Introduction**](intro.md): Get an overview and learn the basics.
 - [**Manual**](clocks.md): Get detailed informations about types, functions and macros.
 - [**Internals**](internals.md): some internal types and functions.
 - [**Troubleshooting**](troubleshooting.md): If something doesn't work as expected.
@@ -17,7 +15,7 @@ A Julia package for **discrete event generation and simulation**.
 
 ## Companion
 
-There is a companion site [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl) with more information, examples, notebooks and benchmarks.
+There is a companion site [DiscreteEventsCompanion](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/) with more information, examples, notebooks and benchmarks.
 
 ## Development
 
