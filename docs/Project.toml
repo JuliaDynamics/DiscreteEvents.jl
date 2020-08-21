@@ -1,3 +1,4 @@
 [deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
