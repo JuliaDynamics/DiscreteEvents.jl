@@ -9,74 +9,129 @@
 """
 ```
 event!([clk], ex, t; <keyword arguments>)
+event!([clk], ex, t, cy; <keyword arguments>)
 event!([clk], ex, T, t; <keyword arguments>)
 ```
-Schedule an event for a given simulation time.
+Schedule an event for a given time. 
+
+If `t` is a `Distribution`, time is evaluated as `rand(t)`.  If `cy` 
+is a `Distribution`, time is evaluated for each repetition as 
+`rand(cy)`. If the evaluated time ≤ clk.time, the event is scheduled 
+at `clk.time`.
 
 # Arguments
 - `clk<:AbstractClock`: clock, it not supplied, the event is scheduled to 𝐶,
 - `ex<:Action`: an expression or function or a tuple of them,
 - `T::Timing`: a timing, one of `at`, `after` or `every`,
-- `t<:Number`: simulation time, if t < clk.time set t = clk.time,
+- `t`: event time, `Number` or `Distribution`,
+- `cy`: repeat cycle, `Number` or `Distribution`.
 
 # Keyword arguments
-- `cycle<:Number=0.0`: repeat cycle time for an event,
 - `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
     with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the event at other available threads,
-- `sync::Bool=false`: if true, force a synchronization of all parallel clocks
-    before executing the event.
 
 # Examples
 ```jldoctest
-julia> using DiscreteEvents, Unitful
+julia> using DiscreteEvents, Distributions, Random
 
-julia> import Unitful: s, minute, hr
+julia> Random.seed!(123);
 
-julia> myfunc(a, b) = a+b
-myfunc (generic function with 1 method)
+julia> c = Clock()
+Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0
+  scheduled ev:0, cev:0, sampl:0
 
-julia> event!(𝐶, fun(myfunc, 1, 2), 1) # a 1st event to 1
+julia> f(x) = x[1] += 1
+f (generic function with 1 method)
 
-julia> event!(𝐶, fun(myfunc, 2, 3), 1) #  a 2nd event to the same time
+julia> a = [0]
+1-element Array{Int64,1}:
+ 0
 
-julia> event!(𝐶, fun(myfunc, 3, 4), 1s)
-Warning: clock has no time unit, ignoring units
+julia> event!(c, fun(f, a), 1)                     # 1st event at 1
 
-julia> setUnit!(𝐶, s)
-0.0 s
+julia> event!(c, fun(f, a), at, 2)                 # 2nd event at 2
 
-julia> event!(𝐶, fun(myfunc, 4, 5), 1minute)
+julia> event!(c, fun(f, a), after, 3)              # 3rd event after 3
 
-julia> event!(fun(myfunc, 5, 6), after, 1hr)
+julia> event!(c, fun(f, a), every, Exponential(3)) # Poisson process with λ=1/3
 
+julia> run!(c, 50)
+"run! finished with 26 clock events, 0 sample steps, simulation time: 50.0"
+
+julia> a
+1-element Array{Int64,1}:
+ 26
 ```
 """
-function event!(clk::CL, ex::A, t::U; cycle::V=0.0,
-                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
+function event!(clk::CL, ex::A, t::U; # 1st case, t isa Number
+                cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number}
     t = _tadjust(clk, t)
-    cycle = _tadjust(clk, cycle)
     t = max(t, _tadjust(clk, tau(clk)))
-
-    if cid == clk.id && spawn  # evaluate spawn only if cid == clk.id
-        cid = _spawnid(clk)
-    end
-    _assign(clk, DiscreteEvent(ex, t, cycle), cid)
+    _assign(clk, DiscreteEvent(ex, t, nothing), _cid(clk,cid,spawn))
 end
-function event!(clk::CL, ex::A, T::Timing, t::U;
-                cid::Int=clk.id, spawn::Bool=false, sync::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number}
+
+# 2nd case, x isa Distribution
+function event!(clk::CL, ex::A, x::X;
+    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,X<:Distribution}
+    t = max(rand(x), _tadjust(clk, tau(clk)))
+    _assign(clk, DiscreteEvent(ex, t, nothing), _cid(clk,cid,spawn))
+end
+
+# 3rd case, t and cy are Numbers
+function event!(clk::CL, ex::A, t::U, cy::V;
+    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
+    t = _tadjust(clk, t)
+    cy = _tadjust(clk, cy)
+    t = max(t, _tadjust(clk, tau(clk)))
+    _assign(clk, DiscreteEvent(ex, t, cy), _cid(clk,cid,spawn))
+end
+
+# 4th case, t isa Number, cy isa Distribution
+function event!(clk::CL, ex::A, t::U, cy::V;
+    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Distribution}
+    t = _tadjust(clk, t)
+    t = max(t, _tadjust(clk, tau(clk)))
+    _assign(clk, DiscreteEvent(ex, t, cy), _cid(clk,cid,spawn))
+end
+
+# 5th case, t and cy are both Distributions
+function event!(clk::CL, ex::A, t::U, cy::V;
+    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Distribution,V<:Distribution}
+    t = max(rand(t), _tadjust(clk, tau(clk)))
+    _assign(clk, DiscreteEvent(ex, t, cy), _cid(clk,cid,spawn))
+end
+
+# 6th case, Timing and Number
+function event!(clk::CL, ex::A, T::Timing, t::U; kw...) where {CL<:AbstractClock,A<:Action,U<:Number}
     t = _tadjust(clk, t)
     if T == after
-        event!(clk, ex, t+clk.time, cid=cid, spawn=spawn, sync=sync)
+        event!(clk, ex, clk.time+t; kw...)
     elseif T == every
-        event!(clk, ex, clk.time, cycle=t, cid=cid, spawn=spawn, sync=sync)
+        event!(clk, ex, t, t; kw...)
     else
-        event!(clk, ex, t, cid=cid, spawn=spawn, sync=sync)
+        event!(clk, ex, t; kw...)
     end
 end
-event!(ex::A, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, t; kw...)
-event!(ex::A, T::Timing, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, T, t; kw...)
 
+# 7th case, Timing and Distribution
+function event!(clk::CL, ex::A, T::Timing, x::X; kw...) where {CL<:AbstractClock,A<:Action,X<:Distribution}
+    if T == after
+        event!(clk, ex, clk.time+rand(x); kw...)
+    elseif T == every
+        event!(clk, ex, rand(x), x; kw...)
+    else
+        event!(clk, ex, rand(x); kw...)
+    end
+end
+# 7 cases to default clock
+event!(ex::A, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, t; kw...)
+event!(ex::A, x::X; kw...) where {A<:Action,X<:Distribution} = event!(𝐶, ex, x; kw...)
+event!(ex::A, t::N, cy::U; kw...) where {A<:Action,N<:Number,U<:Number} = event!(𝐶, ex, t, cy; kw...)
+event!(ex::A, t::N, cy::U; kw...) where {A<:Action,N<:Number,U<:Distribution} = event!(𝐶, ex, t, cy; kw...)
+event!(ex::A, t::N, cy::U; kw...) where {A<:Action,N<:Distribution,U<:Distribution} = event!(𝐶, ex, t, cy; kw...)
+event!(ex::A, T::Timing, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, T, t; kw...)
+event!(ex::A, T::Timing, X::Distribution; kw...) where A<:Action = event!(𝐶, ex, T, X; kw...)
 
 """
     event!([clk], ex, cond; <keyword arguments>)
@@ -143,15 +198,12 @@ periodic!(ex::T, Δt::U=𝐶.Δt; kw...) where {T<:Action,U<:Number} = periodic!
 periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(ac.clock, ex, Δt; kw...)
 periodic!(rtc::RTClock, ex::T, Δt::U=rtc.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(rtc.clock, ex, Δt; kw...)
 
-# Return a random number out of the thread ids of all available parallel clocks.
-# This is used for `spawn`ing tasks or events to them.
-function _spawnid(clk::Clock) :: Int
-    if isempty(clk.ac)
-        return 0
-    else
-        return rand(rng, (0, (i.id for i in clk.ac)...))
-    end
-end
+
+# Return a random number out of the thread ids of all available parallel clocks
+_spawnid(c::Clock) = isempty(c.ac) ? 1 : rand(rng, 1:(length(c.ac)+1))
+
+# return a valid clock id 
+_cid(c::Clock, cid::Int, spawn::Bool) = ifelse(cid == c.id && spawn, _spawnid(c), cid)
 
 # calculate the scale from a given number
 function _scale(n::T)::Float64 where {T<:Number}

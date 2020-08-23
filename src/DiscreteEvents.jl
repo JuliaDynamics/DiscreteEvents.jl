@@ -38,7 +38,7 @@ v"0.3.0"
 """
 const version = v"0.3.0"
 
-using Unitful, Random, DataStructures, Logging, .Threads
+using Unitful, Random, DataStructures, Logging, .Threads, Distributions
 import Unitful: FreeUnits, Time
 
 include("types.jl")

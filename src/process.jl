@@ -121,16 +121,17 @@ delay!(clk, T, t)
 Delay (suspend) a process for a time interval `Δt` on the clock `clk`.
 
 # Arguments
-- `Δt<:Number`: time interval,
+- `clk::Clock`,
+- `Δt`: time interval, `Number` or `Distribution`,
 - `T::Timing`: only `until` is accepted,
-- `t<:Number`: delay until time t if t > clk.time, else give a warning.
+- `t`: time delay, `Number` or `Distribution`.
 """
-function delay!(clk::Clock, Δt::N) where {N<:Number}
+function delay!(clk::Clock, Δt::N) where N<:Number
     c = Condition()
     event!(clk, ()->_wakeup(c), after, Δt)
     wait(c)
 end
-function delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
+function delay!(clk::Clock, T::Timing, t::N) where N<:Number
     @assert T == until "bad Timing $T for delay!"
     if t > clk.time
         c = Condition()
@@ -140,6 +141,8 @@ function delay!(clk::Clock, T::Timing, t::N) where {N<:Number}
         now!(clk, fun(println, stderr, "warning: delay until $t ≤ τ=$(tau(clk))"))
     end
 end
+delay!(clk::Clock, Δt::X) where X<:Distribution = delay!(clk, rand(Δt))
+delay!(clk::Clock, T::Timing, t::X) where X<:Distribution = delay!(clk, T, rand(t))
 
 """
     wait!(clk, cond)
@@ -147,7 +150,8 @@ end
 Delay (suspend) a process on a clock clk until a condition has become true.
 
 # Arguments
-- `cond<:Action`: a condition is is true if all expressions or functions therein return true.
+- `clk::Clock`,
+- `cond<:Action`: a condition, true if all expressions or functions therein return true.
 """
 function wait!(clk::Clock, cond::A) where {A<:Action}
     if all(_evaluate(cond))   # all conditions met
