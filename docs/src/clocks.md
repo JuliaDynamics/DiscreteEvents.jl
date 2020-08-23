@@ -117,7 +117,7 @@ resume!
 sync!
 ```
 
-## Units
+## Time units
 
 You can set time units of a virtual clock:
 

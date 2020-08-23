@@ -67,12 +67,12 @@ end
 We have two events: `customer` and `replenishment` happening in two interacting Poisson processes:
 
 ```julia
-function customer(c::Clock, s::Station, A::Distribution, X::Distribution)
+function customer(c::Clock, s::Station, X::Distribution)
     function fuel(s::Station, x::Float64)
         s.q -= x             # take x from tank
         push!(s.t, c.time)   # record time, amount, customer, sale
         push!(s.qt, s.q)
-        s.cs += 1
+        s.cs += 1            
         s.qs += x
     end
 
@@ -86,10 +86,9 @@ function customer(c::Clock, s::Station, A::Distribution, X::Distribution)
         s.cl += 1            # count the lost customer
         s.ql += x            # count the lost demand
     end
-    event!(c, fun(customer, c, s, A, X), after, rand(A))
 end
 
-function replenish(c::Clock, s::Station, A::Distribution, Q::Float64)
+function replenish(c::Clock, s::Station, Q::Float64)
     if s.q < a
         push!(s.t, c.time)
         push!(s.qt, s.q)
@@ -97,13 +96,12 @@ function replenish(c::Clock, s::Station, A::Distribution, Q::Float64)
         push!(s.t, c.time)
         push!(s.qt, s.q)
     end
-    event!(c, fun(replenish, c, s, A, Q), after, rand(A))
 end
 ```
 
-We pass our event functions a [`Clock`](@ref) variable, wrap them in a [`fun`](@ref) closure and schedule a repeat [`event!`](@ref) at  their end.
+We pass our event functions a [`Clock`](@ref) variable in order to access the clock's `c.time`.
 
-Now we setup our constants, a simulation environment, schedule our first event functions (with [`event!`](@ref) and [`fun`](@ref)) and [`run!`](@ref) for 5000 virtual minutes:
+Now we setup our constants and variables, wrap the functions in [`fun`](@ref) and schedule them as [`event!`](@ref event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number})s and [`run!`](@ref) the clock for 5000 virtual minutes:
 
 ```julia
 Random.seed(123)
@@ -119,8 +117,8 @@ const X = TruncatedNormal(μ, σ, a, Inf)  # demand distribution
 
 clock = Clock()    # create a clock, a fuel station and events
 s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
-event!(clock, fun(replenish, clock, s, M₂, Q), after, rand(M₂))
-event!(clock, fun(customer, clock, s, M₁, X), after, rand(M₁))
+event!(clock, fun(replenish, clock, s, Q), every, M₂)
+event!(clock, fun(customer, clock, s, X), every, M₁)
 println(run!(clock, 5000))   # run the clock
 
 @show fuel_sold = s.qs;
@@ -137,7 +135,7 @@ served_customers = s.cs = 1789
 lost_customers = s.cl = 708
 ```
 
-We sold 9 tanks of fuel to 1789 customers. But we could have served 708 more customers and sold nearly 40% more fuel. Clearly we have some improvement potential:
+We sold 9 tanks of fuel to 1789 customers. But we could have served 708 more customers and sell nearly 40% more fuel. Clearly we have some improvement potential:
 
 ```julia
 using Plots
@@ -153,7 +151,7 @@ If we could manage to replenish immediately after the tank is empty, we would be
 
 `DiscreteEvents` also provides process-based simulation. A process is a typical sequence of events. This is particularly useful if we can describe our system in such terms.
 
-One example is a call center with two servers, Able and Baker and a line for incoming calls. Able is more experienced and can provide service faster than Baker. We want to know if the system works and how long customers have to wait [^2].
+One example is a call center with two servers, Able and Baker and a line for incoming calls. Able is more experienced and can provide service faster than Baker. We have some assumptions about arrival and service time distributions. We want to know if the system works and how long customers have to wait [^2].
 
 First we describe some data structures for our system:
 
@@ -178,28 +176,24 @@ We describe the processes in our system as two functions `serve` and `arrive`:
 
 ```julia
 function serve(c::Clock, s::Server, input::Channel, output::Vector{Caller}, limit::Int)
-    call = take!(input)         # take a call
-    call.t₂ = c.time            # record the beginning of service time
-    ts = rand(s.S)              # calculate service time
-    delay!(c, ts)               # delay for service time
-    call.t₃ = c.time            # record the end of service time 
-    s.tbusy += ts               # log service time
-    push!(output, call)         # hang up
-    call.id ≥ limit && stop!(c) # we stop the clock if all is done
+    call = take!(input)           # take a call
+    call.t₂ = c.time              # record the beginning of service time
+    delay!(c, s.S)                # delay for service time
+    call.t₃ = c.time              # record the end of service time 
+    s.tbusy += call.t₃ - call.t₂  # log service time
+    push!(output, call)           # hang up
+    call.id ≥ limit && stop!(c)
 end
 
-function arrive(c::Clock, A::Distribution, input::Channel, N::Int)
-    for i in 1:N
-        delay!(c, rand(A))
-        call = Caller(i, c.time, 0.0, 0.0)
-        put!(input, call)
-    end
+function arrive(c::Clock, input::Channel, count::Vector{Int})
+    count[1] += 1
+    put!(input, Caller(count[1], c.time, 0.0, 0.0))
 end
 ```
 
-We realize our queue as a `Channel` eventually blocking a process if it calls `take!`. Both functions call a [`delay!`](@ref) from the [`Clock`](@ref). This also suspends their process for the required simulation time. Note that the `serve` process [`stop!`](@ref)s the clock after the last caller is finished.
+We implement our caller queue as a `Channel` eventually blocking a process if it calls `take!`. The `serve` function calls a [`delay!`](@ref) from the [`Clock`](@ref). This suspends a process for the required simulation time. Note that the `serve` process [`stop!`](@ref)s the clock after the last caller is finished.
 
-Then we initialize our constants, setup a simulation environment, wrap our functions in a [`Prc`](@ref) and start them as [`process!`](@ref)es and [`run!`](@ref) them:
+Next we initialize our constants, setup a simulation environment, wrap our servers in [`Prc`](@ref) and start them as [`process!`](@ref)es. The arrivals are an event-based Poisson process as in the first example [^3]. We [`run!`](@ref) the clock for enough time:
 
 ```julia
 Random.seed!(123)
@@ -215,25 +209,25 @@ s1 = Server(1, M_a, 0.0)
 s2 = Server(2, M_b, 0.0)
 process!(clock, Prc(1, serve, s1, input, output, N))
 process!(clock, Prc(2, serve, s2, input, output, N))
-process!(clock, Prc(0, arrive, M_arr, input, N), 1) # this runs only once
+event!(clock, fun(arrive, clock, input, count), every, M_arr)
 run!(clock, 5000)
 ```
 
-```
-"run! halted with 2000 clock events, 0 sample steps, simulation time: 2302.09"
+```julia
+"run! halted with 2005 clock events, 0 sample steps, simulation time: 2464.01"
 ```
 
-The clock stopped at 2302. We could serve 1000 callers in 2302 minutes. This is an average lead time of 2.3 min. Doesn't seem so bad.
+The clock stopped at 2464. We served 1000 callers in 2464 minutes. This is an average lead time of 2.5 min. Doesn't seem so bad.
 
 ```julia
 julia> s1.tbusy / clock.time
-0.7255027971799999
+0.7256119737495218
 
 julia> s2.tbusy / clock.time
-0.7392916075330213
+0.7422549861860762
 ```
 
-Also our servers have been busy only about 73% of the time. Could we give them some other work to do? But how about waiting times for callers?
+Also our servers have been busy only about 73% of the time. Could we give them some other work to do? How about waiting times for callers?
 
 ```julia
 using Plots
@@ -244,7 +238,7 @@ savefig("ccenter.png")
 
 ![](img/ccenter.png)
 
-Given the average values, here something unexpected emerges: The responsiveness of our call center is not good and waiting times often get way too long. If we want to shorten them, we must improve our service times or add more servers.
+Given the average values, something unexpected emerges: The responsiveness of our call center is not good and waiting times often get way too long. If we want to shorten them, we must improve our service times or add more servers.
 
 ## Evaluation
 
@@ -256,3 +250,4 @@ You can find more examples at [`DiscreteEventsCompanion`](https://pbayer.github.
 
 [^1]: This is a modified version of example 4.1.1 in Tijms: A First Course in Stochastic Models, Wiley 2003, p 143ff
 [^2]: This is a simplified version of the Able-Baker Call Center Problem in Banks, Carson, Nelson, Nicol: Discrete-Event System Simulation, Pearson 2005, p 35 ff
+[^3]: The different approaches to modeling: event-based and process-based can be combined.

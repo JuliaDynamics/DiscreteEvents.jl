@@ -44,7 +44,7 @@ Actions can be scheduled as events at given times:
 
 ```@docs
 Timing
-event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
+event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number}
 ```
 
 ## Conditional events
@@ -100,3 +100,17 @@ ii()                            # g gets an updated x
 ```
 
 If you want to modify a global variable, you have to use the `global` keyword inside your function.
+
+## Time units
+
+Timed events can be scheduled with time units. Times are converted to the clock's time unit.
+
+```@repl events
+using Unitful
+import Unitful: s, minute, hr
+c = Clock()
+event!(c, fun(f, a), 1s)
+setUnit!(c, s)
+event!(c, fun(f, a), 1minute)
+event!(c, fun(f, a), after, 1hr)
+```

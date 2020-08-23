@@ -13,7 +13,7 @@ mutable struct Station
     ql::Float64          # lost sales
 end
 
-function customer(c::Clock, s::Station, A::Distribution, X::Distribution)
+function customer(c::Clock, s::Station, X::Distribution)
     function fuel(s::Station, x::Float64)
         s.q -= x             # take x from tank
         push!(s.t, c.time)   # record time, amount, customer, sale
@@ -32,10 +32,9 @@ function customer(c::Clock, s::Station, A::Distribution, X::Distribution)
         s.cl += 1            # count the lost customer
         s.ql += x            # count the lost demand
     end
-    event!(c, fun(customer, c, s, A, X), after, rand(A))
 end
 
-function replenish(c::Clock, s::Station, A::Distribution, Q::Float64)
+function replenish(c::Clock, s::Station, Q::Float64)
     if s.q < a
         push!(s.t, c.time)
         push!(s.qt, s.q)
@@ -43,7 +42,6 @@ function replenish(c::Clock, s::Station, A::Distribution, Q::Float64)
         push!(s.t, c.time)
         push!(s.qt, s.q)
     end
-    event!(c, fun(replenish, c, s, A, Q), after, rand(A))
 end
 
 Random.seed!(123)
@@ -59,8 +57,8 @@ const X = TruncatedNormal(μ, σ, a, Inf)  # demand distribution
 
 clock = Clock()
 s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
-event!(clock, fun(replenish, clock, s, M₂, Q), after, rand(M₂))
-event!(clock, fun(customer, clock, s, M₁, X), after, rand(M₁))
+event!(clock, fun(replenish, clock, s, Q), every, M₂)
+event!(clock, fun(customer, clock, s, X), every, M₁)
 println(run!(clock, 5000))
 
 @show fuel_sold = s.qs;
