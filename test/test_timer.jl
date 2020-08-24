@@ -5,7 +5,7 @@
 #
 # This is a Julia package for discrete event simulation
 #
-using DiscreteEvents
+using DiscreteEvents, .Threads
 
 sleeptime = 0.01
 println("... testing real time clock ...")
@@ -13,7 +13,8 @@ println("... testing real time clock ...")
 rtc = createRTClock(0.01, 4711)
 stopRTClock(rtc)
 rtc.time = 4711.0
-str = "RTClock 4711 on thread 8: state=:idle, t=4711.0 s, T=0.01 s, prc:0\n   scheduled ev:0, cev:0, sampl:0\n"
+thrd = nthreads()
+str = "RTClock 4711 on thread $thrd: state=:idle, t=4711.0 s, T=0.01 s, prc:0\n   scheduled ev:0, cev:0, sampl:0\n"
 @test repr(rtc) == str
 
 rtc = createRTClock(0.01, 4711)
