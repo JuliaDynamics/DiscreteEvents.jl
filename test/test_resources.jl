@@ -5,6 +5,7 @@
 #
 # This is a Julia package for discrete event simulation
 #
+using DiscreteEvents, DataStructures
 
 println("... basic tests: resources  ...")
 
