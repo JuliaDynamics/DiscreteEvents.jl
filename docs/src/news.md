@@ -27,18 +27,19 @@ multithreading, resource handling and a streamlined documentation.
 ## New functionality in v0.3.0
 
 - [`Action`](@ref) is introduced as synonym for `Union{Function,Expr,Tuple}`,
-- thereby in addition to `fun`, you can now schedule arbitrary function closures as events,  
+- thereby in addition to [`fun`](@ref), you can now schedule arbitrary function closures as events,  
 - [`periodic!`](@ref) takes an `Action` as argument,
 - you can pass also symbols, expressions or other `fun`s or function closures as arguments to [`fun`](@ref). They get evaluated at event time before being passed to the event function,
 - [`DiscreteEvents.version`](@ref) gives now the package version,
 - `DiscreteEvents.jl` is now much faster due to optimizations,
 - [`onthread`](@ref) allows simulations with asynchronous tasks (processes and actors) to run much faster on threads other than 1,
 - [`Resource`](@ref) provides an API for modeling limited resources,
-- you can now create a real time clock [`RTClock`](@ref) and schedule events to it,
+- you can now create a real time clock [`RTClock`](@ref) and schedule events to it (experimental),
 - actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty,
-- processes and actors (asynchronous tasks) can transfer IO-operations to the clock with [`now!`](@ref) or print directly via the clock.
+- processes and actors (asynchronous tasks) can transfer IO-operations to the clock with [`now!`](@ref) or print directly via the clock,
+- `event!` and `delay!` now also accept stochastic time variables (`Distribution`).
 
-### Multithreading (still in the making)
+### Multithreading (experimental)
 
 - The data structure of [`Clock`](@ref) has been changed, it now has a field `ac` providing channels to parallel clocks,  
 - [`PClock`](@ref) sets up a clock with parallel active clocks on each available thread,

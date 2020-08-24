@@ -32,17 +32,18 @@ if DiscreteEvents._handle_exceptions[1]
 end
 
 println("... testing channel and active clock ...")
-a = 0
-ev = DiscreteEvents.DiscreteEvent(fun(()->global a+=1),1.0,0.0)
+a = [0.0]
+b = [0.0]
+incr!(x) = x[1] += 1
+ev = DiscreteEvents.DiscreteEvent(fun(incr!, a),1.0,nothing)
 put!(clk.ac[1].forth, DiscreteEvents.Register(ev))
 sleep(sleeptime)
 @test length(c2.clock.sc.events) == 1
-cev = DiscreteEvents.DiscreteCond(fun(≥, fun(tau, c2), 5), fun(()->global a+=1))
+cev = DiscreteEvents.DiscreteCond(fun(≥, fun(tau, c2), 5), fun(incr!, a))
 put!(clk.ac[1].forth, DiscreteEvents.Register(cev))
 sleep(sleeptime)
 @test length(c2.clock.sc.cevents) == 1
-b = 0
-sp = DiscreteEvents.Sample(fun(()->global b+=1))
+sp = DiscreteEvents.Sample(fun(incr!, b))
 put!(clk.ac[1].forth, DiscreteEvents.Register(sp))
 sleep(sleeptime)
 @test length(c2.clock.sc.samples) == 1
@@ -51,20 +52,20 @@ println("... run parallel clock 2 (thread 2) ...")
 # put!(clk.ac[1].forth, DiscreteEvents.Run(10.0))
 # @test take!(clk.ac[1].back).t > 0
 # sleep(sleeptime)
-tns = 0
+tns = [0]
 t1 = time_ns()
-iter = 0
+iter = [0]
 while (c2.clock.time+Δt) ≤ 10
     put!(clk.ac[1].forth, DiscreteEvents.Run(Δt, false))
-    global tns += take!(clk.ac[1].back).t
-    global iter += 1
+    tns[1] += take!(clk.ac[1].back).t
+    iter[1] += 1
 end
 t1 = time_ns() - t1
-println("$iter ticks took $(Int(t1)*1e-9) s, clock time $(Int(tns)*1e-9) s")
+println("$iter ticks took $(Int(t1)*1e-9) s, clock time $(Int(tns[1])*1e-9) s")
 @test c2.clock.time ≈ 10
 @test c2.clock.scount == 1000
-@test a == 2
-@test b == 1000
+@test a[1] == 2
+@test b[1] == 1000
 
 println("... parallel clock 1 reset ...")
 put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
@@ -73,8 +74,8 @@ put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
 @test c2.clock.scount == 0
 
 println("... testing register(!) five cases ... ")
-ev1 = DiscreteEvents.DiscreteEvent(fun(()->global a+=1),1.0,0.0)
-ev2 = DiscreteEvents.DiscreteEvent(fun(()->global a+=1),2.0,0.0)
+ev1 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 1.0, 0.0)
+ev2 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 2.0, 0.0)
 DiscreteEvents._register(clk, ev1, 1)              # 1. register ev1 to clk
 @test DiscreteEvents._nextevent(clk) == ev1
 DiscreteEvents._register(clk, ev1, 2)              # 2. register ev1 to 1st parallel clock
@@ -128,17 +129,17 @@ resetClock!(clk)                            # test resetClock! on multiple clock
 @test sum(length(c.sc.events) for c in clock) == 0
 println("    resetClock!     ok")
 
-a = zeros(Int, nthreads())
-event!(clk, ()->a[1]+=1, 1)
+c = zeros(Int, nthreads())
+event!(clk, ()->c[1]+=1, 1)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(clk, ()->a[2]+=1, 1, cid=1)
+event!(clk, ()->c[2]+=1, 1, cid=1)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(c2,  ()->a[2]+=1, 2)
+event!(c2,  ()->c[2]+=1, 2)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(c2,  ()->a[1]+=1, 2, cid=2)
+event!(c2,  ()->c[1]+=1, 2, cid=2)
 sleep(sleeptime); @test clocks_ok(clk)
 if nthreads() > 2
-    event!(c3,  ()->a[3]+=1, 1, cid=3)
+    event!(c3,  ()->c[3]+=1, 1, cid=3)
     sleep(sleeptime); @test clocks_ok(clk)
 end
 sleep(sleeptime)
@@ -149,9 +150,9 @@ error = false
 @test !error
 println("    distributed events ok")
 run!(clk, 3)
-@test a[1] == 2
-@test a[2] == 2
-nthreads() > 2 && @test a[3] == 1
+@test c[1] == 2
+@test c[2] == 2
+nthreads() > 2 && @test c[3] == 1
 println("    first parallel run ok")
 
 println("... collapse! ...")

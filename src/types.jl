@@ -39,22 +39,27 @@ It can be scheduled in an event for later execution.
 const Action = Union{Function, Expr, Tuple}
 
 """
-    DiscreteEvent{T<:Action} <: AbstractEvent
-
-A discrete event is an `Action` to be executed at an event time.
+````
+DiscreteEvent{T<:Action, X} <: AbstractEvent
+```
+A discrete event is an [`Action`](@ref) to be executed at an event time.
 
 # Arguments, fields
 - `ex::T`: a function or an expression or a tuple of them,
 - `t::Float64`: event time,
-- `Δt::Float64`: repeat rate for repeating events.
+- `Δt::X`: repeat rate (Float64, Distribution or Nothing)
 """
-struct DiscreteEvent{T<:Action} <: AbstractEvent
+struct DiscreteEvent{T<:Action, X} <: AbstractEvent
     ex::T
     t::Float64
-    Δt::Float64
+    Δt::X
 end
-DiscreteEvent(ex::T, t::Real, Δt::Real) where {T<:Action} =
-    DiscreteEvent(ex, float(t), float(Δt))
+# DiscreteEvent(ex::T, t::U, Δt::V) where {T<:Action, U<:Real, V<:Real} =
+#     DiscreteEvent{typeof(ex),Float64}(ex, float(t), float(Δt))
+# DiscreteEvent(ex::T, t::U, Δt::X) where {T<:Action, U<:Real, X<:Distribution} =
+#     DiscreteEvent{typeof(ex), typeof(Δt)}(ex, float(t), Δt)
+# DiscreteEvent(ex::T, t::U) where {T<:Action, U<:Real} =
+#     DiscreteEvent{typeof(ex),Nothing}(ex, float(t), nothing)
 
 """
     DiscreteCond{S<:Action, T<:Action} <: AbstractEvent

@@ -5,6 +5,7 @@
 #
 # This is a Julia package for discrete event simulation
 #
+using DiscreteEvents, Random
 
 println("... basic tests: processes ...")
 simex = DiscreteEvents.ClockException(DiscreteEvents.Stop())
@@ -108,27 +109,27 @@ r = [i[1] for i in res]
 @test res[3][4] == 201
 @test b == 801
 
-a = 1
-function testdelay(clk::Clock)
+a = [1]
+function testdelay(clk::Clock, x)
     delay!(clk, at, 2)
-    global a += 10
+    x[1] += 10
 end
 
-function testdelay2(clk::Clock)
+function testdelay2(clk::Clock, x)
     delay!(clk, until, 5)
-    global a += 1
+    x[1] += 1
 end
 
 resetClock!(𝐶)
-process!(Prc(1, testdelay), 3)
-process!(Prc(2, testdelay2), 3)
+process!(Prc(1, testdelay, a), 3)
+process!(Prc(2, testdelay2, a), 3)
 run!(𝐶, 10)
 
 @test 𝐶.processes[1].task.state == :failed
-@test a == 4
+@test a[1] == 4
 
-testnow(c) = (delay!(c, 1); global a += 1; now!(c, fun(println, "$(tau(c)): a is $a")))
+testnow(c, x) = (delay!(c, 1); x[1] += 1; now!(c, fun(println, "$(tau(c)): x is $(x[1])")))
 resetClock!(𝐶)
-process!(Prc(1, testnow), 3)
+process!(Prc(1, testnow, a), 3)
 run!(𝐶, 5)
-@test a == 7
+@test a[1] == 7
