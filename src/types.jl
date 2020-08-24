@@ -338,4 +338,5 @@ mutable struct RTClock{E <: ClockEvent} <: AbstractClock
     time::Float64
     t0::Float64
     T::Float64
+    task::Task
 end

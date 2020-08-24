@@ -175,7 +175,10 @@ end
 event!( ex::A, cond::C; kw...) where {A<:Action,C<:Action} = event!(𝐶, ex, cond; kw...)
 
 """
-    periodic!([clk], ex, Δt; spawn)
+```
+periodic!([clk], ex, Δt; spawn)
+periodic!(clk, ex)
+```
 
 Register a function or expression for periodic execution at the clock`s sample rate.
 
@@ -196,7 +199,7 @@ function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
 end
 periodic!(ex::T, Δt::U=𝐶.Δt; kw...) where {T<:Action,U<:Number} = periodic!(𝐶, ex, Δt; kw...)
 periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(ac.clock, ex, Δt; kw...)
-periodic!(rtc::RTClock, ex::T, Δt::U=rtc.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(rtc.clock, ex, Δt; kw...)
+periodic!(rtc::RTClock, ex::T) where T<:Action = _assign(rtc, Sample(ex))
 
 
 # Return a random number out of the thread ids of all available parallel clocks
@@ -258,7 +261,7 @@ function _register!(c::Clock, cond::DiscreteCond)
 end
 _register!(c::Clock, sp::Sample) = ( push!(c.sc.samples, sp); nothing )
 _register!(ac::ActiveClock, ev::T) where {T<:AbstractEvent} = _register!(ac.clock, ev)
-_register!(rtc::RTClock, ev::T) where {T<:AbstractEvent} = _register!(rtc.clock, ev)
+_register!(rtc::RTClock, ev::T) where {T<:AbstractEvent} = put!(rtc.cmd, Register(ev))
 
 # Register an event to another clock via a channel.
 # - c::Clock: a master clock can forward events to active clocks,
