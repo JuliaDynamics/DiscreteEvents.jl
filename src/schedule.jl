@@ -204,6 +204,8 @@ _spawnid(c::Clock) = isempty(c.ac) ? 1 : rand(rng, 1:(length(c.ac)+1))
 
 # return a valid clock id 
 _cid(c::Clock, cid::Int, spawn::Bool) = ifelse(cid == c.id && spawn, _spawnid(c), cid)
+_cid(ac::ActiveClock, cid::Int, spawn::Bool) = _cid(ac.clock, cid, spawn)
+_cid(rtc::RTClock, cid::Int, spawn::Bool) = rtc.id
 
 # calculate the scale from a given number
 function _scale(n::T)::Float64 where {T<:Number}

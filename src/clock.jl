@@ -242,7 +242,7 @@ function _tadjust(clk::Clock, t::Unitful.Time) :: Float64
         return uconvert(clk.unit, t).val
     end
 end
-_tadjust(clk::Clock, t::T) where {T<:Number} = t
+_tadjust(clk::Clock, t::T) where {T<:Number} = float(t)
 _tadjust(ac::ActiveClock, t::T) where {T<:Number} = _tadjust(ac.clock, t)
 _tadjust(rtc::RTClock, t::T) where {T<:Number} = _tadjust(rtc.clock, t)
 
