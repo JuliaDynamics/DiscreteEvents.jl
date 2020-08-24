@@ -28,10 +28,14 @@ step!(RTC::RTClock, ::Idle, ::Start) = (RTC.clock.evcount = 0; RTC.clock.scount 
 step!(RTC::RTClock, ::ClockState, ::Query) = put!(RTC.back, Response(RTC))
 
 # reset an rt clock
-step!(RTC::RTClock, ::Union{Idle, Busy}, σ::Reset) = resetClock!(rtc.clock, t0=time_ns()*1e-9)
+function step!(RTC::RTClock, ::Union{Idle, Busy}, ::Reset) 
+    RTC.t0 = time_ns()*1e-9
+    RTC.clock.evcount = 0
+    RTC.clock.scount = 0
+end
 
 # register an event to the rt clock
-step!(RTC::RTClock, ::Union{Idle, Busy}, σ::Register) = _assign(RTC, σ.x, RTC.id)
+step!(RTC::RTClock, ::Union{Idle, Busy}, σ::Register) = _register!(RTC.clock, σ.x)
 
 # fallback transition
 step!(RTC::RTClock, q::ClockState, σ::ClockEvent) = error("transition q=$q, σ=$σ not implemented")
@@ -43,6 +47,7 @@ function _RTClock(rtc::RTClock)
     sf = Array{Base.StackTraces.StackFrame,1}[]
     exc = nothing
     rtc.clock.state = Idle()
+    rtc.task = current_task()
 
     while true
         if isready(rtc.cmd)
@@ -57,7 +62,6 @@ function _RTClock(rtc::RTClock)
                 catch exc
                     sf = stacktrace(catch_backtrace())
                     @warn "clock $(rtc.id), thread $(rtc.thread) exception: $exc"
-                    put!(resp, Error(exc))  # send error to avoid master hangs
                 end
             else
                 step!(rtc, rtc.clock.state, σ)
@@ -65,7 +69,7 @@ function _RTClock(rtc::RTClock)
         end
         rtc.time = time_ns()*1e-9 - rtc.t0
         while !isempty(rtc.clock.sc.samples) && rtc.clock.tn ≤ rtc.time
-            _tick(rtc.clock)
+            _tick!(rtc.clock)
             rtc.clock.tn += rtc.clock.Δt
         end
         while !isempty(rtc.clock.sc.events) && _nextevtime(rtc.clock) ≤ rtc.time
@@ -99,7 +103,7 @@ function createRTClock(T::Float64, id::Int, thrd::Int=nthreads(); ch_size::Int=2
     rtc = RTClock(
             Timer(T, interval=T), Clock(),
             Channel{ClockEvent}(ch_size), Channel{ClockEvent}(ch_size),
-            id, thrd, 0.0, time_ns()*1e-9, T)
+            id, thrd, 0.0, time_ns()*1e-9, T, current_task())
     rtc.clock.id = id
     onthread(thrd, wait=false) do
         _RTClock(rtc)
