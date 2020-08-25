@@ -37,9 +37,8 @@ _invoke(f::F, ::Nothing, ::Nothing) where {F<:Function} = f()
 _invoke(f::F, arg::T, ::Nothing) where {F<:Function,T<:Tuple{Vararg{<:Any}}} = f(_evaluate.(arg)...)
 _invoke(f::F, ::Nothing, kw) where {F<:Function} = f(; _evaluate(kw)...)
 _invoke(f::F, arg::T, kw) where {F<:Function,T<:Tuple{Vararg{<:Any}}} = f(_evaluate.(arg)...; _evaluate(kw)...)
-_invoke(f::typeof(event!), arg::T, ::Nothing) where {T<:Tuple{Vararg{<:Any}}} = f(arg...)
-_invoke(f::typeof(event!), ::Nothing, kw) = f(; kw...)
-_invoke(f::typeof(event!), arg::T, kw) where {T<:Tuple{Vararg{<:Any}}} = f(arg..., kw...)
+_invoke(f::typeof(event!), arg::T, ::Nothing) where T<:Tuple{Vararg{<:Any}} = f(arg...)
+_invoke(f::typeof(event!), arg::T, kw) where T<:Tuple{Vararg{<:Any}} = f(arg...; kw...)
 
 """
     fun(f::Function, args...; kwargs...)

@@ -54,9 +54,3 @@ end
 struct Step <: ClockEvent end
 struct Stop <: ClockEvent end
 struct Sync <: ClockEvent end
-
-# --- default transition for clocks
-function step!(A::AbstractClock, q::ClockState, σ::ClockEvent)
-    println(stderr, "Warning: undefined transition ",
-            "$(typeof(A)), ::$(typeof(q)), ::$(typeof(σ)))")
-end

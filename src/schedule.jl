@@ -206,8 +206,25 @@ periodic!(rtc::RTClock, ex::T) where T<:Action = _assign(rtc, Sample(ex))
 _spawnid(c::Clock) = isempty(c.ac) ? 1 : rand(rng, 1:(length(c.ac)+1))
 
 # return a valid clock id 
-_cid(c::Clock, cid::Int, spawn::Bool) = ifelse(cid == c.id && spawn, _spawnid(c), cid)
-_cid(ac::ActiveClock, cid::Int, spawn::Bool) = _cid(ac.clock, cid, spawn)
+function _cid(c::Clock, cid::Int, spawn::Bool)
+    if c.id == cid
+        return ifelse(spawn, _spawnid(c), cid)
+    elseif c.id == 1
+        isempty(c.ac) && return 1
+        cid ∈ (eachindex(c.ac).+1) && return cid
+        return ifelse(spawn, _spawnid(c), 1) 
+    else
+        _cid(c.ac, cid, spawn)
+    end
+end
+function _cid(ac::ActiveClock, cid::Int, spawn::Bool) 
+    if ac.id == cid
+        return ifelse(spawn, _spawnid(ac.master[]), cid)
+    else
+        cid ∈ (eachindex(ac.master[].ac).+1) && return cid
+        return ifelse(spawn, _spawnid(ac.master[]), ac.id)
+    end
+end
 _cid(rtc::RTClock, cid::Int, spawn::Bool) = rtc.id
 
 # calculate the scale from a given number

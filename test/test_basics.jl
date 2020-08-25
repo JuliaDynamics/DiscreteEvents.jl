@@ -37,39 +37,45 @@ sf1 = fun(h, a, b, c=c, d=d)
 sf2 = fun(h, :a, :b, c=:c, d=:d)
 sf3 = fun(h, a, b, c=c, d=d)
 sf4 = fun(h, :a, :b, c=:c, d=:d)
-@test DiscreteEvents._evaluate(sf1) == 50
-@test DiscreteEvents._evaluate(sf2) == 50
-@test DiscreteEvents._evaluate(sf3) == 50
-@test DiscreteEvents._evaluate(sf4) == 50
+sf5 = fun(i, a=a, b=b)
+sf6 = fun(event!, fun(f, a), 1, cid=2, spawn=true)
+@test sf1() == 50
+@test sf2() == 50
+@test sf3() == 50
+@test sf4() == 50
+@test sf5() == 23
+sf6()
+ev = DiscreteEvents._nextevent(𝐶)
+@test ev.ex() == 14
 a = 21; b = 22; c = 23; d = 24;
-@test DiscreteEvents._evaluate(sf1) == 50
-@test DiscreteEvents._evaluate(sf2) == 90
-@test DiscreteEvents._evaluate(fun(h, :a, 2, c=:c, d=4)) == 50
-@test DiscreteEvents._evaluate(fun(j, :unknown))
-@test DiscreteEvents._evaluate(fun(<=, fun(tau), 1))
+@test sf1() == 50
+@test sf2() == 90
+@test fun(h, :a, 2, c=:c, d=4)() == 50
+@test fun(j, :unknown)()
+@test fun(<=, fun(tau), 1)()
 
-@test DiscreteEvents._evaluate((fun(i, a=10, b=20))) == 30
+@test fun(i, a=10, b=20)() == 30
 
 # one expression
-ev = DiscreteEvents.DiscreteEvent(:(1+1), 10.0, 0.0)
+ev = DiscreteEvents.DiscreteEvent(:(1+1), 10.0, nothing)
 @test DiscreteEvents._evaluate(ev.ex) == 2
 @test ev.t == 10
 
 # two expressions
-ev = DiscreteEvents.DiscreteEvent((:(1+1), :(1+2)), 15.0, 0.0)
+ev = DiscreteEvents.DiscreteEvent((:(1+1), :(1+2)), 15.0, nothing)
 @test DiscreteEvents._evaluate(ev.ex) == (2, 3)
 @test ev.t == 15
 
 # one fun
-ev = DiscreteEvents.DiscreteEvent(fun(f, 1), 10.0, 0.0)
+ev = DiscreteEvents.DiscreteEvent(fun(f, 1), 10.0, nothing)
 @test DiscreteEvents._evaluate(ev.ex) == 4
 
 # two funs
-ev = DiscreteEvents.DiscreteEvent((fun(f, 1), fun(g, 1)), 10.0, 0.0)
+ev = DiscreteEvents.DiscreteEvent((fun(f, 1), fun(g, 1)), 10.0, nothing)
 @test DiscreteEvents._evaluate(ev.ex) == (4, 5)
 
 # expressions and funs mixed in a tuple
-ev = DiscreteEvents.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), 10.0, 0.0)
+ev = DiscreteEvents.DiscreteEvent((:(1+1), fun(g,2), :(1+2), fun(f, 1)), 10.0, nothing)
 @test sum([DiscreteEvents._evaluate(ex) for ex in ev.ex if ex isa Function]) == 10
 @test sum([eval(ex) for ex in ev.ex if isa(ex, Expr)]) == 5
 @test DiscreteEvents._evaluate(ev.ex) == (2, 6, 3, 4)
