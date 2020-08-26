@@ -186,29 +186,35 @@ now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time, cid=1)
 
 """
 ```
-print(clk::Clock, [io::IO], xs...)
+print(clk::Clock, [io::IO], x, xs...)
 ```
-Let the clock `clk` print out `xs` to `io` (or to `stdout`).
+Create a [`now!`](@ref) event to a busy clock `clk` to `print(x, xs...)` 
+to `io` (or to `stdout`).
+
+If the clock is not busy, `x` and `xs...` are printed as usual.
+`print(clk)` still prints `repr(clk)`.
 """
-Base.print(clk::Clock, x) = now!(clk, fun(print, x))
-Base.print(clk::Clock, io::IO, x) = now!(clk, fun(print, io, x))
-function Base.print(clk::Clock, io::IO, xs...)
-    for x in xs
-        print(clk, io, x)
+function Base.print(clk::Clock, io::IO, x, xs...)
+    if clk.state == Busy()
+        now!(clk, fun(print, io, x))
+        for x_ in xs
+            now!(clk, fun(print, io, x_))
+        end
+    else
+        print(io, x, xs...)
     end
 end
-function Base.print(clk::Clock, xs...)
-    for x in xs
-        print(clk, x)
-    end
-end
+Base.print(clk::Clock, x, xs...) = print(clk, stdout, x, xs...)
 
 """
 ```
 println(clk::Clock, [io::IO], xs...)
 ```
-Let the clock `clk` print out `xs` to `io` (or to `stdout`)
-followed by a newline.
+Create a [`now!`](@ref) event to a busy clock `clk` to `println(x, xs...)` 
+to `io` (or to `stdout`).
+
+If the clock is not busy, `x` and `xs...` are printed as usual.
+`println(clk)` still prints `repr(clk)`.
 """
-Base.println(clk, xs...) = print(clk, xs..., '\n')
-Base.println(clk, io::IO, xs...) = print(clk, io, xs..., '\n')
+Base.println(clk::Clock, io::IO, x, xs...) = print(clk, io, x, xs..., '\n')
+Base.println(clk::Clock, x, xs...) = print(clk, x, xs..., '\n')

@@ -1,5 +1,9 @@
 # Resources
 
+```@meta
+CurrentModule = DiscreteEvents
+```
+
 Shared resources with limited capacity are often needed in simulations.
 
 1. One approach to model them, is to use Julia [`Channel`](https://docs.julialang.org/en/v1/base/parallel/#Base.Channel)s with their API. This is thread-safe and thus should be preferred for multithreading applications.

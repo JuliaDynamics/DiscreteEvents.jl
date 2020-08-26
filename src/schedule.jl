@@ -142,7 +142,10 @@ Schedule ex as a conditional event, conditions cond get evaluated at each clock 
 - `clk<:AbstractClock`: if no clock is supplied, the event is scheduled to 𝐶,
 - `ex<:Action`: an expression or function or a tuple of them,
 - `cond<:Action`: a condition is true if all functions or expressions therein return true,
-- `cid::Int=clk.id`: assign the event to the parallel clock cid. This overrides `spawn`,
+
+# Keyword arguments
+- `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
+    with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the event at other available threads.
 
 # Examples
@@ -165,10 +168,7 @@ function event!(clk::T, ex::A, cond::C;
     if _busy(clk) && all(_evaluate(cond))   # all conditions met
         _evaluate(ex)                      # execute immediately
     else
-        if cid == clk.id && spawn  # evaluate spawn only if cid == clk.id
-            cid = _spawnid(clk)
-        end
-        _assign(clk, DiscreteCond(cond, ex), cid)
+        _assign(clk, DiscreteCond(cond, ex), _cid(clk,cid,spawn))
     end
     return nothing
 end
@@ -187,15 +187,19 @@ Register a function or expression for periodic execution at the clock`s sample r
 - `ex<:Action`: an expression or function or a tuple of them,
 - `Δt<:Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
     the current sampling rate, if that is 0, it calculates one,
+
+# Keyword arguments
+- `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
+    with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the periodic event to other available threads.
 """
 function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
-                   spawn=false) where {T<:Action,U<:Number}
+                cid::Int=clk.id, spawn=false) where {T<:Action,U<:Number}
    # clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
    if Δt == 0  # pick a sample rate
        clk.Δt = clk.evcount == 0 ? 0.01 : _scale(clk.time/clk.evcount)/100
    end
-    _assign(clk, Sample(ex), spawn ? _spawnid(clk) : 0)
+    _assign(clk, Sample(ex), _cid(clk,cid,spawn))
 end
 periodic!(ex::T, Δt::U=𝐶.Δt; kw...) where {T<:Action,U<:Number} = periodic!(𝐶, ex, Δt; kw...)
 periodic!(ac::ActiveClock, ex::T, Δt::U=ac.clock.Δt; kw...) where {T<:Action,U<:Number} = periodic!(ac.clock, ex, Δt; kw...)
@@ -203,11 +207,37 @@ periodic!(rtc::RTClock, ex::T) where T<:Action = _assign(rtc, Sample(ex))
 
 
 # Return a random number out of the thread ids of all available parallel clocks
-_spawnid(c::Clock) = isempty(c.ac) ? 1 : rand(rng, 1:(length(c.ac)+1))
+function _spawnid(c::Clock) 
+    if c.id == 1
+        return ifelse(isempty(c.ac), 1, rand(rng, 1:(length(c.ac)+1)))
+    elseif isempty(c.ac)
+        return c.id
+    else
+        return _spawnid(c.ac[])
+    end
+end
+_spawnid(ac::ActiveClock) = _spawnid(ac.master[])
 
 # return a valid clock id 
-_cid(c::Clock, cid::Int, spawn::Bool) = ifelse(cid == c.id && spawn, _spawnid(c), cid)
-_cid(ac::ActiveClock, cid::Int, spawn::Bool) = _cid(ac.clock, cid, spawn)
+function _cid(c::Clock, cid::Int, spawn::Bool)
+    if c.id == cid
+        return ifelse(spawn, _spawnid(c), cid)
+    elseif c.id == 1
+        isempty(c.ac) && return 1
+        cid ∈ (eachindex(c.ac).+1) && return cid
+        return ifelse(spawn, _spawnid(c), 1) 
+    else
+        _cid(c.ac[], cid, spawn)
+    end
+end
+function _cid(ac::ActiveClock, cid::Int, spawn::Bool) 
+    if ac.id == cid
+        return ifelse(spawn, _spawnid(ac.master[]), cid)
+    else
+        cid ∈ 1:(length(ac.master[].ac).+1) && return cid
+        return ifelse(spawn, _spawnid(ac.master[]), ac.id)
+    end
+end
 _cid(rtc::RTClock, cid::Int, spawn::Bool) = rtc.id
 
 # calculate the scale from a given number
