@@ -9,6 +9,8 @@ using DiscreteEvents
 
 println("... basic tests: printing  ...")
 resetClock!(𝐶)
+println(𝐶)
+println(𝐶, stdout, 1, 2, 3)
 DiscreteEvents.prettyClock(true)
 str = "Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0\n  scheduled ev:0, cev:0, sampl:0\n"
 @test repr(𝐶) == str

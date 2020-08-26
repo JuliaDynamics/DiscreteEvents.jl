@@ -32,6 +32,6 @@ Processes (or asynchronous tasks in general) transfer IO-operations with a `now!
 
 ```@docs
 now!
-print(::Clock, ::Any)
-println(::Clock, ::Any)
+print(::Clock, ::IO, ::Any, ::Any)
+println(::Clock, ::IO, ::Any, ::Any)
 ```
