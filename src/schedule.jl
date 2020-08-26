@@ -282,7 +282,7 @@ function _register!(c::Clock, ev::DiscreteEvent)
 end
 function _register!(c::Clock, cond::DiscreteCond)
     # (c.Δt == 0) && (c.Δt = _scale(c.end_time - c.time)/100)
-    if c.Δt == 0  # pick a sample rate
+    if c.Δt ≤ 0  # pick a sample rate
         c.Δt = c.evcount == 0 ? 0.01 : _scale(c.time/c.evcount)/100
     end
     push!(c.sc.cevents, cond)

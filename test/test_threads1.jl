@@ -5,14 +5,16 @@
 #
 # This is a Julia package for discrete event simulation
 #
-
+# ------------------------------------------
+# mostly static tests of multithreading
+#
 sleeptime = 0.5
 a = [0.0]
 b = [0.0]
 c = [0.0]
 incr!(x) = x[1] += 1
 
-println("... testing multithreading  1, (sleeptime=$sleeptime) ...")
+println("... testing multithreading  stage 1, (sleeptime=$sleeptime) ...")
 println("number of available threads: ", nthreads())
 
 clk = PClock()
@@ -137,6 +139,8 @@ put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
 println("... testing register(!) five cases ... ")
 ev1 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 1.0, 0.0)
 ev2 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 2.0, 0.0)
+ev3 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 3.0, 0.0)
+ev4 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 4.0, 0.0)
 DiscreteEvents._register(clk, ev1, 1)              # 1. register ev1 to clk
 @test DiscreteEvents._nextevent(clk) == ev1
 DiscreteEvents._register(clk, ev1, 2)              # 2. register ev1 to 1st parallel clock
@@ -148,6 +152,13 @@ sleep(sleeptime)
 DiscreteEvents._register(c2, ev2, 1)               # 4. register ev2 back to master
 sleep(sleeptime)
 @test length(clk.sc.events) == 2
+DiscreteEvents._register(c2.clock, ev3, 1)
+sleep(sleeptime)
+@test length(clk.sc.events) == 3
+clk.state = DiscreteEvents.Busy()  # mock busy master
+DiscreteEvents._register(c2.clock, ev4, 1)
+clk.state = DiscreteEvents.Idle()
+@test take!(clk.ac[1].back).ev == ev4
 
 if nthreads() > 2                           # This fails on CI (only 2 threads)
     DiscreteEvents._register(c2, ev2, 3)           # 5. register ev2 to another parallel clock
