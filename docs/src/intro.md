@@ -193,7 +193,7 @@ end
 
 We implement our caller queue as a `Channel` eventually blocking a process if it calls `take!`. The `serve` function calls a [`delay!`](@ref) from the [`Clock`](@ref). This suspends a process for the required simulation time. Note that the `serve` process [`stop!`](@ref)s the clock after the last caller is finished.
 
-Next we initialize our constants, setup a simulation environment, wrap our servers in [`Prc`](@ref) and start them as [`process!`](@ref)es. The arrivals are an event-based Poisson process as in the first example [^3]. We [`run!`](@ref) the clock for enough time:
+Next we initialize our constants, setup a simulation environment, wrap our servers in [`Prc`](@ref) and start them as [`process!`](@ref)es. Arrivals are an event-based Poisson process as in the first example [^3]. We [`run!`](@ref) the clock for enough time:
 
 ```julia
 Random.seed!(123)
@@ -217,7 +217,7 @@ run!(clock, 5000)
 "run! halted with 2005 clock events, 0 sample steps, simulation time: 2464.01"
 ```
 
-The clock stopped at 2464. We served 1000 callers in 2464 minutes. This is an average lead time of 2.5 min. Doesn't seem so bad.
+The clock stopped at 2464. We served 1000 callers in 2464 virtual minutes. This is an average lead time of 2.5 min. Doesn't seem so bad.
 
 ```julia
 julia> s1.tbusy / clock.time
