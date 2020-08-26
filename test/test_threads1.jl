@@ -7,14 +7,14 @@ clk = PClock()
 Δt = clk.Δt
 sleep(sleeptime)
 
-# print(repr(clk))
+print(clk)
 @test clk.id == 1
 m = match(r"Clock 1 \(\+(\d+)\)", repr(clk))
 @test parse(Int, m.captures[1]) == nthreads()-1
 @test length(clk.ac) == nthreads()-1
 @test clk.ac[1].thread == 2
 
-println("... parallel clock identification ...")
+# parallel clock identification 
 c2 = pclock(clk, 2)
 @test c2.id == 2
 @test c2.clock.id == 2
@@ -22,6 +22,25 @@ c2 = pclock(clk, 2)
 m = match(r"Active clock (\d+)\:", repr(c2))
 @test parse(Int, m.captures[1]) == 2
 
+# test _cid with parallel clocks
+@test DiscreteEvents._cid(clk, 2, false) == 2
+@test DiscreteEvents._cid(clk, 2, true) in 1:nthreads()
+@test DiscreteEvents._cid(clk, nthreads()+1, false) == 1
+@test DiscreteEvents._cid(clk, nthreads()+1, true) in 1:nthreads()
+@test DiscreteEvents._cid(c2, 2, false) == 2
+@test DiscreteEvents._cid(c2, 2, true) in 1:nthreads()
+@test DiscreteEvents._cid(c2, 1, false) == 1
+@test DiscreteEvents._cid(c2, 1, true) == 1
+@test DiscreteEvents._cid(c2, nthreads()+1, false) == 2
+@test DiscreteEvents._cid(c2, nthreads()+1, true) in 1:nthreads()
+@test DiscreteEvents._cid(c2.clock, 2, false) == 2
+@test DiscreteEvents._cid(c2.clock, 2, true) in 1:nthreads()
+@test DiscreteEvents._cid(c2.clock, 1, false) == 1
+@test DiscreteEvents._cid(c2.clock, 1, true) == 1
+@test DiscreteEvents._cid(c2.clock, nthreads()+1, false) == 2
+@test DiscreteEvents._cid(c2.clock, nthreads()+1, true) in 1:nthreads()
+
+# exception handling and diagnosis
 if DiscreteEvents._handle_exceptions[1]
     println("... remote error handling ...")
     put!(clk.ac[1].forth, DiscreteEvents.Clear())
