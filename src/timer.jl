@@ -22,10 +22,6 @@ resetClock!(rtc::RTClock) = put!(rtc.cmd, Reset(false))
 # -------------------------------------------------------------------
 # RTClock state machine operations
 # -------------------------------------------------------------------
-step!(RTC::RTClock, ::Idle, ::Start) = (RTC.clock.evcount = 0; RTC.clock.scount = 0)
-
-# query an rt clock
-step!(RTC::RTClock, ::ClockState, ::Query) = put!(RTC.back, Response(RTC))
 
 # reset an rt clock
 function step!(RTC::RTClock, ::Union{Idle, Busy}, ::Reset) 

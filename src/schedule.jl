@@ -176,8 +176,8 @@ event!( ex::A, cond::C; kw...) where {A<:Action,C<:Action} = event!(𝐶, ex, co
 
 """
 ```
-periodic!([clk], ex, Δt; spawn)
-periodic!(clk, ex)
+periodic!([clk], ex, Δt; <keyword arguments>)
+periodic!(clk, ex; <keyword arguments>)
 ```
 
 Register a function or expression for periodic execution at the clock`s sample rate.
@@ -186,7 +186,7 @@ Register a function or expression for periodic execution at the clock`s sample r
 - `clk<:AbstractClock`: if not supplied, it registers on 𝐶,
 - `ex<:Action`: an expression or function or a tuple of them,
 - `Δt<:Number=clk.Δt`: set the clock's sampling rate, if no Δt is given, it takes
-    the current sampling rate, if that is 0, it calculates one,
+    the current sampling rate, if ≤ 0, it calculates a positive one,
 
 # Keyword arguments
 - `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
@@ -195,8 +195,7 @@ Register a function or expression for periodic execution at the clock`s sample r
 """
 function periodic!(clk::Clock, ex::T, Δt::U=clk.Δt;
                 cid::Int=clk.id, spawn=false) where {T<:Action,U<:Number}
-   # clk.Δt = Δt == 0 ? _scale(clk.end_time - clk.time)/100 : Δt
-   if Δt == 0  # pick a sample rate
+   if Δt ≤ 0  # pick a positive sample rate
        clk.Δt = clk.evcount == 0 ? 0.01 : _scale(clk.time/clk.evcount)/100
    end
     _assign(clk, Sample(ex), _cid(clk,cid,spawn))

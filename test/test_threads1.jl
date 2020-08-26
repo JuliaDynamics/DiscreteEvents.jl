@@ -1,4 +1,16 @@
-const sleeptime = 0.5
+#
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
+#
+# Paul Bayer, 2020
+#
+# This is a Julia package for discrete event simulation
+#
+
+sleeptime = 0.5
+a = [0.0]
+b = [0.0]
+c = [0.0]
+incr!(x) = x[1] += 1
 
 println("... testing multithreading  1, (sleeptime=$sleeptime) ...")
 println("number of available threads: ", nthreads())
@@ -50,24 +62,55 @@ if DiscreteEvents._handle_exceptions[1]
     @test occursin(r"^step\!\(\:\:DiscreteEvents.ActiveClock.+ at threads\.jl", string(err[2][2]))
 end
 
-println("... testing channel and active clock ...")
-a = [0.0]
-b = [0.0]
-incr!(x) = x[1] += 1
-ev = DiscreteEvents.DiscreteEvent(fun(incr!, a),1.0,nothing)
-put!(clk.ac[1].forth, DiscreteEvents.Register(ev))
+println("... register events to parallel clock 2 over master ...")
+event!(clk, fun(incr!, a), 1.0, cid=2)
 sleep(sleeptime)
 @test length(c2.clock.sc.events) == 1
-cev = DiscreteEvents.DiscreteCond(fun(≥, fun(tau, c2), 5), fun(incr!, a))
-put!(clk.ac[1].forth, DiscreteEvents.Register(cev))
+event!(clk, fun(incr!, b), fun(≥, fun(tau, c2), 5), cid=2)
 sleep(sleeptime)
 @test length(c2.clock.sc.cevents) == 1
-sp = DiscreteEvents.Sample(fun(incr!, b))
-put!(clk.ac[1].forth, DiscreteEvents.Register(sp))
+periodic!(clk, fun(incr!, c), cid=2)
 sleep(sleeptime)
 @test length(c2.clock.sc.samples) == 1
 
-println("... run parallel clock 2 (thread 2) ...")
+println("... 1st run parallel clock 2 (thread 2) ...")
+# put!(clk.ac[1].forth, DiscreteEvents.Run(10.0))
+# @test take!(clk.ac[1].back).t > 0
+# sleep(sleeptime)
+tns = [0]
+t1 = time_ns()
+iter = [0]
+while (c2.clock.time+Δt) ≤ 10
+    put!(clk.ac[1].forth, DiscreteEvents.Run(Δt, false))
+    tns[1] += take!(clk.ac[1].back).t
+    iter[1] += 1
+end
+t1 = time_ns() - t1
+println("$iter ticks took $(Int(t1)*1e-9) s, clock time $(Int(tns[1])*1e-9) s")
+@test c2.clock.time ≈ 10
+@test c2.clock.scount == 1000
+@test a[1] == 1
+@test b[1] == 1
+@test c[1] == 1000
+
+println("... parallel clock 2 reset ...")
+put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
+@test take!(clk.ac[1].back).x == 1
+@test c2.clock.time == 0
+@test c2.clock.scount == 0
+
+println("... register events to active clock 2 ...")
+event!(c2, fun(incr!, a), 1.0)
+sleep(sleeptime)
+@test length(c2.clock.sc.events) == 1
+event!(c2, fun(incr!, b), fun(≥, fun(tau, c2), 5))
+sleep(sleeptime)
+@test length(c2.clock.sc.cevents) == 1
+periodic!(c2, fun(incr!, c))
+sleep(sleeptime)
+@test length(c2.clock.sc.samples) == 1
+
+println("... 2nd run parallel clock 2 (thread 2) ...")
 # put!(clk.ac[1].forth, DiscreteEvents.Run(10.0))
 # @test take!(clk.ac[1].back).t > 0
 # sleep(sleeptime)
@@ -84,13 +127,12 @@ println("$iter ticks took $(Int(t1)*1e-9) s, clock time $(Int(tns[1])*1e-9) s")
 @test c2.clock.time ≈ 10
 @test c2.clock.scount == 1000
 @test a[1] == 2
-@test b[1] == 1000
+@test b[1] == 2
+@test c[1] == 2000
 
-println("... parallel clock 1 reset ...")
+println("... parallel clock 2 reset ...")
 put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
 @test take!(clk.ac[1].back).x == 1
-@test c2.clock.time == 0
-@test c2.clock.scount == 0
 
 println("... testing register(!) five cases ... ")
 ev1 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 1.0, 0.0)
@@ -148,17 +190,17 @@ resetClock!(clk)                            # test resetClock! on multiple clock
 @test sum(length(c.sc.events) for c in clock) == 0
 println("    resetClock!     ok")
 
-c = zeros(Int, nthreads())
-event!(clk, ()->c[1]+=1, 1)
+d = zeros(Int, nthreads())
+event!(clk, ()->d[1]+=1, 1)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(clk, ()->c[2]+=1, 1, cid=1)
+event!(clk, ()->d[2]+=1, 1, cid=1)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(c2,  ()->c[2]+=1, 2)
+event!(c2,  ()->d[2]+=1, 2)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(c2,  ()->c[1]+=1, 2, cid=2)
+event!(c2,  ()->d[1]+=1, 2, cid=2)
 sleep(sleeptime); @test clocks_ok(clk)
 if nthreads() > 2
-    event!(c3,  ()->c[3]+=1, 1, cid=3)
+    event!(c3,  ()->d[3]+=1, 1, cid=3)
     sleep(sleeptime); @test clocks_ok(clk)
 end
 sleep(sleeptime)
@@ -169,9 +211,9 @@ error = false
 @test !error
 println("    distributed events ok")
 run!(clk, 3)
-@test c[1] == 2
-@test c[2] == 2
-nthreads() > 2 && @test c[3] == 1
+@test d[1] == 2
+@test d[2] == 2
+nthreads() > 2 && @test d[3] == 1
 println("    first parallel run ok")
 
 println("... collapse! ...")

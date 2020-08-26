@@ -116,6 +116,14 @@ run!(clk, 6)
 
 println("... sampling ...")
 clk = Clock(1)  # clock with sample rate 1
+periodic!(clk, fun(incr!, a), 0)
+@test clk.Δt == 0.01
+clk.time = 10
+clk.evcount = 1000
+periodic!(clk, fun(incr!, a), 0)
+@test clk.Δt == 0.0001
+
+clk = Clock(1)  # clock with sample rate 1
 @test clk.time == 0
 @test clk.tn == 1
 @test clk.Δt == 1
