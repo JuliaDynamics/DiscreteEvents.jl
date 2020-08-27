@@ -12,6 +12,7 @@ sleeptime = 0.5
 a = [0.0]
 b = [0.0]
 c = [0.0]
+d = [0.0]
 incr!(x) = x[1] += 1
 
 println("... testing multithreading  stage 1, (sleeptime=$sleeptime) ...")
@@ -64,6 +65,11 @@ if DiscreteEvents._handle_exceptions[1]
     @test occursin(r"^step\!\(\:\:DiscreteEvents.ActiveClock.+ at threads\.jl", string(err[2][2]))
 end
 
+function pinc!(c::Clock, x)
+    delay!(c, 1)
+    incr!(x)
+end
+
 println("... register events to parallel clock 2 over master ...")
 event!(clk, fun(incr!, a), 1.0, cid=2)
 sleep(sleeptime)
@@ -74,6 +80,9 @@ sleep(sleeptime)
 periodic!(clk, fun(incr!, c), cid=2)
 sleep(sleeptime)
 @test length(c2.clock.sc.samples) == 1
+process!(clk, Prc(1, pinc!, d), cid=2)
+sleep(sleeptime)
+@test length(c2.clock.processes) == 1
 
 println("... 1st run parallel clock 2 (thread 2) ...")
 # put!(clk.ac[1].forth, DiscreteEvents.Run(10.0))
@@ -94,12 +103,14 @@ println("$iter ticks took $(Int(t1)*1e-9) s, clock time $(Int(tns[1])*1e-9) s")
 @test a[1] == 1
 @test b[1] == 1
 @test c[1] == 1000
+@test d[1] >= 10
 
 println("... parallel clock 2 reset ...")
 put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
 @test take!(clk.ac[1].back).x == 1
 @test c2.clock.time == 0
 @test c2.clock.scount == 0
+empty!(c2.clock.processes)
 
 println("... register events to active clock 2 ...")
 event!(c2, fun(incr!, a), 1.0)
@@ -201,17 +212,17 @@ resetClock!(clk)                            # test resetClock! on multiple clock
 @test sum(length(c.sc.events) for c in clock) == 0
 println("    resetClock!     ok")
 
-d = zeros(Int, nthreads())
-event!(clk, ()->d[1]+=1, 1)
+x = zeros(Int, nthreads())
+event!(clk, ()->x[1]+=1, 1)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(clk, ()->d[2]+=1, 1, cid=1)
+event!(clk, ()->x[2]+=1, 1, cid=1)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(c2,  ()->d[2]+=1, 2)
+event!(c2,  ()->x[2]+=1, 2)
 sleep(sleeptime); @test clocks_ok(clk)
-event!(c2,  ()->d[1]+=1, 2, cid=2)
+event!(c2,  ()->x[1]+=1, 2, cid=2)
 sleep(sleeptime); @test clocks_ok(clk)
 if nthreads() > 2
-    event!(c3,  ()->d[3]+=1, 1, cid=3)
+    event!(c3,  ()->x[3]+=1, 1, cid=3)
     sleep(sleeptime); @test clocks_ok(clk)
 end
 sleep(sleeptime)
@@ -222,9 +233,9 @@ error = false
 @test !error
 println("    distributed events ok")
 run!(clk, 3)
-@test d[1] == 2
-@test d[2] == 2
-nthreads() > 2 && @test d[3] == 1
+@test x[1] == 2
+@test x[2] == 2
+nthreads() > 2 && @test x[3] == 1
 println("    first parallel run ok")
 
 println("... collapse! ...")

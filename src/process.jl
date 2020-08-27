@@ -35,8 +35,7 @@ end
 # - `p::Prc`:
 # - `cycles=Inf`: determine, how often the loop should be run.
 function _loop(p::Prc, cycles::T) where {T<:Number}
-    threadid() > 1 && (p.clk = pclock(p.clk, threadid()))
-
+    threadid() > 1 && (p.clk = pclock(p.clk).clock)
     while cycles > 0
         try
             p.f(p.clk, p.arg...; p.kw...)
@@ -62,13 +61,12 @@ function _startup!(c::C, p::Prc, cycles::T, cid::Int, spawn::Bool) where {C<:Abs
     cid = _cid(c, cid, spawn)
     if cid == c.id
         startit()
-        _register!(p.clk, p)
     else
-        onthread(cid) do 
-            startit()
-            _register!(p.clk, p)
+        @threads for i in 1:nthreads()
+            i == cid && startit()
         end
     end
+    _register!(p.clk, p)
 end
 
 """
