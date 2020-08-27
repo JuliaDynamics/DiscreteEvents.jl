@@ -67,8 +67,8 @@ function _startup!(c::C, p::Prc, cycles::T, cid::Int, spawn::Bool) where {C<:Abs
             i == cid && (t = @async startit())
         end
         fetch(t)
+        sleep(0.01)
     end
-    yield()
     _register!(p.clk, p)
 end
 
