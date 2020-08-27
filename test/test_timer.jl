@@ -40,6 +40,13 @@ sleep(1)
 @test a[1] ≥ 10
 @test b[1] ≥ 100
 
+old = DiscreteEvents._handle_exceptions[end]
+DiscreteEvents._handle_exceptions[end] = false
+sleep(1)
+@test a[1] ≥ 20
+@test b[1] ≥ 200
+DiscreteEvents._handle_exceptions[end] = old
+
 stopRTClock(rtc)
 t = tau(rtc)
 sleep(0.1)

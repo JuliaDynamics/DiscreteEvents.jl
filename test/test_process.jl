@@ -27,7 +27,7 @@ for i in 1:8
     @test 𝐶.processes[b[i]].id == b[i]
 end
 @test process!(Prc((1,2), incr, ch1, ch2, 1)) == (1,2)
-@test_throws ArgumentError process!(Prc((1,2), incr, ch1, ch2, 1))
+@test process!(Prc((1,2), incr, ch1, ch2, 1)).state === :failed
 
 println("... test channel 4 example ...")
 A = []

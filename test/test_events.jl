@@ -104,17 +104,28 @@ event!(clk, fun(event!, clk, fun(tim, d, clk), fun(is, c, 1)), 3) # execute imme
 @test length(clk.sc.cevents) == 1  # only the 1st cevent is scheduled
 @test DiscreteEvents._evaluate(clk.sc.cevents[1].cond) == (false, false)
 @test DiscreteEvents._nextevent(clk).t == 1
-
+clk.Δt = 0
+event!(clk, fun(incr!, c), fun(≥, ()->tau(clk), 3))
+@test clk.Δt == 0.01
 
 run!(clk, 6)
 @test tau(clk) == 6
 @test a[1] == 6
 @test b[1] ≈ 5 + clk.Δt            # 1st cevent must have fired 
+@test c[1] == 2                    # 2nd cevent must have fired
 @test d[1] == 3
 @test length(clk.sc.cevents) == 0  # and has disappeared
 @test length(clk.sc.events) == 1   # but repeat event is still scheduled
 
 println("... sampling ...")
+clk = Clock(1)  # clock with sample rate 1
+periodic!(clk, fun(incr!, a), 0)
+@test clk.Δt == 0.01
+clk.time = 10
+clk.evcount = 1000
+periodic!(clk, fun(incr!, a), 0)
+@test clk.Δt == 0.0001
+
 clk = Clock(1)  # clock with sample rate 1
 @test clk.time == 0
 @test clk.tn == 1

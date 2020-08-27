@@ -35,10 +35,8 @@ end
 # - `p::Prc`:
 # - `cycles=Inf`: determine, how often the loop should be run.
 function _loop(p::Prc, cycles::T) where {T<:Number}
-    if threadid() > 1 && !isempty(p.clk.ac)
-        p.clk = pclock(p.clk, threadid())
-    end
-
+    threadid() > 1 && (p.clk = pclock(p.clk).clock)
+    _register!(p.clk, p)
     while cycles > 0
         try
             p.f(p.clk, p.arg...; p.kw...)
@@ -54,37 +52,28 @@ function _loop(p::Prc, cycles::T) where {T<:Number}
 end
 
 # startup a `Prc` as a task in a loop.
-function _startup!(c::C, p::Prc, cycles::T, spawn::Bool) where {C<:AbstractClock,T<:Number}
+function _startup!(c::C, p::Prc, cycles::T, cid::Int, spawn::Bool) where {C<:AbstractClock,T<:Number}
 
     function startit()
         p.task = @task _loop(p, cycles)
         yield(p.task)
+        return p.task
     end
 
-    if spawn
-        if threadid() == 1
-            @assert !isempty(c.ac) "no parallel clocks available!"
-            sid = spawnid(c)
-            if sid == 1
-                startit()
-            else
-                talk(c, sid, Register((p=p, cycles=cycles)) )
-            end
-        else
-            @threads for i in 1:nthreads()
-                if threadid() == 1
-                    process!(c.master[], p, cycles, spawn=spawn)
-                end
-            end
-        end
+    t = Task(nothing)
+    cid = _cid(c, cid, spawn)
+    if cid == c.id
+        t = startit()
     else
-        startit()
+        @threads for i in 1:nthreads()
+            i == cid && (t = startit())
+        end
     end
-    _register!(p.clk, p)
+    return t
 end
 
 """
-    process!([clk], prc, cycles; spawn)
+    process!([clk], prc, cycles; <keyword arguments>)
 
 Register a [`Prc`](@ref) to a clock, start an asynchronous task 
 executing the process function in a loop and return the `id` it 
@@ -94,19 +83,21 @@ was registered with. It can then be found under `clk.processes[id]`.
 - `c<:AbstractClock`: if not provided, the process runs under `𝐶`,
 - `prc::Prc`: it contains a function and its arguments,
 - `cycles<:Number=Inf`: number of loop cycles the process should run,
+
+# Keyword arguments
+- `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
+    with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, the process may be scheduled on another thread
     in parallel and registered to the thread specific clock.
-
-!!! note
-    `spawn`ing a process is possible only with parallel clocks setup with
-    [`PClock`](@ref) or [`fork!`](@ref).
 """
-function process!(c::C, p::Prc, cycles::T=Inf; spawn::Bool=false) where {C<:AbstractClock,T<:Number}
+function process!(c::C, p::Prc, cycles::T=Inf; 
+                  cid::Int=c.id, spawn::Bool=false) where {C<:AbstractClock,T<:Number}
     p.clk = c
-    _startup!(c, p, cycles, spawn)
+    t = _startup!(c, p, cycles, cid, spawn)
+    t.state === :failed && return t
     p.id
 end
-process!(p::Prc, cycles::T=Inf) where {T<:Number} = process!(𝐶, p, cycles)
+process!(p::Prc, cycles::T=Inf; kwargs...) where {T<:Number} = process!(𝐶, p, cycles; kwargs...)
 
 # wakeup a process waiting for a `Condition`
 # two yields for giving back control first and then enabling a
