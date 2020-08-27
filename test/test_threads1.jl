@@ -81,7 +81,7 @@ periodic!(clk, fun(incr!, c), cid=2)
 sleep(sleeptime)
 @test length(c2.clock.sc.samples) == 1
 process!(clk, Prc(1, pinc!, d), cid=2)
-sleep(sleeptime)
+sleep(2sleeptime)
 @test length(c2.clock.processes) == 1
 
 println("... 1st run parallel clock 2 (thread 2) ...")
