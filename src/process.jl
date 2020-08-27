@@ -68,6 +68,7 @@ function _startup!(c::C, p::Prc, cycles::T, cid::Int, spawn::Bool) where {C<:Abs
         end
         fetch(t)
     end
+    yield()
     _register!(p.clk, p)
 end
 
