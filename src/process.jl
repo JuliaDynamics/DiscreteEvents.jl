@@ -62,9 +62,11 @@ function _startup!(c::C, p::Prc, cycles::T, cid::Int, spawn::Bool) where {C<:Abs
     if cid == c.id
         startit()
     else
+        t = Task(nothing)
         @threads for i in 1:nthreads()
-            i == cid && startit()
+            i == cid && (t = @async startit())
         end
+        fetch(t)
     end
     _register!(p.clk, p)
 end
