@@ -52,7 +52,7 @@ function _RTClock(rtc::RTClock)
                 break
             elseif σ isa Diag
                 put!(rtc.back, Response((exc, sf)))
-            elseif _handle_exceptions[end]
+            elseif handle_exceptions()
                 try
                     step!(rtc, rtc.clock.state, σ)
                 catch exc

@@ -34,6 +34,7 @@ DiscreteEvents.incr!(clk)
 @test a[1] == 1
 @test clk.time == 1
 event!(clk, fun(DiscreteEvents.stop!, clk), 5.1)
+clk.state = DiscreteEvents.Undefined()
 run!(clk, 9)
 @test clk.state == DiscreteEvents.Halted()
 @test a[1] == 5

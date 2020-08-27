@@ -12,7 +12,7 @@ end
 
 const ex_dir = "../examples/"
 const nb_dir = "../examples/"
-trash = open("/dev/null", "w")
+# trash = open(@static(Sys.iswindows() ? "nul" : "/dev/null"), "w")
 
 dir = pwd()
 cd(@__DIR__)
