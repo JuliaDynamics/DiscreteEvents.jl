@@ -94,7 +94,7 @@ function process!(c::C, p::Prc, cycles::T=Inf;
                   cid::Int=c.id, spawn::Bool=false) where {C<:AbstractClock,T<:Number}
     p.clk = c
     t = _startup!(c, p, cycles, cid, spawn)
-    istaskfailed(t) && return t
+    t.state === :failed && return t
     p.id
 end
 process!(p::Prc, cycles::T=Inf; kwargs...) where {T<:Number} = process!(𝐶, p, cycles; kwargs...)
