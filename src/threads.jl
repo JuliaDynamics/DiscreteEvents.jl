@@ -7,17 +7,19 @@
 #
 
 const _handle_exceptions = [true]
+handle_exceptions() = _handle_exceptions[end]
 
 # ---------------------------------------------------------
 # methods for active clocks
 # ---------------------------------------------------------
 tau(ac::ActiveClock) = tau(ac.clock)
 _busy(ac::ActiveClock) = ac.clock.state == Busy()
-sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
 
-delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
-wait!(ac::ActiveClock, args...; kwargs...) = wait!(ac.clock, args...; kwargs...)
-now!(ac::ActiveClock, ex::A) where {A<:Action} = now!(ac.clock, ex)
+# sync!(ac::ActiveClock, clk::Clock) = sync!(ac.clock, clk)
+
+# delay!(ac::ActiveClock, args...) = delay!(ac.clock, args...)
+# wait!(ac::ActiveClock, args...; kwargs...) = wait!(ac.clock, args...; kwargs...)
+# now!(ac::ActiveClock, ex::A) where {A<:Action} = now!(ac.clock, ex)
 
 
 # ---------------------------------------------------------
@@ -36,7 +38,7 @@ function step!(A::ActiveClock, ::Idle, σ::Finish)
     put!(A.back, Response((A.clock.evcount, A.clock.scount)))
 end
 
-step!(A::ActiveClock, ::Union{Idle, Busy}, ::Sync) = nothing
+# step!(A::ActiveClock, ::Union{Idle, Busy}, ::Sync) = nothing
 
 # query an active clock
 step!(A::ActiveClock, ::ClockState, ::Query) = put!(A.back, Response(A))
@@ -73,7 +75,7 @@ function _activeClock(cmd::Channel, resp::Channel)
             break
         elseif σ isa Diag
             put!(resp, Response((exc, sf)))
-        elseif _handle_exceptions[end]
+        elseif handle_exceptions()
             try
                 step!(ac, ac.clock.state, σ)
             catch exc
@@ -218,7 +220,9 @@ Get a parallel clock to a given clock.
 """
 function pclock(clk::Clock, id::Int=threadid())
     if clk.id == 1
-        if id in [x.thread for x in clk.ac]
+        if clk.id == id
+            return clk
+        elseif id in [x.thread for x in clk.ac]
             put!(clk.ac[id-1].forth, Query())
             return take!(clk.ac[id-1].back).x
         else

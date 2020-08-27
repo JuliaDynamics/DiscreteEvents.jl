@@ -30,12 +30,19 @@ m = match(r"Clock 1 \(\+(\d+)\)", repr(clk))
 @test clk.ac[1].thread == 2
 
 # parallel clock identification 
+id = nthreads()+1
+@test_warn "parallel clock $id not available!" pclock(clk, id)
 c2 = pclock(clk, 2)
 @test c2.id == 2
 @test c2.clock.id == 2
 @test c2.clock.ac[].master[].id == 1
 m = match(r"Active clock (\d+)\:", repr(c2))
 @test parse(Int, m.captures[1]) == 2
+@test pclock(c2.clock, 2) isa DiscreteEvents.ActiveClock
+@test clk == pclock(c2.clock, 1)
+
+# test fork!
+@test_warn "only the master clock" fork!(c2.clock)
 
 # test _cid with parallel clocks
 @test DiscreteEvents._cid(clk, 2, false) == 2
@@ -64,6 +71,21 @@ if DiscreteEvents._handle_exceptions[1]
     @test err[1] isa ErrorException
     @test occursin(r"^step\!\(\:\:DiscreteEvents.ActiveClock.+ at threads\.jl", string(err[2][2]))
 end
+old = DiscreteEvents._handle_exceptions[1]
+DiscreteEvents._handle_exceptions[1] = false
+put!(clk.ac[1].forth, DiscreteEvents.Clear())
+sleep(sleeptime)
+@test diagnose(clk, 2).state === :failed
+DiscreteEvents._handle_exceptions[1] = old
+@test_warn "parallel clock $id not available!" diagnose(clk, id)
+
+# now testing parallel events and runs 
+#
+# start a parallel clock again
+clk = PClock()
+Δt = clk.Δt
+sleep(sleeptime)
+c2 = pclock(clk, 2)
 
 function pinc!(c::Clock, x)
     delay!(c, 1)
@@ -239,6 +261,7 @@ nthreads() > 2 && @test x[3] == 1
 println("    first parallel run ok")
 
 println("... collapse! ...")
+@test_warn "only the master clock" collapse!(c2.clock)
 ac = clk.ac
 collapse!(clk)
 @test all(x->istaskdone(x.ref[]), ac)
