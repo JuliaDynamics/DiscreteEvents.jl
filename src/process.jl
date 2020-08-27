@@ -36,6 +36,7 @@ end
 # - `cycles=Inf`: determine, how often the loop should be run.
 function _loop(p::Prc, cycles::T) where {T<:Number}
     threadid() > 1 && (p.clk = pclock(p.clk).clock)
+    _register!(p.clk, p)
     while cycles > 0
         try
             p.f(p.clk, p.arg...; p.kw...)
@@ -56,20 +57,19 @@ function _startup!(c::C, p::Prc, cycles::T, cid::Int, spawn::Bool) where {C<:Abs
     function startit()
         p.task = @task _loop(p, cycles)
         yield(p.task)
+        return p.task
     end
 
+    t = Task(nothing)
     cid = _cid(c, cid, spawn)
     if cid == c.id
-        startit()
+        t = startit()
     else
-        t = Task(nothing)
         @threads for i in 1:nthreads()
-            i == cid && (t = @async startit())
+            i == cid && (t = startit())
         end
-        fetch(t)
-        sleep(0.01)
     end
-    _register!(p.clk, p)
+    return t
 end
 
 """
@@ -93,7 +93,8 @@ was registered with. It can then be found under `clk.processes[id]`.
 function process!(c::C, p::Prc, cycles::T=Inf; 
                   cid::Int=c.id, spawn::Bool=false) where {C<:AbstractClock,T<:Number}
     p.clk = c
-    _startup!(c, p, cycles, cid, spawn)
+    t = _startup!(c, p, cycles, cid, spawn)
+    istaskfailed(t) && return t
     p.id
 end
 process!(p::Prc, cycles::T=Inf; kwargs...) where {T<:Number} = process!(𝐶, p, cycles; kwargs...)
