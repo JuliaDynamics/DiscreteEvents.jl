@@ -36,7 +36,8 @@ Enumeration type for scheduling events and timed conditions:
 An action is either  a `Function` or an `Expr` or a `Tuple` of them. 
 It can be scheduled in an event for later execution.
 """
-const Action = Union{Function, Expr, Tuple}
+const Action = Union{Expr, Function, Tuple{Vararg{Union{Expr, Function}}}}
+# const Action = Union{Function, Expr, Tuple}
 
 """
 ````
