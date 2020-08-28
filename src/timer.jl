@@ -89,13 +89,13 @@ the given period `T`. Events or sampling functions can then be scheduled to it.
 
 # Arguments
 - `T::Float64`:           period (clock resolution) in seconds, T ≥ 0.001
-- `id::Int`:              clock identification number other than 0:(nthreads()-1)
+- `id::Int`:              clock identification number other than 0:nthreads()
 - `thrd::Int=nthreads()`: thread, the clock task should run in
 - `ch_size::Int=256`:     clock communication channel size
 """
 function createRTClock(T::Float64, id::Int, thrd::Int=nthreads(); ch_size::Int=256)
     T ≥ 0.001 || throw(ArgumentError("RTClock cannot have a period of $T < 0.001 seconds"))
-    id ∉ 0:(nthreads()-1) || throw(ArgumentError("RTClock id $id forbidden!"))
+    id ∉ 0:nthreads() || throw(ArgumentError("RTClock id $id forbidden!"))
     rtc = RTClock(
             Timer(T, interval=T), Clock(),
             Channel{ClockEvent}(ch_size), Channel{ClockEvent}(ch_size),
