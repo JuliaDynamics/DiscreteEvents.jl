@@ -27,6 +27,7 @@ at `clk.time`.
 - `cy`: repeat cycle, `Number` or `Distribution`.
 
 # Keyword arguments
+- `n::Int=typemax(Int)`: number of repeating events,
 - `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
     with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the event at other available threads,
