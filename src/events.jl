@@ -28,14 +28,10 @@ end
     c.time = ev.t
     _evaluate(ev.ex)
     c.evcount += 1
-    # ev.Δt > 0.0 && event!(c, ev.ex, c.time + ev.Δt, cycle=ev.Δt)
 
-    if ev.Δt === nothing
-        return
-    elseif ev.Δt isa Float64
-        event!(c, ev.ex, c.time + ev.Δt, ev.Δt)
-    elseif ev.Δt isa Distribution
-        event!(c, ev.ex, c.time + rand(ev.Δt), ev.Δt)
+    if (ev.Δt !== nothing) && (ev.n > 1) 
+        ev.Δt isa Float64 && event!(c, ev.ex, c.time + ev.Δt, ev.Δt, n=ev.n-1)
+        ev.Δt isa Distribution && event!(c, ev.ex, c.time + rand(ev.Δt), ev.Δt, n=ev.n-1)
     end
 end
 

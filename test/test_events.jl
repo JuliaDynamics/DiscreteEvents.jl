@@ -117,6 +117,14 @@ run!(clk, 6)
 @test length(clk.sc.cevents) == 0  # and has disappeared
 @test length(clk.sc.events) == 1   # but repeat event is still scheduled
 
+resetClock!(clk)
+a[1] = 0
+event!(clk, ()->a[1] += 1, every, 1, n=100) # test repeat event count
+run!(clk, 200)
+@test clk.time == 200
+@test clk.evcount == 100
+@test a[1] == 100
+
 println("... sampling ...")
 clk = Clock(1)  # clock with sample rate 1
 periodic!(clk, fun(incr!, a), 0)
