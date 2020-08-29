@@ -68,38 +68,38 @@ function event!(clk::CL, ex::A, t::U; # 1st case, t isa Number
                 cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number}
     t = _tadjust(clk, t)
     t = max(t, _tadjust(clk, tau(clk)))
-    _assign(clk, DiscreteEvent(ex, t, nothing), _cid(clk,cid,spawn))
+    _assign(clk, DiscreteEvent(ex, t, nothing, 1), _cid(clk,cid,spawn))
 end
 
 # 2nd case, x isa Distribution
 function event!(clk::CL, ex::A, x::X;
     cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,X<:Distribution}
     t = max(rand(x), _tadjust(clk, tau(clk)))
-    _assign(clk, DiscreteEvent(ex, t, nothing), _cid(clk,cid,spawn))
+    _assign(clk, DiscreteEvent(ex, t, nothing, 1), _cid(clk,cid,spawn))
 end
 
 # 3rd case, t and cy are Numbers
 function event!(clk::CL, ex::A, t::U, cy::V;
-    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
+    n::Int=typemax(Int), cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Number}
     t = _tadjust(clk, t)
     cy = _tadjust(clk, cy)
     t = max(t, _tadjust(clk, tau(clk)))
-    _assign(clk, DiscreteEvent(ex, t, cy), _cid(clk,cid,spawn))
+    _assign(clk, DiscreteEvent(ex, t, cy, n), _cid(clk,cid,spawn))
 end
 
 # 4th case, t isa Number, cy isa Distribution
 function event!(clk::CL, ex::A, t::U, cy::V;
-    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Distribution}
+    n::Int=typemax(Int), cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Number,V<:Distribution}
     t = _tadjust(clk, t)
     t = max(t, _tadjust(clk, tau(clk)))
-    _assign(clk, DiscreteEvent(ex, t, cy), _cid(clk,cid,spawn))
+    _assign(clk, DiscreteEvent(ex, t, cy, n), _cid(clk,cid,spawn))
 end
 
 # 5th case, t and cy are both Distributions
 function event!(clk::CL, ex::A, t::U, cy::V;
-    cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Distribution,V<:Distribution}
+    n::Int=typemax(Int), cid::Int=clk.id, spawn::Bool=false) where {CL<:AbstractClock,A<:Action,U<:Distribution,V<:Distribution}
     t = max(rand(t), _tadjust(clk, tau(clk)))
-    _assign(clk, DiscreteEvent(ex, t, cy), _cid(clk,cid,spawn))
+    _assign(clk, DiscreteEvent(ex, t, cy, n), _cid(clk,cid,spawn))
 end
 
 # 6th case, Timing and Number
@@ -125,12 +125,12 @@ function event!(clk::CL, ex::A, T::Timing, x::X; kw...) where {CL<:AbstractClock
     end
 end
 # 7 cases to default clock
-event!(ex::A, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, t; kw...)
+event!(ex::A, t::U; kw...) where {A<:Action,U<:Number} = event!(𝐶, ex, t; kw...)
 event!(ex::A, x::X; kw...) where {A<:Action,X<:Distribution} = event!(𝐶, ex, x; kw...)
-event!(ex::A, t::N, cy::U; kw...) where {A<:Action,N<:Number,U<:Number} = event!(𝐶, ex, t, cy; kw...)
-event!(ex::A, t::N, cy::U; kw...) where {A<:Action,N<:Number,U<:Distribution} = event!(𝐶, ex, t, cy; kw...)
-event!(ex::A, t::N, cy::U; kw...) where {A<:Action,N<:Distribution,U<:Distribution} = event!(𝐶, ex, t, cy; kw...)
-event!(ex::A, T::Timing, t::N; kw...) where {A<:Action,N<:Number} = event!(𝐶, ex, T, t; kw...)
+event!(ex::A, t::U, cy::V; kw...) where {A<:Action,U<:Number,V<:Number} = event!(𝐶, ex, t, cy; kw...)
+event!(ex::A, t::U, cy::V; kw...) where {A<:Action,U<:Number,V<:Distribution} = event!(𝐶, ex, t, cy; kw...)
+event!(ex::A, t::U, cy::V; kw...) where {A<:Action,U<:Distribution,V<:Distribution} = event!(𝐶, ex, t, cy; kw...)
+event!(ex::A, T::Timing, t::U; kw...) where {A<:Action,U<:Number} = event!(𝐶, ex, T, t; kw...)
 event!(ex::A, T::Timing, X::Distribution; kw...) where A<:Action = event!(𝐶, ex, T, X; kw...)
 
 """

@@ -48,19 +48,15 @@ A discrete event is an [`Action`](@ref) to be executed at an event time.
 # Arguments, fields
 - `ex::T`: a function or an expression or a tuple of them,
 - `t::Float64`: event time,
-- `Δt::X`: repeat rate (Float64, Distribution or Nothing)
+- `Δt::X`: repeat interval (Float64, Distribution or Nothing),
+- `n::Int`: number of repeats.
 """
 struct DiscreteEvent{T<:Action, X} <: AbstractEvent
     ex::T
     t::Float64
     Δt::X
+    n::Int
 end
-# DiscreteEvent(ex::T, t::U, Δt::V) where {T<:Action, U<:Real, V<:Real} =
-#     DiscreteEvent{typeof(ex),Float64}(ex, float(t), float(Δt))
-# DiscreteEvent(ex::T, t::U, Δt::X) where {T<:Action, U<:Real, X<:Distribution} =
-#     DiscreteEvent{typeof(ex), typeof(Δt)}(ex, float(t), Δt)
-# DiscreteEvent(ex::T, t::U) where {T<:Action, U<:Real} =
-#     DiscreteEvent{typeof(ex),Nothing}(ex, float(t), nothing)
 
 """
     DiscreteCond{S<:Action, T<:Action} <: AbstractEvent

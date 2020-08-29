@@ -170,10 +170,10 @@ put!(clk.ac[1].forth, DiscreteEvents.Reset(true))
 @test take!(clk.ac[1].back).x == 1
 
 println("... testing register(!) five cases ... ")
-ev1 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 1.0, 0.0)
-ev2 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 2.0, 0.0)
-ev3 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 3.0, 0.0)
-ev4 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 4.0, 0.0)
+ev1 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 1.0, 0.0, 1)
+ev2 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 2.0, 0.0, 1)
+ev3 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 3.0, 0.0, 1)
+ev4 = DiscreteEvents.DiscreteEvent(fun(incr!, a), 4.0, 0.0, 1)
 DiscreteEvents._register(clk, ev1, 1)              # 1. register ev1 to clk
 @test DiscreteEvents._nextevent(clk) == ev1
 DiscreteEvents._register(clk, ev1, 2)              # 2. register ev1 to 1st parallel clock
