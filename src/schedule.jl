@@ -137,7 +137,7 @@ event!(ex::A, T::Timing, X::Distribution; kw...) where A<:Action = event!(𝐶, 
 """
     event!([clk], ex, cond; <keyword arguments>)
 
-Schedule ex as a conditional event, conditions cond get evaluated at each clock tick.
+Schedule `ex` as a conditional event, conditions `cond` get evaluated at each clock tick.
 
 # Arguments
 - `clk<:AbstractClock`: if no clock is supplied, the event is scheduled to 𝐶,
@@ -181,7 +181,7 @@ periodic!([clk], ex, Δt; <keyword arguments>)
 periodic!(clk, ex; <keyword arguments>)
 ```
 
-Register a function or expression for periodic execution at the clock`s sample rate.
+Register an Action `ex` for periodic execution at the clock`s sample rate.
 
 # Arguments
 - `clk<:AbstractClock`: if not supplied, it registers on 𝐶,
@@ -190,7 +190,7 @@ Register a function or expression for periodic execution at the clock`s sample r
     the current sampling rate, if ≤ 0, it calculates a positive one,
 
 # Keyword arguments
-- `cid::Int=clk.id`: if cid ≠ clk.id, assign the event to the parallel clock
+- `cid::Int=clk.id`: if cid ≠ clk.id, sample at the parallel clock
     with id == cid. This overrides `spawn`,
 - `spawn::Bool=false`: if true, spawn the periodic event to other available threads.
 """
