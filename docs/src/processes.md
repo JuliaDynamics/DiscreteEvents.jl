@@ -1,17 +1,15 @@
 # Processes
 
-Processes are typical event sequences implemented in a function. They
-are run by asynchronous tasks in a loop and get registered to a clock.
+Processes are *typical event sequences*. They get implemented in a function, run as asynchronous tasks in a loop and get registered to a clock.
 
 ```@docs
 Prc
 process!
-interrupt!
 ```
 
 !!! warning "Processes must yield!"
 
-    A process has to `yield` to Julia by e.g. doing a `take!(input)` or by calling [`delay!`](@ref) or [`wait!`](@ref). Otherwise it will starve everything else!
+    A process has to give control back to Julia by e.g. doing a `take!(input)` or by calling [`delay!`](@ref) or [`wait!`](@ref). Otherwise it will starve everything else!
 
 ## Delay and wait …
 
@@ -22,9 +20,16 @@ delay!
 wait!
 ```
 
-!!! warning "Processes use blocking calls and are not responsive!"
+## Exceptions
 
-    If the typical event sequence of a process is interrupted by other events (e.g. a customer reneging, a failure) the process is blocked and has to use exception handling to tackle it.
+If other events (customers reneging, failures) interrupt the typical event sequence of a process, it is blocked and not ready to respond. Processes therefore must use exception handling to handle unusual events.
+
+```@docs
+PrcException
+interrupt!
+```
+
+An example at DiscreteEventsCompanion illustrates how to handle exceptions to a process. Things can get messy quickly if there are several unusual events which have to be handled in a process.
 
 ## Now
 

@@ -88,18 +88,17 @@ struct Sample{T<:Action} <: AbstractEvent
 end
 
 """
-    ClockException(ev::ClockEvent, value=nothing)
+    PrcException(ev, value)
 
-A ClockException to be thrown at processes.
+An exception to be thrown at processes.
 
 # Arguments, fields
-- `ev::ClockEvent`: delivers an event to the interrupted task
-- `value=nothing`: deliver some other value
+- `event`: deliver an event to the interrupted task
+- `value`: deliver some other value
 """
-struct ClockException <: Exception
-  ev::ClockEvent
-  value::Any
-  ClockException(ev::ClockEvent, value=nothing) = new(ev, value)
+struct PrcException{U,V} <: Exception
+  event::U
+  value::V
 end
 
 """

@@ -59,7 +59,8 @@ export  Clock, PClock, RTClock, setUnit!, 𝐶,
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
         fork!, collapse!, pclock, diagnose, onthread,
-        createRTClock, stopRTClock,
+        createRTClock, stopRTClock, 
+        PrcException, 
         Resource
 
 

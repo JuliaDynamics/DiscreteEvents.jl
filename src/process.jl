@@ -155,12 +155,12 @@ function wait!(clk::Clock, cond::A) where {A<:Action}
 end
 
 """
-    interrupt!(p::Prc, ev::ClockEvent, value=nothing)
+    interrupt!(p::Prc, ev, value)
 
 Interrupt a `Prc` by throwing a `ClockException` to it.
 """
-function interrupt!(p::Prc, ev::EV, value=nothing) where {EV<:ClockEvent}
-    schedule(p.task, ClockException(ev, value), error=true)
+function interrupt!(p::Prc, ev, value)
+    schedule(p.task, PrcException(ev, value), error=true)
     yield()
 end
 
