@@ -40,7 +40,7 @@ clock = Clock()
 
 You created a [`Clock`](@ref) variable `clk` with a clock at thread 1 with pretty much everything set to 0, without yet any scheduled events (ev), conditional events (cev) or sampling events (sampl).
 
-You can now schedule events to your clock. In order to demonstrate how it works we setup a small simulation. 
+You can now schedule events to your clock. We demonstrate how it works with a couple of small simulations.
 
 ## Inventory Control Problem
 
@@ -72,7 +72,7 @@ function customer(c::Clock, s::Station, X::Distribution)
         s.q -= x             # take x from tank
         push!(s.t, c.time)   # record time, amount, customer, sale
         push!(s.qt, s.q)
-        s.cs += 1            
+        s.cs += 1
         s.qs += x
     end
 
@@ -107,9 +107,9 @@ Now we setup our constants and variables, wrap the functions in [`fun`](@ref) an
 Random.seed(123)
 const λ = 0.5      # ~ every two minutes a customer
 const ρ = 1/180    # ~ every 3 hours a replenishment truck
-const μ = 30       # ~ mean demand per customer 
+const μ = 30       # ~ mean demand per customer
 const σ = 10       #   standard deviation
-const a = 5        #   minimum amount 
+const a = 5        #   minimum amount
 const Q = 6000.0   # replenishment amount
 const M₁ = Exponential(1/λ)  # customer arrival time distribution
 const M₂ = Exponential(1/ρ)  # replenishment time distribution
@@ -143,7 +143,7 @@ plot(s.t, s.qt, title="Filling Station", xlabel="time [min]", ylabel="inventory 
 savefig("invctrl.png")
 ```
 
-![](img/invctrl.png)
+![inventory](img/invctrl.png)
 
 If we could manage to replenish immediately after the tank is empty, we would be much better off.
 
@@ -179,7 +179,7 @@ function serve(c::Clock, s::Server, input::Channel, output::Vector{Caller}, limi
     call = take!(input)           # take a call
     call.t₂ = c.time              # record the beginning of service time
     delay!(c, s.S)                # delay for service time
-    call.t₃ = c.time              # record the end of service time 
+    call.t₃ = c.time              # record the end of service time
     s.tbusy += call.t₃ - call.t₂  # log service time
     push!(output, call)           # hang up
     call.id ≥ limit && stop!(c)
@@ -236,13 +236,13 @@ plot(wt, title="A-B-Call center ", xlabel="callers", ylabel="waiting time [min]"
 savefig("ccenter.png")
 ```
 
-![](img/ccenter.png)
+![call center](img/ccenter.png)
 
 Given the average values, something unexpected emerges: The responsiveness of our call center is not good and waiting times often get way too long. If we want to shorten them, we must improve our service times or add more servers.
 
 ## Evaluation
 
-It is easy to simulate discrete event systems such as stochastic processes or queueing systems with `DiscreteEvents`. It integrates well with Julia.
+It is easy to simulate discrete event systems such as continuous-time stochastic processes or queueing systems with `DiscreteEvents`. It integrates well with Julia.
 
 ## Further examples
 
