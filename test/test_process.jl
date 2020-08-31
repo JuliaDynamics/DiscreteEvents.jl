@@ -8,8 +8,8 @@
 using DiscreteEvents, Random, Distributions
 
 println("... basic tests: processes ...")
-simex = DiscreteEvents.ClockException(DiscreteEvents.Stop())
-@test simex.ev == DiscreteEvents.Stop()
+simex = DiscreteEvents.PrcException(DiscreteEvents.Stop(), nothing)
+@test simex.event == DiscreteEvents.Stop()
 @test simex.value === nothing
 
 # ===== test process registration

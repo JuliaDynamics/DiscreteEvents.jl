@@ -4,7 +4,7 @@
 CurrentModule = DiscreteEvents
 ```
 
-Events are computations ``\,α,β,γ,...\,`` at times ``\,t_1,t_2,t_3,...`` Those computations are called *actions*.
+Events are computations ``\,α,β,γ,...\,`` at times ``\,t_1,t_2,t_3,...`` We call those computations *actions*.
 
 ## Actions
 
@@ -14,12 +14,6 @@ Actions are Julia functions or expressions to be executed later:
 Action
 fun
 ```
-
-!!! warning "Evaluating expressions is slow!"
-
-    The use of expressions (`Expr`) and symbols (`Symbol`) in actions should be avoided. You will get a one time warning if you use them. They can be replaced easily by `fun`s or function closures. 
-    
-    They are evaluated at global scope in Module `Main` only. Other modules using `DiscreteEvents` cannot use `Expr` in events and have to use functions.
 
 Actions can be combined into tuples:
 
@@ -33,12 +27,15 @@ isa(()->println(a), Action)  # an anonymous function
 (()->println(a), fun(println, a), :(println(a))) isa Action # a tuple of them
 ```
 
-Actions can be scheduled for execution
+### Expressions and Symbols
 
-1. at given clock times and
-2. under specified conditions.
+Expressions too are Actions. Also you can pass symbols to `fun` to delay evaluation of variables. `Expr`s and `Symbol`s are evaluated at global scope in Module `Main` only. This is a user convenience feature. Other modules using `DiscreteEvents` cannot use them in events and have to use functions.
 
-## Timed events
+!!! warning "Evaluating expressions is slow!"
+
+    Usage of `Expr` or `Symbol` will generate a one time warning. You can replace them easily with `fun`s or function closures. 
+
+## Timed Events
 
 Actions can be scheduled as events at given times:
 
@@ -47,7 +44,7 @@ Timing
 event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number}
 ```
 
-## Conditional events
+## Conditional Events
 
 Actions can be scheduled as events under given conditions:
 
@@ -59,7 +56,7 @@ event!(::T,::A,::C) where {T<:AbstractClock,A<:Action,C<:Action}
 
     For conditions you should prefer inequalities like <, ≤, ≥, > to equality == in order to make sure that a condition can be detected, e.g. `tau() ≥ 100` is preferable to `tau() == 100`.
 
-## Continuous sampling
+## Continuous Sampling
 
 Actions can be registered for sampling and are then executed "continuously" at each clock increment Δt. The default clock sample rate Δt is 0.01 time units.
 
@@ -68,7 +65,7 @@ sample_time!
 periodic!
 ```
 
-## Events and variables
+## Events and Variables
 
 Actions often depend on data or modify it. The data may change between the definition of an action and its later execution. If an action uses a *mutable variable* like an array or a mutable struct, it gets current data at event time and it is fast. If the action modifies the data, this is the best way to do it:
 
@@ -82,7 +79,7 @@ ff()                     # execute ff
 a[1]                     # a has been modified correctly
 ```
 
-If for some reason and against [better advise](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-global-variables-1) you want to work with global variables, there are several ways to deal with them:
+There are good [reasons to avoid global variables](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-global-variables-1) but if you want to work with them, you can do it in several ways:
 
 ```@repl events
 g(x; y=1) = x+y                 # define a function g
@@ -99,9 +96,9 @@ x += 1                          # increment x
 ii()                            # g gets an updated x
 ```
 
-If you want to modify a global variable, you have to use the `global` keyword inside your function.
+To modify a global variable, you have to use the `global` keyword inside your function.
 
-## Time units
+## Events with Time Units
 
 Timed events can be scheduled with time units. Times are converted to the clock's time unit.
 

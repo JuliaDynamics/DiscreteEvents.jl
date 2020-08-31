@@ -37,8 +37,8 @@ multithreading, resource handling and a streamlined documentation.
 - you can now create a real time clock [`RTClock`](@ref) and schedule events to it (experimental),
 - actors can register their message channels to the `clock.channels` vector and the clock will not proceed before they are empty,
 - processes and actors (asynchronous tasks) can transfer IO-operations to the clock with [`now!`](@ref) or print directly via the clock,
-- `event!` and `delay!` now also accept stochastic time variables (`Distribution`).
-- there is a `n` keyword parameter for repeat `event!`s.
+- `event!` and `delay!` now also accept stochastic time variables (a `Distribution`).
+- there is a `n` keyword parameter for the number of repeat `event!`s.
 
 ### Multithreading (experimental)
 

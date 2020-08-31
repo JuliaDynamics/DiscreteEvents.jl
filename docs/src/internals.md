@@ -59,7 +59,6 @@ There are several ways to solve this problem:
 ## Error handling and diagnosis
 
 ```@docs
-ClockException
 prettyClock
 ```
 
