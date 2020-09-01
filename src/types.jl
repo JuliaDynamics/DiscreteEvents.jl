@@ -88,7 +88,7 @@ struct Sample{T<:Action} <: AbstractEvent
 end
 
 """
-    PrcException(ev, value)
+    PrcException(event, value)
 
 An exception to be thrown at processes.
 
