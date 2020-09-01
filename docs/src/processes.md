@@ -20,7 +20,7 @@ delay!
 wait!
 ```
 
-## Exceptions
+## Interrupts
 
 If other events (customers reneging, failures) interrupt the typical event sequence of a process, it is blocked and not ready to respond. Processes therefore must use exception handling to handle unusual events.
 
@@ -29,7 +29,7 @@ PrcException
 interrupt!
 ```
 
-An example at DiscreteEventsCompanion illustrates how to handle exceptions to a process. Things can get messy quickly if there are several unusual events which have to be handled in a process.
+An [example at `DiscreteEventsCompanion`](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/queue_mmc_srv_fail/) illustrates how to handle interrupts to a process. Things can get messy quickly if there are several unusual events which have to be handled in a process.
 
 ## Now
 
