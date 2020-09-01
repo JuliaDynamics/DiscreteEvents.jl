@@ -157,7 +157,7 @@ end
 """
     interrupt!(p::Prc, ev, value)
 
-Interrupt a `Prc` by throwing a `ClockException` to it.
+Interrupt a [`Prc`](@ref) by throwing a [`PrcException`](@ref) to it.
 """
 function interrupt!(p::Prc, ev, value)
     schedule(p.task, PrcException(ev, value), error=true)

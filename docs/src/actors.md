@@ -4,15 +4,19 @@
 CurrentModule = DiscreteEvents
 ```
 
-[Actors](https://en.wikipedia.org/wiki/Actor_model) can operate as finite state machines, are more reactive than processes and can assemble into systems. They run as Julia tasks listening to a (message) channel. In order to integrate into the `DiscreteEvents` framework, they can register their channels to the `clock.channels` vector. Then the clock will only proceed to the next event if all registered channels are empty and the associated actors have finished to process the current event.
+Even if not considered in classical literature about DES, [Actors](https://en.wikipedia.org/wiki/Actor_model) are natural candidates to represent entities in discrete event systems. They are not bound to typical event sequences, can operate as finite state machines, can assemble into systems and represent hierarchies. They can spawned to and interoperate over threads.
 
 ## Reactive programming
+
+Actors run as Julia tasks listening to a (message) channel. They block only if they have no message in their channel. Therefore they run in a simple loop, reacting to a message when it arrives according to their current state. They don't share their state with other actors or their environment.
 
 !!! warning "Don't use `delay!` or `wait!` with actors"
 
     Those are blocking operations and will make an actor non-responsive, just as a process.
 
-Even if actors have registered their message channel to the clock, they should use [`now!`](@ref) for IO-operations or print via the clock. This also makes them more responsive and does not yield them to the scheduler during their loop.
+In order to integrate into the `DiscreteEvents` framework, Actors  register their channels to the `clock.channels` vector. Then the clock will only proceed to the next event if all registered channels are empty and the associated actors have finished to process the current event.
+
+Even if Actors have registered their message channel to the clock, they should use [`now!`](@ref) for IO-operations or print via the clock. This also makes them responsive and does not yield them to the scheduler during their loop.
 
 ## Actor potential
 
