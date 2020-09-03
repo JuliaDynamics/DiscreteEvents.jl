@@ -343,11 +343,11 @@ function step!(clk::Clock, ::Idle, σ::Run)
     if length(clk.ac) == 0
         tend = _run!(clk, σ.duration)
     else
-        tend = clk.time + σ.duration
+        tend = clk.end_time = clk.time + σ.duration
         while clk.time < tend
-            Δt = min(clk.Δt, abs(tend-clk.time))           # sync yet missing
-            foreach(ac->put!(ac.forth, Run(Δt, sync)), clk.ac)   # run pclocks
-            _cycle!(clk, Δt, sync)                                 # run yourself
+            Δt = min(clk.Δt, abs(tend-clk.time))       # sync yet missing
+            foreach(ac->put!(ac.forth, Run(Δt, sync)), clk.ac) # run pclocks
+            _cycle!(clk, Δt, sync)                             # run yourself
             foreach(x->handle_response(x), eachindex(clk.ac))
         end
     end
@@ -360,7 +360,7 @@ function step!(clk::Clock, ::Idle, σ::Run)
     for ac in clk.ac
         c1, c2 = take!(ac.back).x
         clk.evcount += c1
-        clk.scount  += c2
+        # clk.scount  += c2
     end
 
     "run! finished with $(clk.evcount) clock events, $(clk.scount) sample steps, simulation time: $(clk.time)"
