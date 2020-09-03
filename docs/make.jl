@@ -18,6 +18,7 @@ makedocs(
             "processes.md",
             "actors.md",
             "resources.md",
+            "parallel.md",
             "usage.md"],
         "Internals" => [
             "internals.md",

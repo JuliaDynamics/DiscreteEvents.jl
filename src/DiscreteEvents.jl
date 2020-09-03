@@ -52,16 +52,18 @@ include("threads.jl")
 include("timer.jl")
 include("printing.jl")
 include("resources.jl")
+include("utils.jl")
 
 export  Clock, PClock, RTClock, setUnit!, 𝐶,
         Action, Timing, at, after, every, before, until,
         tau, sample_time!, fun, event!, periodic!, register!,
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
-        fork!, collapse!, pclock, diagnose, onthread,
+        fork!, collapse!, pclock, diagnose, 
         createRTClock, stopRTClock, 
         PrcException, 
-        Resource
+        Resource,
+        onthread, pseed!
 
 
 Random.seed!(123)
