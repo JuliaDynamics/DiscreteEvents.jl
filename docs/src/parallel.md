@@ -57,7 +57,7 @@ end
 
 ## More Documentation and Examples
 
-You can find more [documentation](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/parallel/) and examples on `DiscreteEventsCompanion`.
+You can find more [documentation](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/parallel/) and [examples](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/examples/#Multi-Threading) on `DiscreteEventsCompanion`.
 
 [^1]: The [Goldratt's Dice Game](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/dicegame/dicegame/) example on `DiscreteEventsCompanion` illustrates how to do this.
 [^2]: Event numbers and line throughput are different because the random number sequence changes between these examples.
