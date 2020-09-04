@@ -241,7 +241,7 @@ function Clock(Δt::T=0.01;
     else
         nothing
     end
-    GlobalClock(1, ClockChannel[], Idle(), 
+    GlobalClock(threadid(), ClockChannel[], Idle(), 
         t0, unit, Δt, Schedule(), Dict{Any, Prc}(), Channel[], 
         t0 + Δt, t0, t0, 0, 0)
 end

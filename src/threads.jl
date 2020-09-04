@@ -229,7 +229,7 @@ function pclock(clk::Clock, id::Int=threadid())
             println(stderr, "parallel clock $id not available!")
         end
     elseif clk.id == id
-        return clk.ac[]
+        return clk.ac isa Ref ? clk.ac[] : clk
     else
         pclock(clk.ac[], id)
     end
@@ -237,6 +237,10 @@ end
 function pclock(ac::ActiveClock, id::Int=threadid())
     id == ac.id ? ac : pclock(ac.master[], id)
 end
+
+# return a valid clock variable
+_clock(clk::Clock) = clk
+_clock(ac::ActiveClock) = ac.clock
 
 """
     diagnose(master::Clock, id::Int)

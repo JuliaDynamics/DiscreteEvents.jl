@@ -6,7 +6,7 @@ CurrentModule = DiscreteEvents
 
 Clocks schedule and execute *actions*, computations that happen as *events* at specified times (or under specified conditions).
 
-## Virtual clocks
+## Virtual Clocks
 
 A `Clock` is not bound to physical time and executes an event sequence as fast as possible.
 
@@ -39,7 +39,7 @@ You can query the current clock time:
 tau
 ```
 
-## Parallel clocks
+## Parallel Clocks (Experimental)
 
 Parallel clocks are virtual clocks with local clocks on parallel threads to support parallel simulations.
 
@@ -76,7 +76,7 @@ collapse!
 diagnose
 ```
 
-## Real time clocks
+## Real Time Clocks (Experimental)
 
 `RTClock`s schedule and execute actions on a real (system) time line.
 
@@ -104,7 +104,7 @@ a[1]                              # query a
 stopRTClock(rtc)                  # stop the clock
 ```
 
-## Clock operation
+## Clock Operation
 
 Virtual clocks can be run, stopped or stepped through and thereby used to simulate chains of events.
 
@@ -117,7 +117,7 @@ resume!
 sync!
 ```
 
-## Time units
+## Time Units
 
 You can set time units of a virtual clock:
 

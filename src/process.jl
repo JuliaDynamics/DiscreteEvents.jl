@@ -35,13 +35,13 @@ end
 # - `p::Prc`:
 # - `cycles=Inf`: determine, how often the loop should be run.
 function _loop(p::Prc, cycles::T) where {T<:Number}
-    threadid() > 1 && (p.clk = pclock(p.clk).clock)
+    threadid() > 1 && (p.clk = _clock(pclock(p.clk)))
     _register!(p.clk, p)
     while cycles > 0
         try
             p.f(p.clk, p.arg...; p.kw...)
         catch exc
-            if isa(exc, ClockException)
+            if isa(exc, PrcException)
                 exc.ev == Stop() && break
             end
             rethrow(exc)
@@ -170,10 +170,14 @@ stop!(p::Prc, value=nothing) = interrupt!(p, Stop(), value)
 """
     now!(clk::Clock, ex::A) where {A<:Action}
 
-Transfer an IO-operation `ex` to the master clock (on thread 1). 
-The clock executes it before proceeding to the next time step.
+Transfer an IO-operation `ex` to `clk` or if it is a parallel clock
+to the master clock (on thread 1). The clock executes it before 
+proceeding to the next time step.
 """
-now!(clk::Clock, ex::A) where {A<:Action} = event!(clk, ex, clk.time, cid=1)
+function now!(clk::Clock, ex::A) where {A<:Action} 
+    cid = clk.ac isa Ref ? 1 : threadid()
+    event!(clk, ex, clk.time, cid=cid)
+end
 
 """
 ```
