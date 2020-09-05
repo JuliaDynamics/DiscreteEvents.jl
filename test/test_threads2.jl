@@ -1,43 +1,63 @@
-# using Printf
+#
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
+#
+# Paul Bayer, 2020
+#
+# This is a Julia package for discrete event simulation
+#
+# ------------------------------------------
+# dynamical multi-threading based on assy_thrd.jl example
+#
+using DiscreteEvents, Distributions, .Threads, Test
 
-println("... test threading 2 ...")
+println("... dynamical multi-threading ...")
 
+# describe an assembly process
+function assy(c::Clock, input::Channel, output::Channel, S::Distribution, id::Int)
+    job = take!(input)
+    delay!(c, S)
+    put!(output, job)
+end
 
-# println("... test channel 4 example parallel ...")
-# A = []
-# ch1 = Channel(32)
-# ch2 = Channel(32)
-#
-# function simple1(c::Clock, input::Channel, output::Channel, name, id, op)
-#     token = take!(input)         # take something from the input
-#     push!(A, (tau(c), name, id, token))
-# #    println(@sprintf("%5.2f: %s %d took %d", tau(c), name, id, token))
-#     d = delay!(c, rand())           # after a delay
-# #    println(@sprintf("%5.2f: %s %d now after a delay ...", tau(c), name, id))
-#     put!(output, op(token, id))  # put it out with some op applied
-# #    println(@sprintf("%5.2f: %s %d sent %d", tau(c), name, id, op(token, id)))
-# end
-#
-# clk = Clock(0.001)
-# Random.seed!(123)
-#
-# for i in 1:2:8    # create, register and start 8 SimProcesses SP
-#     process!(clk, SP(i, simple1, clk, ch1, ch2, "foo", i, +), spawn=true)
-#     process!(clk, SP(i+1, simple1, clk, ch2, ch1, "bar", i+1, *), spawn=true)
-# end
-#
-# @test length(clk.processes) == 8
-# for p in values(clk.processes)
-#     @test p.state == DiscreteEvents.Idle()
-#     @test istaskstarted(p.task)
-# end
-#
-# put!(ch1, 1)
-# sleep(0.1)
-# run!(clk, 10)
-#
-# # @test length(A) > 20
-# # p = [i[3] for i in A]
-# # for i in 1:8
-# #     @test i ∈ p  # all processes did something
-# # end
+# setup an assembly line of N nodes between input and output
+# buf is the buffer size between the nodes
+function assyLine(c::Clock, input::Channel, output::Channel, 
+                  S::Distribution, N::Int, buf::Int; thrd=1)
+    inp = input
+    out = N > 1 ? typeof(input)(buf) : output
+    for i in 1:N
+        process!(c, Prc(i, assy, inp, out, S, i), cid=thrd)
+        inp = out
+        out = i < (N-1) ? typeof(input)(buf) : output
+    end
+end
+
+# arrivals
+function arrive(c::Clock, input::Channel, jobno::Vector{Int}, A::Distribution)
+    jobno[1] += 1
+    delay!(c, A)
+    put!(input, jobno[1])
+end
+
+pseed!(123)
+const M₁ = Exponential(1/0.9)
+const M₂ = Normal(1, 0.1)
+const jobno = [4]
+
+clk = PClock(0.05)
+input = Channel{Int}(10)
+buffer = [Channel{Int}(10) for _ in 2:nthreads()]
+output = Channel{Int}(Inf)
+foreach(i->put!(input, i), 1:3)
+for i in 1:nthreads()
+    inp = i == 1 ? input : buffer[i-1]
+    out = i < nthreads() ? buffer[i] : output
+    assyLine(clk, inp, out, M₂, 10, 2, thrd=i)
+end
+process!(clk, Prc(0, arrive, input, jobno, M₁))
+
+@time run!(clk, 1000)
+
+len = 700
+@test length(output) > len
+@test clk.evcount > len*10*nthreads()

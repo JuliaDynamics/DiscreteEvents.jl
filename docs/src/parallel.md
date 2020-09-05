@@ -19,15 +19,15 @@ Fortunately not all events in larger DES are strongly coupled. For most practica
 
 ## Thread-local Clocks
 
-With [`PClock`](@ref) we introduce parallel local clocks on each thread. when we [`run!`](@ref) the master clock on thread 1 it synchronizes with the parallel clocks each chosen time interval ``\;Δt\;`` . The synchronization takes some time and the slowest thread with the biggest workload (usually thread 1) sets the pace for the whole computation.
+With [`PClock`](@ref) we introduce parallel local clocks on each thread. When we [`run!`](@ref) the master clock on thread 1, it synchronizes with the parallel clocks each chosen time interval ``\;Δt\;`` . The synchronization takes some time and the slowest thread with the biggest workload (usually thread 1) sets the pace for the whole computation.
 
-We can allocate [events](events.md), [periodic](@ref) actions and [processes](@ref) to parallel clocks by giving them a clock id `cid` or by spawning them with `spawn`. Then 
+We can allocate [events](events.md), [periodic](@ref) actions and [processes](@ref) to parallel clocks by giving them a clock id `cid` or by spawning them with `spawn`. Then
 
 - events and processes get registered to parallel clocks,
 - processes get started on parallel threads and
 - their functions get the thread local clock to `delay!` or `wait!` on it.
 
-We avoid to share global variables between threads in order not to have race conditions. If thread-local subsystems get inputs from each other, they should communicate over Julia channels, which are thread safe.
+We avoid to share global variables between threads in order not to get race conditions. If thread-local subsystems get inputs from each other, they should communicate over Julia channels, which are thread safe.
 
 When working on parallel threads, we have thread-local random number generators. Random number sequences therefore are not identical between single-threaded and multithreaded applications (see below). This usually causes also simulation results to be different.
 
