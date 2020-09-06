@@ -53,6 +53,7 @@ run!(clock, 20)   # run the clock
 If we source this program, it runs a simulation.
 
 <details><summary>output:</summary>
+<p>
 ```julia
 julia> include("examples/intro.jl")
 0.141: customer 1 arrived
@@ -87,6 +88,7 @@ julia> include("examples/intro.jl")
 10.477: server 3 finished serving 10
 "run! finished with 40 clock events, 0 sample steps, simulation time: 20.0"
 ```
+</p>
 </details>
 
 For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion site [DiscreteEventsCompanion](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/).
