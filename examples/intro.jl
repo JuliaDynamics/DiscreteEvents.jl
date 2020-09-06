@@ -1,26 +1,32 @@
-#
-# introductory example in README.md
-#
-using DiscreteEvents, Printf, Random
+using DiscreteEvents, Printf, Distributions, Random
 
-function simple(c::Clock, input::Channel, output::Channel, name, id, op)
-    token = take!(input)         # take something from the input
-    print(c, @sprintf("%5.2f: %s %d took token %d\n", tau(c), name, id, token))
-    delay!(c, rand())            # after a delay
-    put!(output, op(token, id))  # put it out with some op applied
+Random.seed!(123)  # set random number seed
+const μ = 1/3       # service rate
+const λ = 0.9       # arrival rate
+count = [0]         # a job counter
+
+# describe the server process
+function serve(clk::Clock, id::Int, input::Channel, output::Channel, X::Distribution)
+    job = take!(input)
+    print(clk, @sprintf("%5.3f: server %d serving customer %d\n", tau(clk), id, job))
+    delay!(clk, X)
+    print(clk, @sprintf("%5.3f: server %d finished serving %d\n", tau(clk), id, job))
+    put!(output, job)
 end
 
-clk = Clock()      # create a clock
-Random.seed!(123)  # seed the random number generator
-
-ch1 = Channel(32)  # create two channels
-ch2 = Channel(32)
-
-for i in 1:2:8     # create and register 8 SimProcesses SP
-    process!(clk, Prc(i, simple, ch1, ch2, "foo", i, +))
-    process!(clk, Prc(i+1, simple, ch2, ch1, "bar", i+1, *))
+# model the arrivals
+function arrive(c::Clock, input::Channel, cust::Vector{Int})
+    cust[1] += 1
+    @printf("%5.3f: customer %d arrived\n", tau(c), cust[1])
+    put!(input, cust[1])
 end
 
-put!(ch1, 1)       # put first token into channel 1
-yield()            # let the first task take it
-run!(clk, 10)      # and run for 10 time units
+clock = Clock()   # create a clock
+input = Channel{Int}(Inf)
+output = Channel{Int}(Inf)
+for i in 1:3      # start three server processes
+    process!(clock, Prc(i, serve, i, input, output, Exponential(1/μ)))
+end
+# create a repeating event for 10 arrivals
+event!(clock, fun(arrive, clock, input, count), every, Exponential(1/λ), n=10)
+run!(clock, 20)   # run the clock

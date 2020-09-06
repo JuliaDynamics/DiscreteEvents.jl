@@ -21,7 +21,7 @@ Fortunately not all events in larger DES are strongly coupled. For most practica
 
 With [`PClock`](@ref) we introduce parallel local clocks on each thread. When we [`run!`](@ref) the master clock on thread 1, it synchronizes with the parallel clocks each chosen time interval ``\;Δt\;`` . The synchronization takes some time and the slowest thread with the biggest workload (usually thread 1) sets the pace for the whole computation.
 
-We can allocate [events](events.md), [periodic](@ref) actions and [processes](@ref) to parallel clocks by giving them a clock id `cid` or by spawning them with `spawn`. Then
+We can use [event!](events.md), [periodic!](@ref) and [process!](@ref) to allocate to parallel clocks by using the keywords `cid` or `spawn`. Then
 
 - events and processes get registered to parallel clocks,
 - processes get started on parallel threads and
@@ -47,7 +47,7 @@ To get reproducible but different random number sequences on each thread, you ca
 
 At this time of writing all implicit calls to `rand()` in timed [`event!`](@ref event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number})s or in [`delay!`](@ref) use the default RNGs.
 
-Alternatively you can set the thread-specific default RNG with:
+Alternatively you can seed a thread-specific default RNG with:
 
 ```julia
 using DiscreteEvents, Random
