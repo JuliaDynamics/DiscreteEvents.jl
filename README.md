@@ -2,8 +2,6 @@
 
 A Julia package for **discrete event generation and simulation**.
 
-**Note:** This package has been renamed and its code and examples have been updated to upcoming `v0.3`. The registered package is [`Simulate`](https://github.com/pbayer/DiscreteEvents.jl/tree/v0.2.0)
-
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/v0.2.0/)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/dev)
 [![Build Status](https://travis-ci.com/pbayer/DiscreteEvents.jl.svg?branch=master)](https://travis-ci.com/pbayer/DiscreteEvents.jl)
@@ -11,73 +9,100 @@ A Julia package for **discrete event generation and simulation**.
 [![codecov](https://codecov.io/gh/pbayer/DiscreteEvents.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/DiscreteEvents.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/DiscreteEvents.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/DiscreteEvents.jl?branch=master)
 
-`DiscreteEvents` introduces a *clock* and allows to schedule arbitrary functions or expressions as *actions* on the clock's timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
+`DiscreteEvents` introduces *clocks* and allows to schedule and execute arbitrary functions or expressions as *actions* on the clocks' timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
-## A first example
+## An M/M/3 queue
 
-A server takes something from its input and puts it out modified after some time. We implement that in a function, create input and output channels and some "foo" and "bar" processes operating reciprocally on the channels:  
-
-```julia
-using DiscreteEvents, Printf, Random
-
-function simple(c::Clock, input::Channel, output::Channel, name, id, op)
-    token = take!(input)         # take something from the input
-    print(c, @sprintf("%5.2f: %s %d took token %d\n", tau(c), name, id, token))
-    delay!(c, rand())            # after a delay
-    put!(output, op(token, id))  # put it out with some op applied
-end
-
-clk = Clock()      # create a clock
-Random.seed!(123)  # seed the random number generator
-
-ch1 = Channel(32)  # create two channels
-ch2 = Channel(32)
-
-for i in 1:2:8     # create and register 8 SimProcesses SP
-    process!(clk, Prc(i, simple, ch1, ch2, "foo", i, +))
-    process!(clk, Prc(i+1, simple, ch2, ch1, "bar", i+1, *))
-end
-
-put!(ch1, 1)       # put first token into channel 1
-yield()            # let the first task take it
-run!(clk, 10)      # and run for 10 time units
-```
-
-If we source this program, it runs a simulation:
+Three servers serve customers arriving with an arrival rate λ with a service rate μ. We implement `serve` and `arrive` functions, create a clock and queues, start three service processes and an arrival process and run.
 
 ```julia
-julia> include("docs/examples/channels.jl")
- 0.00: foo 1 took token 1
- 0.77: bar 2 took token 2
- 1.71: foo 3 took token 4
- 2.38: bar 4 took token 7
- 2.78: foo 5 took token 28
- 3.09: bar 6 took token 33
- ...
- ...
- 7.64: foo 1 took token 631016
- 7.91: bar 2 took token 631017
- 8.36: foo 3 took token 1262034
- 8.94: bar 4 took token 1262037
- 9.20: foo 5 took token 5048148
- 9.91: bar 6 took token 5048153
-"run! finished with 43 clock events, 0 sample steps, simulation time: 10.0"
+using DiscreteEvents, Printf, Distributions, Random
+
+# describe a server process
+function serve(clk::Clock, id::Int, input::Channel, output::Channel, X::Distribution)
+    job = take!(input)
+    print(clk, @sprintf("%5.3f: server %d serving customer %d\n", tau(clk), id, job))
+    delay!(clk, X)
+    print(clk, @sprintf("%5.3f: server %d finished serving %d\n", tau(clk), id, job))
+    put!(output, job)
+end
+
+# model the arrivals
+function arrive(c::Clock, input::Channel, cust::Vector{Int})
+    cust[1] += 1
+    @printf("%5.3f: customer %d arrived\n", tau(c), cust[1])
+    put!(input, cust[1])
+end
+
+Random.seed!(123)  # set random number seed
+const μ = 1/3       # service rate
+const λ = 0.9       # arrival rate
+count = [0]         # a job counter
+
+clock = Clock()   # create a clock
+input = Channel{Int}(Inf)
+output = Channel{Int}(Inf)
+for i in 1:3      # start three server processes
+    process!(clock, Prc(i, serve, i, input, output, Exponential(1/μ)))
+end
+# create a repeating event for 10 arrivals
+event!(clock, fun(arrive, clock, input, count), every, Exponential(1/λ), n=10)
+run!(clock, 20)   # run the clock
 ```
 
-For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion site [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
+If we source this program, it runs a simulation.
+
+<details><summary>output:</summary>
+```julia
+julia> include("examples/intro.jl")
+0.141: customer 1 arrived
+0.141: server 1 serving customer 1
+1.668: server 1 finished serving 1
+2.316: customer 2 arrived
+2.316: server 2 serving customer 2
+3.154: customer 3 arrived
+3.154: server 3 serving customer 3
+4.182: customer 4 arrived
+4.182: server 1 serving customer 4
+4.364: server 3 finished serving 3
+4.409: customer 5 arrived
+4.409: server 3 serving customer 5
+4.533: customer 6 arrived
+4.566: server 2 finished serving 2
+4.566: server 2 serving customer 6
+5.072: customer 7 arrived
+5.299: server 3 finished serving 5
+5.299: server 3 serving customer 7
+5.335: server 1 finished serving 4
+5.376: customer 8 arrived
+5.376: server 1 serving customer 8
+5.833: customer 9 arrived
+6.134: customer 10 arrived
+6.570: server 1 finished serving 8
+6.570: server 1 serving customer 9
+6.841: server 3 finished serving 7
+6.841: server 3 serving customer 10
+8.371: server 2 finished serving 6
+10.453: server 1 finished serving 9
+10.477: server 3 finished serving 10
+"run! finished with 40 clock events, 0 sample steps, simulation time: 20.0"
+```
+</details>
+
+For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion site [DiscreteEventsCompanion](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/).
 
 ## Installation
 
-The development (and sometimes not so stable) version can be installed with:
-
-```julia
-pkg> add https://github.com/pbayer/DiscreteEvents.jl
-```
-
-The stable, registered version is installed with:
+`DiscreteEvents` is installed with:
 
 ```julia
 pkg> add DiscreteEvents
+```
+
+The development version can be installed with:
+
+```julia
+pkg> add https://github.com/pbayer/DiscreteEvents.jl
 ```
 
 Please use, test and help to develop `DiscreteEvents`! 😄
