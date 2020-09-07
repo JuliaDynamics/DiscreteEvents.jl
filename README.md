@@ -13,7 +13,7 @@ A Julia package for **discrete event generation and simulation**.
 
 ## An M/M/3 queue
 
-Three servers serve customers arriving with an arrival rate λ with a service rate μ. We implement `serve` and `arrive` functions, create a clock and queues, start three service processes and an arrival process and run.
+Three servers serve customers arriving at an arrival rate λ with a service rate μ. We implement `serve` and `arrive` functions, create a clock and queues, start three service processes and an arrival process and run.
 
 ```julia
 using DiscreteEvents, Printf, Distributions, Random
@@ -21,16 +21,16 @@ using DiscreteEvents, Printf, Distributions, Random
 # describe a server process
 function serve(clk::Clock, id::Int, input::Channel, output::Channel, X::Distribution)
     job = take!(input)
-    print(clk, @sprintf("%5.3f: server %d serving customer %d\n", tau(clk), id, job))
+    print(clk, @sprintf("%6.3f: server %d serving customer %d\n", tau(clk), id, job))
     delay!(clk, X)
-    print(clk, @sprintf("%5.3f: server %d finished serving %d\n", tau(clk), id, job))
+    print(clk, @sprintf("%6.3f: server %d finished serving %d\n", tau(clk), id, job))
     put!(output, job)
 end
 
 # model the arrivals
 function arrive(c::Clock, input::Channel, cust::Vector{Int})
     cust[1] += 1
-    @printf("%5.3f: customer %d arrived\n", tau(c), cust[1])
+    @printf("%6.3f: customer %d arrived\n", tau(c), cust[1])
     put!(input, cust[1])
 end
 
@@ -55,34 +55,34 @@ If we source this program, it runs a simulation.
 <details><summary>output:</summary>
 <pre><code>
 julia> include("examples/intro.jl")
-0.141: customer 1 arrived
-0.141: server 1 serving customer 1
-1.668: server 1 finished serving 1
-2.316: customer 2 arrived
-2.316: server 2 serving customer 2
-3.154: customer 3 arrived
-3.154: server 3 serving customer 3
-4.182: customer 4 arrived
-4.182: server 1 serving customer 4
-4.364: server 3 finished serving 3
-4.409: customer 5 arrived
-4.409: server 3 serving customer 5
-4.533: customer 6 arrived
-4.566: server 2 finished serving 2
-4.566: server 2 serving customer 6
-5.072: customer 7 arrived
-5.299: server 3 finished serving 5
-5.299: server 3 serving customer 7
-5.335: server 1 finished serving 4
-5.376: customer 8 arrived
-5.376: server 1 serving customer 8
-5.833: customer 9 arrived
-6.134: customer 10 arrived
-6.570: server 1 finished serving 8
-6.570: server 1 serving customer 9
-6.841: server 3 finished serving 7
-6.841: server 3 serving customer 10
-8.371: server 2 finished serving 6
+ 0.141: customer 1 arrived
+ 0.141: server 1 serving customer 1
+ 1.668: server 1 finished serving 1
+ 2.316: customer 2 arrived
+ 2.316: server 2 serving customer 2
+ 3.154: customer 3 arrived
+ 3.154: server 3 serving customer 3
+ 4.182: customer 4 arrived
+ 4.182: server 1 serving customer 4
+ 4.364: server 3 finished serving 3
+ 4.409: customer 5 arrived
+ 4.409: server 3 serving customer 5
+ 4.533: customer 6 arrived
+ 4.566: server 2 finished serving 2
+ 4.566: server 2 serving customer 6
+ 5.072: customer 7 arrived
+ 5.299: server 3 finished serving 5
+ 5.299: server 3 serving customer 7
+ 5.335: server 1 finished serving 4
+ 5.376: customer 8 arrived
+ 5.376: server 1 serving customer 8
+ 5.833: customer 9 arrived
+ 6.134: customer 10 arrived
+ 6.570: server 1 finished serving 8
+ 6.570: server 1 serving customer 9
+ 6.841: server 3 finished serving 7
+ 6.841: server 3 serving customer 10
+ 8.371: server 2 finished serving 6
 10.453: server 1 finished serving 9
 10.477: server 3 finished serving 10
 "run! finished with 40 clock events, 0 sample steps, simulation time: 20.0"
