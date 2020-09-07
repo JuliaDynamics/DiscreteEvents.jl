@@ -169,6 +169,7 @@ function collapse!(master::Clock)
             put!(ac.forth, Stop())
         end
         empty!(master.ac)
+        return
     else
         println(stderr, "only the master clock on thread 1 can be collapsed!")
     end

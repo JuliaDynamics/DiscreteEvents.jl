@@ -37,7 +37,6 @@ An action is either  a `Function` or an `Expr` or a `Tuple` of them.
 It can be scheduled in an event for later execution.
 """
 const Action = Union{Function, Expr, Tuple{Vararg{Union{Function, Expr}}}}
-# const Action = Union{Function, Expr, Tuple}
 
 """
 ````
@@ -104,19 +103,24 @@ end
 """
     Prc(id, f, arg...; kw...)
 
-Prepare a function to run as a process registered to a clock.
+Prepare a function to run as a process and get registered to a clock.
 
-# Arguments, fields
+# Arguments, Fields
 - `id`: some unique identification for registration,
 - `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` 
     (a [`Clock`](@ref)) as its first argument,
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
-# Fields
-- `task::Union{Task,Nothing}`: a task structure,
+# Dynamically Identified Fields
+- `task::Union{Task,Nothing}`: a task structure used for diagnosis,
 - `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
-- `state::ClockState`: process state,
+
+!!! note "The clock is identified dynamically!"
+
+    The clock `clk` where a process runs and gets registered is
+    identified during process startup and then passed as 1st 
+    argument to `f`. 
 """
 mutable struct Prc
     id::Any

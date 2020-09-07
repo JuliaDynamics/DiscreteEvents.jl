@@ -20,6 +20,6 @@ Even if Actors have registered their message channel to the clock, they should u
 
 ## Outlook
 
-See the [companion site](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/) for more explanations and examples with Actors. Despite of minimal actor support, a lot can be done yet with Actors. Actors push the boundaries of discrete event simulation.
+See `DiscreteEventsCompanion` for [more explanations and examples with Actors](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/actors/). Despite of minimal actor support, a lot can be done yet with Actors. Actors push the boundaries of discrete event simulation.
 
 [`YAActL`](https://pbayer.github.io/YAActL.jl/dev/) provides `register!` for integration into the `DiscreteEvents` framework.
