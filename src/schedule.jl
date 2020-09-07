@@ -12,12 +12,12 @@ event!([clk], ex, t; <keyword arguments>)
 event!([clk], ex, t, cy; <keyword arguments>)
 event!([clk], ex, T, t; <keyword arguments>)
 ```
-Schedule an event for a given time. 
+Schedule an event for a given time `t`. 
 
-If `t` is a `Distribution`, time is evaluated as `rand(t)`.  If `cy` 
-is a `Distribution`, time is evaluated for each repetition as 
-`rand(cy)`. If the evaluated time ≤ clk.time, the event is scheduled 
-at `clk.time`.
+If `t` is a `Distribution`, event time is evaluated as `rand(t)`.  
+If `cy` is a `Distribution`, the event is repeated after a random 
+interval `rand(cy)`. If the evaluated time ≤ clk.time, the event 
+is scheduled at `clk.time`.
 
 # Arguments
 - `clk<:AbstractClock`: clock, it not supplied, the event is scheduled to 𝐶,

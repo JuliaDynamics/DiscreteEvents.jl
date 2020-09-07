@@ -47,7 +47,7 @@ Parallel clocks are virtual clocks with local clocks on parallel threads to supp
 
 A parallel clock structure consists of a master (global) clock on thread 1 and [`ActiveClock`](@ref)s on all available threads > 1. An active clock is a task running a thread local clock. The thread local clock can schedule and execute events locally.
 
-The master clock communicates with its parallel active clocks via message channels. It synchronizes time with the local clocks. Tasks (processes and actors) can get access to their thread local clock from it and then work only with the local clock.
+The master clock communicates with its parallel active clocks via message channels. It synchronizes time with the local clocks. Tasks (processes and actors) have access to their thread local clock from it and then work only with the local clock.
 
 ```@docs
 PClock
@@ -71,16 +71,25 @@ You can fork explicitly existing clocks to other threads or collapse them if no 
 ```@docs
 fork!
 collapse!
+```
+
+```@repl clocks
+clk = Clock()      # create a clock
+fork!(clk)         # fork it
+clk                # it now has parallel clocks
+collapse!(clk)     # collapse it
+clk                # it now has no parallel clocks
+```
+
+```@docs
 diagnose
 ```
 
 ## Real Time Clocks (Experimental)
 
+Real time clocks are a new feature in v0.3 and thus cannot yet be considered as stable. Please try and report problems.
+
 `RTClock`s schedule and execute actions on a real (system) time line.
-
-!!! warning "Real time clocks are experimental!"
-
-    Real time clocks are a new feature in v0.3 and thus cannot yet be considered as stable. Please try and report problems.
 
 ```@docs
 RTClock

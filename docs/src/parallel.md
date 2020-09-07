@@ -13,21 +13,21 @@ You can parallelize simulations in two ways:
 
 Multithreading of simulations is introduced with `DiscreteEvents` v0.3 and will take some time to become stable. Please try it out and report your problems!
 
-If we compute events of a DES on parallel cores of a computer, we may reverse their sequence ``\;e_i, e_j\;`` to  ``\;e_j, e_i\;``. If there is causality between those events, we have a problem. Therefore we cannot spawn arbitrary events to parallel cores without altering causality and the simulated outcome.
+If we compute events of a DES on parallel cores of a computer, we may reverse a sequence ``\;e_i, e_j\;`` to  ``\;e_j, e_i\;``. If there is causality between those events, we have a problem. Therefore we cannot spawn arbitrary events to parallel cores without altering causality and the simulated outcome.
 
-Fortunately not all events in larger DES are strongly coupled. For most practical purposes we can divide systems into subsystems where events depend on each other but not or only statistically on events in other subsystems. Each subsystem has its local time/clock and clocks get synchronized periodically.
+Fortunately not all events in larger DES are strongly coupled. For most practical purposes we can divide systems into subsystems where events depend on each other but not or only statistically on events in other subsystems. Subsystems have local time and their clocks get synchronized periodically.
 
 ## Thread-local Clocks
 
-With [`PClock`](@ref) we introduce parallel local clocks on each thread. When we [`run!`](@ref) the master clock on thread 1, it synchronizes with the parallel clocks each chosen time interval ``\;Δt\;`` . The synchronization takes some time and the slowest thread with the biggest workload (usually thread 1) sets the pace for the whole computation.
+With [`PClock`](@ref) we introduce parallel local clocks on each thread. The master clock on thread 1 synchronizes with its parallel clocks each chosen time interval ``\;Δt\;``. Synchronization takes some time and the slowest thread with the biggest workload (usually thread 1) sets the pace for the whole computation.
 
-We can use [event!](events.md), [periodic!](@ref) and [process!](@ref) to allocate to parallel clocks by using the keywords `cid` or `spawn`. Then
+When using the keywords `cid` or `spawn` with [`event!`](events.md), [`periodic!`](@ref) and [`process!`](@ref) we can work with parallel clocks. Then
 
 - events and processes get registered to parallel clocks,
 - processes get started on parallel threads and
-- their functions get the thread local clock to `delay!` or `wait!` on it.
+- their functions get the thread local clock to [`delay!`](@ref) or [`wait!`](@ref) on it.
 
-We avoid to share global variables between threads in order not to get race conditions. If thread-local subsystems get inputs from each other, they should communicate over Julia channels, which are thread safe.
+A user should avoid to share global variables between threads in order not to get race conditions. If thread-local subsystems get inputs from each other, they should communicate over Julia channels, which are thread safe.
 
 When working on parallel threads, we have thread-local random number generators. Random number sequences therefore are not identical between single-threaded and multithreaded applications (see below). This usually causes also simulation results to be different.
 
@@ -62,4 +62,4 @@ end
 You can find more [documentation](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/parallel/) and [examples](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/examples/#Multi-Threading-(Experimental)) on `DiscreteEventsCompanion`.
 
 [^1]:  [Goldratt's Dice Game](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/dicegame/dicegame/) on `DiscreteEventsCompanion` illustrates how to do this.
-[^2]: Event numbers and line throughput are different because the random number sequence changes between these examples.
+[^2]: Event count and line throughput are different between multi- and single-threaded because the random number sequence changes between these examples.

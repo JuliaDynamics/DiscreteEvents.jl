@@ -38,9 +38,9 @@ Setting up a virtual clock is as easy as
 clock = Clock()
 ```
 
-You created a [`Clock`](@ref) variable `clk` with a clock at thread 1 with pretty much everything set to 0, without yet any scheduled events (ev), conditional events (cev) or sampling events (sampl).
+This creates a [`Clock`](@ref) variable `clk` with a clock at thread 1 with pretty much everything set to 0, without yet any scheduled events (ev), conditional events (cev) or sampling events (sampl).
 
-You can now schedule events to your clock. We demonstrate how it works with a couple of small simulations.
+We can now schedule events to the clock. We demonstrate how it works with a couple of small simulations.
 
 ## Inventory Control Problem
 
@@ -147,7 +147,7 @@ savefig("invctrl.png")
 
 If we could manage to replenish immediately after the tank is empty, we would be much better off.
 
-## A-B Call Center Problem
+## [A-B Call Center Problem](@id a-b_call_center)
 
 `DiscreteEvents` also provides process-based simulation. A process is a typical sequence of events. This is particularly useful if we can describe our system in such terms.
 
@@ -246,8 +246,8 @@ It is easy to simulate discrete event systems such as continuous-time stochastic
 
 ## Further examples
 
-You can find more examples at [`DiscreteEventsCompanion`](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/examples/).
+You can find [more examples at `DiscreteEventsCompanion`](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/examples/).
 
 [^1]: This is a modified version of example 4.1.1 in Tijms: A First Course in Stochastic Models, Wiley 2003, p 143ff
 [^2]: This is a simplified version of the Able-Baker Call Center Problem in Banks, Carson, Nelson, Nicol: Discrete-Event System Simulation, Pearson 2005, p 35 ff
-[^3]: The different approaches to modeling: event-based and process-based can be combined.
+[^3]: Different approaches to modeling: e.g. event-based and process-based can be combined.

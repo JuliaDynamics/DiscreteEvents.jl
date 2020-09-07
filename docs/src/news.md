@@ -5,9 +5,9 @@ CurrentModule = DiscreteEvents
 ```
 
 v0.3.0 is a significant improvement over 0.2.0 with a name change,
-multithreading, resource handling and a streamlined documentation.
+multi-threading, resource handling and a streamlined documentation.
 
-## Breaking name changes
+## Breaking Name Changes
 
 - following the [advice on discourse](https://discourse.julialang.org/t/simulate-v0-2-0-a-julia-package-for-discrete-event-simulation/31822) and in
   [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13) `Simulate.jl` was renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
@@ -19,12 +19,12 @@ multithreading, resource handling and a streamlined documentation.
   - `sample!` → [`periodic!`](@ref), was a name collision with `Distributions.jl`.
   - `reset!` → [`resetClock!`](@ref), was a name collision with `DataStructures.jl`
 
-## Streamlined documentation
+## Streamlined Documentation
 
 - the documentation has been reduced to minimal introductory examples and API documentation,
 - everything else (explanations, further examples, notebooks, benchmarks) has been moved to a companion site: [DiscreteEventsCompanion](https://github.com/pbayer/DiscreteEventsCompanion.jl).
 
-## New functionality in v0.3.0
+## New Functionality in v0.3.0
 
 - [`Action`](@ref) is introduced as synonym for `Union{Function,Expr,Tuple}`,
 - thereby in addition to [`fun`](@ref), you can now schedule arbitrary function closures as events,  
@@ -41,7 +41,7 @@ multithreading, resource handling and a streamlined documentation.
 - there is a `n` keyword parameter for the number of repeat `event!`s,
 - you can seed the thread-specific RNGs with [`pseed!`](@ref).
 
-### Multithreading (experimental)
+### Multi-Threading (Experimental)
 
 - The data structure of [`Clock`](@ref) has been changed, it now has a field `ac` providing channels to parallel clocks,  
 - [`PClock`](@ref) sets up a clock with parallel active clocks on each available thread,
@@ -51,7 +51,7 @@ multithreading, resource handling and a streamlined documentation.
 - [`periodic!`](@ref) can now register sampling functions or expressions to parallel clocks,
 - if setup with parallel clocks, [`Clock`](@ref) becomes the master to drive them and synchronize with them at each `Δt` time step,
 
-## Other breaking changes in v0.3.0
+## Other Breaking Changes in v0.3.0
 
 - `τ` as an alias for [`tau`](@ref) is no longer defined.
 - The macros `@tau`, `@val`, `@SF`, `@SP` are no longer defined.
