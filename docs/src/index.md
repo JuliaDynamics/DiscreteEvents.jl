@@ -1,8 +1,8 @@
-# DiscreteEvents
+# DiscreteEvents.jl
 
 A Julia package for **discrete event generation and simulation**.
 
-`DiscreteEvents` [^1] introduces a *clock* and allows to schedule arbitrary functions or expressions as *actions* on the clock's timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
+`DiscreteEvents.jl` [^1] introduces a *clock* and allows to schedule arbitrary functions or expressions as *actions* on the clock's timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
 ## Overview
 

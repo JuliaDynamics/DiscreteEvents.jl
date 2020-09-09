@@ -1,4 +1,4 @@
-# DiscreteEvents
+# DiscreteEvents.jl
 
 A Julia package for **discrete event generation and simulation**.
 
@@ -9,7 +9,7 @@ A Julia package for **discrete event generation and simulation**.
 [![codecov](https://codecov.io/gh/pbayer/DiscreteEvents.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/DiscreteEvents.jl)
 [![Coverage Status](https://coveralls.io/repos/github/pbayer/DiscreteEvents.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/DiscreteEvents.jl?branch=master)
 
-`DiscreteEvents` [^1] introduces *clocks* and allows to schedule and execute arbitrary functions or expressions as *actions* on the clocks' timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
+`DiscreteEvents.jl` <sup id="a1">[1](#f1)</sup>&ensp; introduces *clocks* and allows to schedule and execute arbitrary functions or expressions as *actions* on the clocks' timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
 ## An M/M/3 queue
 
@@ -110,4 +110,4 @@ Please use, test and help to develop `DiscreteEvents`! 😄
 **Author:** Paul Bayer,\
 **License:** MIT
 
-[^1]: `DiscreteEvents.jl` as of `v0.3` has been renamed from [`Simulate.jl`](https://github.com/pbayer/Simulate.jl/tree/v0.2.0), see [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13).
+<b id="f1">1</b> &nbsp; `DiscreteEvents.jl` as of `v0.3` has been renamed from [`Simulate.jl`](https://github.com/pbayer/Simulate.jl/tree/v0.2.0), see [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13).[↩](#a1)
