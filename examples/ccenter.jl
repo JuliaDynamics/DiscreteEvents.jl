@@ -43,10 +43,14 @@ input = Channel{Caller}(Inf)
 output = Caller[]
 s1 = Server(1, M_a, 0.0)
 s2 = Server(2, M_b, 0.0)
-process!(clock, Prc(1, serve, s1, input, output, N))
-process!(clock, Prc(2, serve, s2, input, output, N))
-event!(clock, fun(arrive, clock, input, count), every, M_arr)
-run!(clock, 5000)
+# process!(clock, Prc(1, serve, s1, input, output, N))
+# process!(clock, Prc(2, serve, s2, input, output, N))
+# event!(clock, fun(arrive, clock, input, count), every, M_arr)
+# run!(clock, 5000)
+@process clock Prc(1, serve, s1, input, output, N)
+@process clock Prc(2, serve, s2, input, output, N)
+@event clock fun(arrive, clock, input, count) every M_arr
+@run! clock 5000
 
 # using Plots
 # wt = [c.t₂ - c.t₁ for c in output]

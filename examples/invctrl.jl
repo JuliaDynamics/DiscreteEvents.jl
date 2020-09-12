@@ -57,9 +57,12 @@ const X = TruncatedNormal(μ, σ, a, Inf)  # demand distribution
 
 clock = Clock()
 s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
-event!(clock, fun(replenish, clock, s, Q), every, M₂)
-event!(clock, fun(customer, clock, s, X), every, M₁)
-println(run!(clock, 5000))
+# event!(clock, fun(replenish, clock, s, Q), every, M₂)
+# event!(clock, fun(customer, clock, s, X), every, M₁)
+# println(run!(clock, 5000))
+@event clock fun(replenish, clock, s, Q) every M₂
+@event clock fun(customer, clock, s, X) every M₁
+println(@run! clock 5000)
 
 @show fuel_sold = s.qs;
 @show loss_rate = s.ql/s.qs;
