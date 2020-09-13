@@ -101,20 +101,26 @@ struct PrcException{U,V} <: Exception
 end
 
 """
-    Prc(id, f, arg...; kw...)
+```
+Prc(id, f, arg...; kw...)
+Prc(f, arg...; kw...)
+```
 
 Prepare a function to run as a process and get registered to a clock.
 
 # Arguments, Fields
-- `id`: some unique identification for registration,
+- `id`: some unique identification for registration, 
 - `f::Function`: a function `f(clk, arg...; kw...)`, must take `clk` 
     (a [`Clock`](@ref)) as its first argument,
 - `arg...`: further arguments to `f`
 - `kw...`: keyword arguments to `f`
 
-# Dynamically Identified Fields
+# Fields identified during registration
+- `id`: if it is not provided, some integer will be calculated 
+    for it during registration,
 - `task::Union{Task,Nothing}`: a task structure used for diagnosis,
-- `clk::Union{AbstractClock,Nothing}`: clock where the process is registered,
+- `clk::Union{AbstractClock,Nothing}`: clock where the process is 
+    registered,
 
 !!! note "The clock is identified dynamically!"
 
@@ -131,6 +137,7 @@ mutable struct Prc
     kw::Base.Iterators.Pairs
 
     Prc( id, f::Function, arg...; kw...) = new(id, nothing, nothing, f, arg, kw)
+    Prc(f::Function, arg...; kw...) = new(1, nothing, nothing, f, arg, kw)
 end
 
 """
