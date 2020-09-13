@@ -1,34 +1,38 @@
 """
     @proceses
 
-Register a process to a clock.
+Create a process from a function.
+
+Note: the first arg to the function being passed must be an AbstractClock
 """
-macro process(c, p, cycles=Inf)
-    return esc(:(process!($c, $p, $cycles)))
+macro process(id, expr)
+    expr.head != :call && error("Expression is not a function call.")
+    f = expr.args[1] #extract function passed
+    c = expr.args[2] #first function arg must be an AbstractClock
+    args = expr.args[3:end] #extract other function args
+    p = :(Prc($id, $f, $(args...))) #create Prc struct
+    esc(:(process!($c,$p))) #execute process!
 end
 
 """
     @event
 
-Schedule an event for a given time `t`.
+Schedule an event.
+
+Note: if 3 arguments are passed after the function being called,
+    the third one is assumed to be the keyword argument `n`.
 """
-macro event(clk, ex, t) 
-    # Cases: 1 - 2
-    # t is Number or Distribution
-    return esc(:(event!($clk, $ex, $t)))
-end
-
-macro event(clk, ex, t, cy, n) 
-    # Cases: 3 - 5 (when n is specified)
-    # t and cy are Numbers or Distributions
-    return esc(:(event!($clk, $ex, $t, $cy; n = $n)))
-end
-
-macro event(clk, ex, T, t) 
-    # Cases: 3 - 7
-    # T is timing or Numbers or Distributions
-    # t is Number or Distribution
-    return esc(:(event!($clk, $ex, $T, $t)))
+macro event(expr, args...)
+    expr.head != :call && error("Expression is not a function call.")
+    f = expr.args[1] #extract function passed
+    c = expr.args[2] #first function arg must be an AbstractClock
+    fargs = expr.args[2:end] #extract other function args
+    ex = :(fun($f, $(fargs...))) #create Action
+    if length(args) <= 2 
+        esc(:(event!($c, $ex, $(args...)))) #execute event!
+    else
+        esc(:(event!($c, $ex, $(args[1:2]...), n = $args[end]))) #execute event!
+    end
 end
 
 """
