@@ -130,7 +130,7 @@ mutable struct Prc
     arg::Tuple
     kw::Base.Iterators.Pairs
 
-    Prc( id, f::Function, arg...; kw...) = new(id, nothing, nothing, f, arg, kw)
+    Prc(id, f::Function, arg...; kw...) = new(id, nothing, nothing, f, arg, kw)
 end
 
 """
