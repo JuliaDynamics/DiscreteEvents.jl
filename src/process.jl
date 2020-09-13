@@ -6,12 +6,6 @@
 # This is a Julia package for discrete event simulation
 #
 
-# @static if VERSION >= v"1.3"
-#     using Base.Threads: @spawn
-# else
-#     @eval const $(Symbol("@spawn")) = $(Symbol("@async"))
-# end
-
 # Register a Prc to a clock. Check its id and change it apropriately.
 function _register!(clk::Clock, p::Prc)
     id = p.id
