@@ -53,6 +53,7 @@ include("timer.jl")
 include("printing.jl")
 include("resources.jl")
 include("utils.jl")
+include("macros.jl")
 
 export  Clock, PClock, RTClock, setUnit!, 𝐶,
         Action, Timing, at, after, every, before, until,
@@ -63,7 +64,8 @@ export  Clock, PClock, RTClock, setUnit!, 𝐶,
         createRTClock, stopRTClock, 
         PrcException, 
         Resource,
-        onthread, pseed!
+        onthread, pseed!,
+        @process, @event, @run!
 
 
 Random.seed!(123)
