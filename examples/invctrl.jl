@@ -53,13 +53,16 @@ const a = 5        #   minimum amount
 const Q = 6000.0   # replenishment amount
 const M₁ = Exponential(1/λ)  # customer arrival time distribution
 const M₂ = Exponential(1/ρ)  # replenishment time distribution
-const X = TruncatedNormal(μ, σ, a, Inf)  # demand distribution
+const X = truncated(Normal(μ, σ), a, Inf)  # demand distribution
 
 clock = Clock()
 s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
-event!(clock, fun(replenish, clock, s, Q), every, M₂)
-event!(clock, fun(customer, clock, s, X), every, M₁)
-println(run!(clock, 5000))
+# event!(clock, fun(replenish, clock, s, Q), every, M₂)
+# event!(clock, fun(customer, clock, s, X), every, M₁)
+# println(run!(clock, 5000))
+@event replenish(clock, s, Q) every M₂
+@event customer(clock, s, X) every M₁
+println(@run! clock 5000)
 
 @show fuel_sold = s.qs;
 @show loss_rate = s.ql/s.qs;
