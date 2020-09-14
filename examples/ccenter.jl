@@ -47,8 +47,8 @@ s2 = Server(2, M_b, 0.0)
 # process!(clock, Prc(2, serve, s2, input, output, N))
 # event!(clock, fun(arrive, clock, input, count), every, M_arr)
 # run!(clock, 5000)
-@process 1 serve(clock, s1, input, output, N)
-@process 2 serve(clock, s2, input, output, N)
+@process serve(clock, s1, input, output, N)
+@process serve(clock, s2, input, output, N)
 @event arrive(clock,input,count) every M_arr
 @run! clock 5000
 

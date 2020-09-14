@@ -26,7 +26,7 @@ input = Channel{Int}(Inf)
 output = Channel{Int}(Inf)
 for i in 1:3      # start three server processes
     # process!(clock, Prc(i, serve, i, input, output, Exponential(1/μ)))
-    @process i serve(clock, i, input, output, Exponential(1/μ))
+    @process serve(clock, i, input, output, Exponential(1/μ))
 end
 # create a repeating event for 10 arrivals
 # event!(clock, fun(arrive, clock, input, count), every, Exponential(1/λ), n=10)
