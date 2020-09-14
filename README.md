@@ -22,7 +22,7 @@ using DiscreteEvents, Printf, Distributions, Random
 function serve(clk::Clock, id::Int, input::Channel, output::Channel, X::Distribution)
     job = take!(input)
     print(clk, @sprintf("%6.3f: server %d serving customer %d\n", tau(clk), id, job))
-    delay!(clk, X)
+    @delay! clk, X
     print(clk, @sprintf("%6.3f: server %d finished serving %d\n", tau(clk), id, job))
     put!(output, job)
 end
@@ -43,11 +43,11 @@ clock = Clock()   # create a clock
 input = Channel{Int}(Inf)
 output = Channel{Int}(Inf)
 for i in 1:3      # start three server processes
-    process!(clock, Prc(i, serve, i, input, output, Exponential(1/μ)))
+    @process serve(clock, i, input, output, Exponential(1/μ))
 end
 # create a repeating event for 10 arrivals
-event!(clock, fun(arrive, clock, input, count), every, Exponential(1/λ), n=10)
-run!(clock, 20)   # run the clock
+@event arrive(clock, input, count) every Exponential(1/λ) 10
+@run! clock 20   # run the clock
 ```
 
 If we source this program, it runs a simulation.
