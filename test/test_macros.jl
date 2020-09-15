@@ -16,7 +16,9 @@ h(clk, x, y) = clk.time + x + y
 clk = Clock()
 
 @test repr(@macroexpand @event h(clk, a, b) at a) == ":(event!(clk, fun(h, clk, a, b), at, a))"
-@test repr(@macroexpand @event h(clk, a, b) every a 10) == ":(event!(clk, fun(h, clk, a, b), every, a, n = 10))"
+if VERSION > v"1.5"
+    @test repr(@macroexpand @event h(clk, a, b) every a 10) == ":(event!(clk, fun(h, clk, a, b), every, a, n = 10))"
+end
 @test repr(@macroexpand @event h(clk, a, b) g(x, y)) == ":(event!(clk, fun(h, clk, a, b), fun(g, x, y)))"
 @test repr(@macroexpand @event h(clk, a, b) a==1) == ":(event!(clk, fun(h, clk, a, b), fun(==, a, 1)))"
 
