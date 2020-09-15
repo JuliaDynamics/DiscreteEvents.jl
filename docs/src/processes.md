@@ -7,12 +7,12 @@ Processes are *typical event sequences* running as asynchronous tasks.
 To setup a process, you
 
 1. implement it in a function taking a [`Clock`](@ref) variable as its first argument,
-2. specify the process id and its arguments with `Prc`,
-3. start it as an asynchronous task and register it to a clock with `process!`.
+2. wrap it into `Prc` and start it as an asynchronous task with `process!`. The `@process` macro does this in one call.
 
 ```@docs
 Prc
 process!
+@process
 ```
 
 ## Delay and Wait …
@@ -21,7 +21,9 @@ Functions implementing processes create events implicitly by calling `delay!` or
 
 ```@docs
 delay!
+@delay
 wait!
+@wait
 ```
 
 ## Interrupts

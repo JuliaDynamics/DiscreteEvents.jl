@@ -65,6 +65,14 @@ sample_time!
 periodic!
 ```
 
+## Macros
+
+Functions can be scheduled to the clock as timed and conditional events with the `@event` macro. This wraps a given function into a `fun` closure and calls `event!` on it. 
+
+```@docs
+@event
+```
+
 ## Events and Variables
 
 Actions often depend on data or modify it. The data may change between the definition of an action and its later execution. If an action uses a *mutable variable* like an array or a mutable struct, it gets current data at event time and it is fast. If the action modifies the data, this is the best way to do it:

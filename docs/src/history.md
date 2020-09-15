@@ -1,5 +1,9 @@
 # Version history
 
+```@meta
+CurrentModule = DiscreteEvents
+```
+
 ## v0.3.0
 
 v0.3.0 was a significant improvement over 0.2.0 with a name change,
