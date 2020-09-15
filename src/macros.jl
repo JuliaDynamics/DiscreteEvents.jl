@@ -1,9 +1,26 @@
+#
+# This file is part of the DiscreteEvents.jl Julia package, MIT license
+#
+# Hector Perez, Paul Bayer, 2020
+#
+# This is a Julia package for discrete event simulation
+#
+
 """
-    @proceses
+    @process f(arg...) [cycles]
 
-Create a process from a function.
+Create a process from a function `f(arg...)`.
 
-Note: the first arg to the function being passed must be an AbstractClock
+Wrap a function and its arguments in a [`Prc`](@ref) and start it with 
+[`process!`](@ref).
+
+# Arguments
+- `f`: a function,
+- `arg...`: arguments, the first argument must be an AbstractClock,
+- `cycles::Int`: the number of cycles, `f` should run.
+
+# Returns
+- an `Int` process id.
 """
 macro process(expr, args...)
     expr.head != :call && error("Expression is not a function call.")
@@ -20,50 +37,83 @@ macro process(expr, args...)
 end
 
 """
-    @event
+    @event f(arg...) T t [n]
 
-Schedule an event.
+Schedule a function `f(arg...)` as an event to a clock.
 
-Note: if 3 arguments are passed after the function being called,
-    the third one is assumed to be the keyword argument `n`.
+# Arguments
+- `f`: function to be executed at event time,
+- `arg...`: its arguments, the first argument must be a clock,
+- `T`: a [`Timing`](@ref) (at, after, every),
+- `n`: passed as keyword `n` to `event!`.
 """
 macro event(expr, args...)
-    expr.head != :call && error("Expression is not a function call.")
+    expr.head != :call && error("1st term is not a function call.")
     f = expr.args[1] #extract function passed
     c = expr.args[2] #first function arg must be an AbstractClock
     fargs = expr.args[2:end] #extract other function args
     ex = :(fun($f, $(fargs...))) #create Action
     if length(args) == 3 
-        esc(:(event!($c, $ex, $(args[1:2]...), n = $args[3]))) #execute event!
+        esc(:(event!($c, $ex, $(args[1:2]...), n = $(args[3])))) #execute event!
     else
         esc(:(event!($c, $ex, $(args...)))) #execute event!
     end
 end
 
 """
-    @delay
+    @event f(farg...) c(carg...)
 
-Delay a process.
+Schedule a function `f(farg...)` as a conditional event to a clock.
+
+# Arguments
+- `f`: function to be executed at event time,
+- `farg...`: its arguments, the first argument must be a clock,
+- `c`: function to be evaluated at the clock's sample rate, if it
+    returns true, the event is triggered,
+- `carg...`: arguments to c.
+"""
+macro event(expr, cond)
+    expr.head != :call && error("1st term is not a function call.")
+    f1 = expr.args[1] 
+    c = expr.args[2] 
+    f1args = expr.args[2:end] 
+    ex1 = :(fun($f1, $(f1args...))) 
+    cond.head != :call && error("2nd term is not a function call.")
+    f2 = cond.args[1] 
+    f2args = cond.args[2:end] 
+    ex2 = :(fun($f2, $(f2args...))) 
+    esc(:(event!($c, $ex1, $ex2)))
+end
+
+"""
+```
+@delay clk Δt
+@delay clk until t
+```
+Delay a process on a clock `clk` for a time interval `Δt` or until
+a time `t`.
 """
 macro delay(clk, delay...)
     esc(:(delay!($clk, $(delay...))))
 end
 
 """
-    @wait
+    @wait clk f(arg...)
 
-Delay a process until a condition has been met.
+Conditionally wait on a clock `clk` until `f(arg...)` returns true.
 """
-macro wait(clk, cond)
-    exc(:(wait!($clk, $cond)))
+macro wait(clk, expr)
+    expr.head != :call && error("2nd term is not a function call.")
+    f = expr.args[1]
+    fargs = expr.args[2:end]
+    ex = :(fun($f, $(fargs...)))
+    esc(:(wait!($clk, $ex)))
 end
 
 """
-    @run!
+    @run! clk t
 
-Run a simulation for a given duration.
-
-Takes two arguments: clock and duration.
+Run a clock `clk` for a duration `t`. 
 """
 macro run!(clk, duration)
     esc(:(run!($clk, $duration)))
