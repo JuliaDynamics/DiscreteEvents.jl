@@ -18,6 +18,7 @@ using DiscreteEvents, Test, SafeTestsets, .Threads
 @safetestset "Processes"    begin include("test_process.jl") end
 @safetestset "Resources"    begin include("test_resources.jl") end
 @safetestset "Utilities"    begin include("test_utils.jl") end
+@safetestset "Macros"       begin include("test_macros.jl") end
 
 if (VERSION ≥ v"1.3") && (nthreads() > 1)
     @safetestset "timer.jl" begin include("test_timer.jl") end

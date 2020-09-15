@@ -22,7 +22,7 @@ using DiscreteEvents, Printf, Distributions, Random
 function serve(clk::Clock, id::Int, input::Channel, output::Channel, X::Distribution)
     job = take!(input)
     print(clk, @sprintf("%6.3f: server %d serving customer %d\n", tau(clk), id, job))
-    @delay! clk, X
+    @delay! clk X
     print(clk, @sprintf("%6.3f: server %d finished serving %d\n", tau(clk), id, job))
     put!(output, job)
 end

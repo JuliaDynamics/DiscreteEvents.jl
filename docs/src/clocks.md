@@ -117,6 +117,7 @@ Virtual clocks can be run, stopped or stepped through and thereby used to simula
 
 ```@docs
 run!
+@run!
 incr!
 resetClock!
 stop!

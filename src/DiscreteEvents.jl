@@ -65,7 +65,7 @@ export  Clock, PClock, RTClock, setUnit!, 𝐶,
         PrcException, 
         Resource,
         onthread, pseed!,
-        @process, @event, @run!
+        @process, @event, @run!, @delay, @wait
 
 
 Random.seed!(123)
