@@ -6,8 +6,7 @@ CurrentModule = DiscreteEvents
 
 ## v0.3.0
 
-v0.3.0 was a significant improvement over 0.2.0 with a name change,
-multi-threading, resource handling and a streamlined documentation.
+(2020-09-11) v0.3.0 was a significant improvement over 0.2.0 with a name change, multi-threading, resource handling and a streamlined documentation ([announcement on Julia discourse](https://discourse.julialang.org/t/ann-discreteevents-0-3/46477)).
 
 ### Breaking Name Changes
 
@@ -72,7 +71,7 @@ multi-threading, resource handling and a streamlined documentation.
 
 ## v0.2.0
 
-This is the first version fully supporting three modeling schemes: events, processes and sampling.
+(2019-12-03) This is the first version fully supporting three modeling schemes: events, processes and sampling.
 
 - [`now!`](@ref) for IO-operations of processes,
 - functions and macros for defining conditions,
@@ -87,7 +86,8 @@ This is the first version fully supporting three modeling schemes: events, proce
 
 ## v0.1.0
 
-- first registration 2019-11-04
+First registration 2019-11-04:
+
 - event-/activity-/state-based simulation with `SimFunction` and `event!` based on Julia functions and expressions,
 - introduced a central clock variable 𝐶,
 - `Clock` state machine with `init!`, `run!`, `incr!`, `stop!`, `resume!`,
