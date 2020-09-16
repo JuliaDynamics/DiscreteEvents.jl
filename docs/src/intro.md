@@ -101,7 +101,7 @@ end
 
 We pass our event functions a [`Clock`](@ref) variable in order to access the clock's `c.time`.
 
-Now we setup our constants and variables, wrap the functions in [`fun`](@ref) and schedule them as [`event!`](@ref event!(::CL,::A,::U)  where {CL<:AbstractClock,A<:Action,U<:Number})s and [`run!`](@ref) the clock for 5000 virtual minutes:
+Now we setup our constants and variables, schedul the event functions with [`@event`](@ref)s and [`@run!`](@ref) the clock for 5000 virtual minutes:
 
 ```julia
 Random.seed(123)
@@ -113,13 +113,13 @@ const a = 5        #   minimum amount
 const Q = 6000.0   # replenishment amount
 const M₁ = Exponential(1/λ)  # customer arrival time distribution
 const M₂ = Exponential(1/ρ)  # replenishment time distribution
-const X = TruncatedNormal(μ, σ, a, Inf)  # demand distribution
+const X = truncated(Normal(μ, σ), a, Inf)  # demand distribution
 
 clock = Clock()    # create a clock, a fuel station and events
 s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
-event!(clock, fun(replenish, clock, s, Q), every, M₂)
-event!(clock, fun(customer, clock, s, X), every, M₁)
-println(run!(clock, 5000))   # run the clock
+@event replenish(clock, s, Q) every M₂
+@event customer(clock, s, X) every M₁
+println(@run! clock 5000)
 
 @show fuel_sold = s.qs;
 @show loss_rate = s.ql/s.qs;
@@ -178,7 +178,7 @@ We describe the processes in our system as two functions `serve` and `arrive`:
 function serve(c::Clock, s::Server, input::Channel, output::Vector{Caller}, limit::Int)
     call = take!(input)           # take a call
     call.t₂ = c.time              # record the beginning of service time
-    delay!(c, s.S)                # delay for service time
+    @delay c s.S                  # delay for service time
     call.t₃ = c.time              # record the end of service time
     s.tbusy += call.t₃ - call.t₂  # log service time
     push!(output, call)           # hang up
@@ -191,9 +191,9 @@ function arrive(c::Clock, input::Channel, count::Vector{Int})
 end
 ```
 
-We implement our caller queue as a `Channel` eventually blocking a process if it calls `take!`. The `serve` function calls a [`delay!`](@ref) from the [`Clock`](@ref). This suspends a process for the required simulation time. Note that the `serve` process [`stop!`](@ref)s the clock after the last caller is finished.
+We implement our caller queue as a `Channel` eventually blocking a process if it calls `take!`. The `serve` function calls a [`@delay`](@ref) from the [`Clock`](@ref). This suspends a process for the required simulation time. Note that the `serve` process [`stop!`](@ref)s the clock after the last caller is finished.
 
-Next we initialize our constants, setup a simulation environment, wrap our servers in [`Prc`](@ref) and start them as [`process!`](@ref)es. Arrivals are an event-based Poisson process as in the first example [^3]. We [`run!`](@ref) the clock for enough time:
+Next we initialize our constants, setup a simulation environment,  and start our servers as [`process!`](@ref)es. Arrivals are an event-based Poisson process as in the first example [^3]. We [`@run!`](@ref) the clock for enough time:
 
 ```julia
 Random.seed!(123)
@@ -207,10 +207,10 @@ input = Channel{Caller}(Inf)
 output = Caller[]
 s1 = Server(1, M_a, 0.0)
 s2 = Server(2, M_b, 0.0)
-process!(clock, Prc(1, serve, s1, input, output, N))
-process!(clock, Prc(2, serve, s2, input, output, N))
-event!(clock, fun(arrive, clock, input, count), every, M_arr)
-run!(clock, 5000)
+@process serve(clock, s1, input, output, N)
+@process serve(clock, s2, input, output, N)
+@event arrive(clock,input,count) every M_arr
+@run! clock 5000
 ```
 
 ```julia

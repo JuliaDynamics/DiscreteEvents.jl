@@ -19,7 +19,7 @@ end
 function serve(c::Clock, s::Server, input::Channel, output::Vector{Caller}, limit::Int)
     call = take!(input)           # take a call
     call.t₂ = c.time              # record the beginning of service time
-    delay!(c, s.S)                # delay for service time
+    @delay c s.S                  # delay for service time
     call.t₃ = c.time              # record the end of service time 
     s.tbusy += call.t₃ - call.t₂  # log service time
     push!(output, call)           # hang up
@@ -43,10 +43,6 @@ input = Channel{Caller}(Inf)
 output = Caller[]
 s1 = Server(1, M_a, 0.0)
 s2 = Server(2, M_b, 0.0)
-# process!(clock, Prc(1, serve, s1, input, output, N))
-# process!(clock, Prc(2, serve, s2, input, output, N))
-# event!(clock, fun(arrive, clock, input, count), every, M_arr)
-# run!(clock, 5000)
 @process serve(clock, s1, input, output, N)
 @process serve(clock, s2, input, output, N)
 @event arrive(clock,input,count) every M_arr

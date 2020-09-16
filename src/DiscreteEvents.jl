@@ -65,8 +65,7 @@ export  Clock, PClock, RTClock, setUnit!, 𝐶,
         PrcException, 
         Resource,
         onthread, pseed!,
-        @process, @event, @run!, @delay, @wait
-
+        @process, @event, @periodic, @delay, @wait, @run!
 
 Random.seed!(123)
 rng = MersenneTwister(2020)

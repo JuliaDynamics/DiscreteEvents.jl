@@ -54,7 +54,29 @@ event!(::T,::A,::C) where {T<:AbstractClock,A<:Action,C<:Action}
 
 !!! note "Use inequalities to express conditions"
 
-    For conditions you should prefer inequalities like <, ≤, ≥, > to equality == in order to make sure that a condition can be detected, e.g. `tau() ≥ 100` is preferable to `tau() == 100`.
+    Conditions should be expressed with inequalities like <, ≤, ≥, > rather than with equality == in order to make sure that they can be detected, e.g. `tau() ≥ 100` is preferable to `tau() == 100`.
+
+## The @event Macro
+
+If a function has a clock as its first argument, you can use the `@event` macro to schedule it. This wraps it into a `fun` closure and then calls `event!` with it.
+
+```@docs
+@event
+```
+
+### Examples
+
+The first call gets expanded to `event!(clk, fun(f, clk, a, b), after, 10)`:
+
+```julia
+@event f(clk, a, b) after 10    # schedule f(clk, a, b) after 10 time units
+@event f(clk, a, b) every 1 10  # schedule it every 1 unit for 10 times
+@event f(clk, a, b) g(c)        # schedule it on condition g(c)
+@event f(clk, a, b) :a ≥ 5      # schedule it on condition a ≥ 5
+@event f(clk, a, b) ()-> a≥5 && tau(clk)≥8  # on condition of an anonymous function
+```
+
+Note: the `@event` macro doesn't accept keyword arguments. If you want to use `event!` with keyword arguments, you must use it explicitly.
 
 ## Continuous Sampling
 
@@ -63,14 +85,7 @@ Actions can be registered for sampling and are then executed "continuously" at e
 ```@docs
 sample_time!
 periodic!
-```
-
-## Macros
-
-Functions can be scheduled to the clock as timed and conditional events with the `@event` macro. This wraps a given function into a `fun` closure and calls `event!` on it. 
-
-```@docs
-@event
+@periodic
 ```
 
 ## Events and Variables
