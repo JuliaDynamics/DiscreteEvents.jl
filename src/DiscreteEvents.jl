@@ -33,10 +33,10 @@ Gives the package version:
 julia> using DiscreteEvents
 
 julia> DiscreteEvents.version
-v"0.3.0"
+v"0.3.1"
 ```
 """
-const version = v"0.3.0"
+const version = v"0.3.1"
 
 using Unitful, Random, DataStructures, Logging, .Threads, Distributions
 import Unitful: FreeUnits, Time
