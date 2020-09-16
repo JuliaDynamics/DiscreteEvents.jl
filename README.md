@@ -34,20 +34,20 @@ function arrive(c::Clock, input::Channel, cust::Vector{Int})
     put!(input, cust[1])
 end
 
-Random.seed!(123)  # set random number seed
+Random.seed!(123)   # set random number seed
 const μ = 1/3       # service rate
 const λ = 0.9       # arrival rate
-count = [0]         # a job counter
+count   = [0]       # a job counter
 
-clock = Clock()   # create a clock
-input = Channel{Int}(Inf)
+clock  = Clock()    # create a clock
+input  = Channel{Int}(Inf)
 output = Channel{Int}(Inf)
-for i in 1:3      # start three server processes
+for i in 1:3        # start three server processes
     @process serve(clock, i, input, output, Exponential(1/μ))
 end
 # create a repeating event for 10 arrivals
 @event arrive(clock, input, count) every Exponential(1/λ) 10
-@run! clock 20   # run the clock
+@run! clock 20      # run the clock for 20 time units
 ```
 
 If we source this program, it runs a simulation.
