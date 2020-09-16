@@ -8,7 +8,7 @@ Clocks schedule and execute *actions*, computations that happen as *events* at s
 
 ## Virtual Clocks
 
-A `Clock` is not bound to physical time and executes an event sequence as fast as possible.
+A `Clock` is not bound to physical time and executes an event sequence as fast as possible by jumping from event to event.
 
 ```@docs
 Clock
@@ -41,7 +41,7 @@ tau
 
 ## Parallel Clocks (Experimental)
 
-Working with parallel clocks over multiple threads is a new feature in v0.3 and cannot yet considered to be stable. Please develop your applications first single-threaded before going parallel. Please report any failures.
+Parallel clocks are a new feature in v0.3 and cannot yet considered to be stable. Please develop your applications first single-threaded before going parallel. Please report any failures.
 
 Parallel clocks are virtual clocks with local clocks on parallel threads to support multi-threaded simulations.
 
