@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Introduction · DiscreteEvents.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">DiscreteEvents.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../news/">News</a></li><li class="is-active"><a class="tocitem" href>Introduction</a><ul class="internal"><li><a class="tocitem" href="#Preparations"><span>Preparations</span></a></li><li><a class="tocitem" href="#Setup-a-clock"><span>Setup a clock</span></a></li><li><a class="tocitem" href="#Inventory-Control-Problem"><span>Inventory Control Problem</span></a></li><li><a class="tocitem" href="#a-b_call_center"><span>A-B Call Center Problem</span></a></li><li><a class="tocitem" href="#Evaluation"><span>Evaluation</span></a></li><li><a class="tocitem" href="#Further-examples"><span>Further examples</span></a></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../setup/">Installation</a></li><li><a class="tocitem" href="../clocks/">Clocks</a></li><li><a class="tocitem" href="../events/">Events</a></li><li><a class="tocitem" href="../processes/">Processes</a></li><li><a class="tocitem" href="../actors/">Actors</a></li><li><a class="tocitem" href="../resources/">Resources</a></li><li><a class="tocitem" href="../parallel/">Parallel Simulation</a></li><li><a class="tocitem" href="../usage/">Utilities</a></li></ul></li><li><span class="tocitem">Internals</span><ul><li><a class="tocitem" href="../internals/">Internals</a></li><li><a class="tocitem" href="../troubleshooting/">Troubleshooting</a></li><li><a class="tocitem" href="../history/">Version history</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Introduction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Introduction</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/pbayer/DiscreteEvents.jl/blob/master/docs/src/intro.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h1><p><code>DiscreteEvents.jl</code> allows you to</p><ol><li>setup virtual or realtime clocks,</li><li>schedule events (Julia functions or expressions) to them,</li><li>run clocks to trigger events.</li></ol><h2 id="Preparations"><a class="docs-heading-anchor" href="#Preparations">Preparations</a><a id="Preparations-1"></a><a class="docs-heading-anchor-permalink" href="#Preparations" title="Permalink"></a></h2><p><code>DiscreteEvents.jl</code> is a registered package. You install it to your Julia environment with</p><pre><code class="language-julia-repl">] add DiscreteEvents</code></pre><p>You can install the development version with</p><pre><code class="language-julia-repl">] add https://github.com/pbayer/DiscreteEvents.jl</code></pre><p>You can then load it with</p><pre><code class="language-julia-repl">julia&gt; using DiscreteEvents</code></pre><h2 id="Setup-a-clock"><a class="docs-heading-anchor" href="#Setup-a-clock">Setup a clock</a><a id="Setup-a-clock-1"></a><a class="docs-heading-anchor-permalink" href="#Setup-a-clock" title="Permalink"></a></h2><p>Setting up a virtual clock is as easy as</p><pre><code class="language-julia-repl">julia&gt; clock = Clock()
+Clock 1: state=:idle, t=0.0, Δt=0.01, prc:0
+  scheduled ev:0, cev:0, sampl:0</code></pre><p>This creates a <a href="../clocks/#DiscreteEvents.Clock"><code>Clock</code></a> variable <code>clk</code> with a clock at thread 1 with pretty much everything set to 0, without yet any scheduled events (ev), conditional events (cev) or sampling events (sampl).</p><p>We can now schedule events to the clock. We demonstrate how it works with a couple of small simulations.</p><h2 id="Inventory-Control-Problem"><a class="docs-heading-anchor" href="#Inventory-Control-Problem">Inventory Control Problem</a><a id="Inventory-Control-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#Inventory-Control-Problem" title="Permalink"></a></h2><p>An inflammable is stored in a special tank at a filling station. Customers arrive according to a Poisson process with rate <span>$λ$</span> and ask for an amount <span>$\,X \sim \mathcal{N}(μ, σ^2)\,|\, a&lt;X\,$</span> of the product. Any demand that cannot be met is lost. Opportunities to replenish the stock in the tank occur according to a Poisson process with rate <span>$ρ$</span>. The two Poisson processes are assumed to be independent of each other. For security reasons replenishment is only allowed when the tank is empty. At those opportunities it is replenished with a fixed amount <span>$Q$</span>. <sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup></p><p>We are interested to study the stock in the tank and the fraction of demand that is lost.</p><p>First we setup a data structure for a simulation:</p><pre><code class="language-julia">using DiscreteEvents, Distributions, Random
+
+mutable struct Station
+    q::Float64           # fuel amount
+    t::Vector{Float64}   # time vector
+    qt::Vector{Float64}  # fuel/time vector
+    cs::Int              # customers served
+    cl::Int              # customers lost
+    qs::Float64          # fuel sold
+    ql::Float64          # lost sales
+end</code></pre><p>We have two events: <code>customer</code> and <code>replenishment</code> happening in two interacting Poisson processes:</p><pre><code class="language-julia">function customer(c::Clock, s::Station, X::Distribution)
+    function fuel(s::Station, x::Float64)
+        s.q -= x             # take x from tank
+        push!(s.t, c.time)   # record time, amount, customer, sale
+        push!(s.qt, s.q)
+        s.cs += 1
+        s.qs += x
+    end
+
+    x = rand(X)              # calculate demand
+    if s.q ≥ x               # demand can be met
+        fuel(s, x)
+    elseif s.q ≥ a           # only partially in stock
+        s.ql += x - s.q      # count the loss
+        fuel(s, s.q)         # give em all we have
+    else
+        s.cl += 1            # count the lost customer
+        s.ql += x            # count the lost demand
+    end
+end
+
+function replenish(c::Clock, s::Station, Q::Float64)
+    if s.q &lt; a
+        push!(s.t, c.time)
+        push!(s.qt, s.q)
+        s.q += Q
+        push!(s.t, c.time)
+        push!(s.qt, s.q)
+    end
+end</code></pre><p>We pass our event functions a <a href="../clocks/#DiscreteEvents.Clock"><code>Clock</code></a> variable in order to access the clock&#39;s <code>c.time</code>.</p><p>Now we setup our constants and variables, schedul the event functions with <a href="../events/#DiscreteEvents.@event"><code>@event</code></a>s and <a href="../clocks/#DiscreteEvents.@run!"><code>@run!</code></a> the clock for 5000 virtual minutes:</p><pre><code class="language-julia">Random.seed(123)
+const λ = 0.5      # ~ every two minutes a customer
+const ρ = 1/180    # ~ every 3 hours a replenishment truck
+const μ = 30       # ~ mean demand per customer
+const σ = 10       #   standard deviation
+const a = 5        #   minimum amount
+const Q = 6000.0   # replenishment amount
+const M₁ = Exponential(1/λ)  # customer arrival time distribution
+const M₂ = Exponential(1/ρ)  # replenishment time distribution
+const X = truncated(Normal(μ, σ), a, Inf)  # demand distribution
+
+clock = Clock()    # create a clock, a fuel station and events
+s = Station(Q, Float64[0.0], Float64[Q], 0, 0, 0.0, 0.0)
+@event replenish(clock, s, Q) every M₂
+@event customer(clock, s, X) every M₁
+println(@run! clock 5000)
+
+@show fuel_sold = s.qs;
+@show loss_rate = s.ql/s.qs;
+@show served_customers = s.cs;
+@show lost_customers = s.cl;</code></pre><pre><code class="language-julia">run! finished with 2525 clock events, 0 sample steps, simulation time: 5000.0
+fuel_sold = s.qs = 53999.999999999956
+loss_rate = s.ql / s.qs = 0.3962195131252451
+served_customers = s.cs = 1789
+lost_customers = s.cl = 708</code></pre><p>We sold 9 tanks of fuel to 1789 customers. But we could have served 708 more customers and sell nearly 40% more fuel. Clearly we have some improvement potential:</p><pre><code class="language-julia">using Plots
+plot(s.t, s.qt, title=&quot;Filling Station&quot;, xlabel=&quot;time [min]&quot;, ylabel=&quot;inventory [L]&quot;, legend=false)
+savefig(&quot;invctrl.png&quot;)</code></pre><p><img src="../img/invctrl.png" alt="inventory"/></p><p>If we could manage to replenish immediately after the tank is empty, we would be much better off.</p><h2 id="a-b_call_center"><a class="docs-heading-anchor" href="#a-b_call_center">A-B Call Center Problem</a><a id="a-b_call_center-1"></a><a class="docs-heading-anchor-permalink" href="#a-b_call_center" title="Permalink"></a></h2><p><code>DiscreteEvents</code> also provides process-based simulation. A process is a typical sequence of events. This is particularly useful if we can describe our system in such terms.</p><p>One example is a call center with two servers, Able and Baker and a line for incoming calls. Able is more experienced and can provide service faster than Baker. We have some assumptions about arrival and service time distributions. We want to know if the system works and how long customers have to wait <sup class="footnote-reference"><a id="citeref-2" href="#footnote-2">[2]</a></sup>.</p><p>First we describe some data structures for our system:</p><pre><code class="language-julia">using DiscreteEvents, Distributions, Random
+
+mutable struct Caller
+    id::Int
+    t₁::Float64  # arrival time
+    t₂::Float64  # beginning of service time
+    t₃::Float64  # end of servive time
+end
+
+mutable struct Server
+    id::Int
+    S::Distribution  # service time distribution
+    tbusy::Float64   # cumulative service time
+end</code></pre><p>We describe the processes in our system as two functions <code>serve</code> and <code>arrive</code>:</p><pre><code class="language-julia">function serve(c::Clock, s::Server, input::Channel, output::Vector{Caller}, limit::Int)
+    call = take!(input)           # take a call
+    call.t₂ = c.time              # record the beginning of service time
+    @delay c s.S                  # delay for service time
+    call.t₃ = c.time              # record the end of service time
+    s.tbusy += call.t₃ - call.t₂  # log service time
+    push!(output, call)           # hang up
+    call.id ≥ limit &amp;&amp; stop!(c)
+end
+
+function arrive(c::Clock, input::Channel, count::Vector{Int})
+    count[1] += 1
+    put!(input, Caller(count[1], c.time, 0.0, 0.0))
+end</code></pre><p>We implement our caller queue as a <code>Channel</code> eventually blocking a process if it calls <code>take!</code>. The <code>serve</code> function calls a <a href="../processes/#DiscreteEvents.@delay"><code>@delay</code></a> from the <a href="../clocks/#DiscreteEvents.Clock"><code>Clock</code></a>. This suspends a process for the required simulation time. Note that the <code>serve</code> process <a href="../clocks/#DiscreteEvents.stop!"><code>stop!</code></a>s the clock after the last caller is finished.</p><p>Next we initialize our constants, setup a simulation environment,  and start our servers as <a href="../processes/#DiscreteEvents.process!"><code>process!</code></a>es. Arrivals are an event-based Poisson process as in the first example <sup class="footnote-reference"><a id="citeref-3" href="#footnote-3">[3]</a></sup>. We <a href="../clocks/#DiscreteEvents.@run!"><code>@run!</code></a> the clock for enough time:</p><pre><code class="language-julia">Random.seed!(123)
+const N = 1000
+const M_arr = Exponential(2.5)
+const M_a   = Exponential(3)
+const M_b   = Exponential(4)
+
+clock = Clock()
+input = Channel{Caller}(Inf)
+output = Caller[]
+s1 = Server(1, M_a, 0.0)
+s2 = Server(2, M_b, 0.0)
+@process serve(clock, s1, input, output, N)
+@process serve(clock, s2, input, output, N)
+@event arrive(clock,input,count) every M_arr
+@run! clock 5000</code></pre><pre><code class="language-julia">&quot;run! halted with 2005 clock events, 0 sample steps, simulation time: 2464.01&quot;</code></pre><p>The clock stopped at 2464. We served 1000 callers in 2464 virtual minutes. This is an average lead time of 2.5 min. Doesn&#39;t seem so bad.</p><pre><code class="language-julia">julia&gt; s1.tbusy / clock.time
+0.7256119737495218
+
+julia&gt; s2.tbusy / clock.time
+0.7422549861860762</code></pre><p>Also our servers have been busy only about 73% of the time. Could we give them some other work to do? How about waiting times for callers?</p><pre><code class="language-julia">using Plots
+wt = [c.t₂ - c.t₁ for c in output]
+plot(wt, title=&quot;A-B-Call center &quot;, xlabel=&quot;callers&quot;, ylabel=&quot;waiting time [min]&quot;, legend=false)
+savefig(&quot;ccenter.png&quot;)</code></pre><p><img src="../img/ccenter.png" alt="call center"/></p><p>Given the average values, something unexpected emerges: The responsiveness of our call center is not good and waiting times often get way too long. If we want to shorten them, we must improve our service times or add more servers.</p><h2 id="Evaluation"><a class="docs-heading-anchor" href="#Evaluation">Evaluation</a><a id="Evaluation-1"></a><a class="docs-heading-anchor-permalink" href="#Evaluation" title="Permalink"></a></h2><p>It is easy to simulate discrete event systems such as continuous-time stochastic processes or queueing systems with <code>DiscreteEvents</code>. It integrates well with Julia.</p><h2 id="Further-examples"><a class="docs-heading-anchor" href="#Further-examples">Further examples</a><a id="Further-examples-1"></a><a class="docs-heading-anchor-permalink" href="#Further-examples" title="Permalink"></a></h2><p>You can find <a href="https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/examples/">more examples at <code>DiscreteEventsCompanion</code></a>.</p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>This is a modified version of example 4.1.1 in Tijms: A First Course in Stochastic Models, Wiley 2003, p 143ff</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>This is a simplified version of the Able-Baker Call Center Problem in Banks, Carson, Nelson, Nicol: Discrete-Event System Simulation, Pearson 2005, p 35 ff</li><li class="footnote" id="footnote-3"><a class="tag is-link" href="#citeref-3">3</a>Different approaches to modeling: e.g. event-based and process-based can be combined.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../news/">« News</a><a class="docs-footer-nextpage" href="../setup/">Installation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 16 September 2020 16:23">Wednesday 16 September 2020</span>. Using Julia version 1.5.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
