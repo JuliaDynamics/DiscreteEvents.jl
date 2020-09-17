@@ -45,7 +45,8 @@ Schedule a function `f(arg...)` as an event to a clock.
 - `f`: function to be executed at event time,
 - `arg...`: its arguments, the first argument must be a clock,
 - `T`: a [`Timing`](@ref) (at, after, every),
-- `n`: passed as keyword `n` to `event!`.
+- `t`: a `Number` or a `Distribution`,
+- `n::Int`: repetitions for a repeat event.
 """
 macro event(expr, args...)
     @assert expr isa Expr && expr.head == :call "1st term is not a function call!"
