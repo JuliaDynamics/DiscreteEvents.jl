@@ -36,7 +36,7 @@ julia> DiscreteEvents.version
 v"0.3.1"
 ```
 """
-const version = v"0.3.1"
+const version = v"0.3.2"
 
 using Unitful, Random, DataStructures, Logging, .Threads, Distributions
 import Unitful: FreeUnits, Time
