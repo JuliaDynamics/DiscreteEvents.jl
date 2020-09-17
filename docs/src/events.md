@@ -64,17 +64,22 @@ If a function has a clock as its first argument, you can use the `@event` macro 
 @event
 ```
 
-### Examples
+### Use Cases
 
-The first call gets expanded to `event!(clk, fun(f, clk, a, b), after, 10)`:
+Currently `@event` supports the following use cases (it accepts a number or a distribution as time `t` argument):
 
 ```julia
-@event f(clk, a, b) after 10    # schedule f(clk, a, b) after 10 time units
-@event f(clk, a, b) every 1 10  # schedule it every 1 unit for 10 times
+@event f(clk, a, b) at t        # schedule f(clk, a, b) at time t
+@event f(clk, a, b) t           # the same
+@event f(clk, a, b) after t     # schedule f(clk, a, b) after t time units
+@event f(clk, a, b) every t     # schedule it every t unit
+@event f(clk, a, b) every t 10  # schedule it every t unit for 10 times
 @event f(clk, a, b) g(c)        # schedule it on condition g(c)
 @event f(clk, a, b) :a ≥ 5      # schedule it on condition a ≥ 5
 @event f(clk, a, b) ()-> a≥5 && tau(clk)≥8  # on condition of an anonymous function
 ```
+
+The first call gets expanded to `event!(clk, fun(f, clk, a, b), after, 10)`.
 
 Note: the `@event` macro doesn't accept keyword arguments. If you want to use `event!` with keyword arguments, you must use it explicitly.
 
