@@ -24,18 +24,7 @@ pkg> add("https://github.com/pbayer/DiscreteEvents.jl")
 """
 module DiscreteEvents
 
-"""
-    DiscreteEvents.version
-
-Gives the package version:
-
-```jldoctest
-julia> using DiscreteEvents
-
-julia> DiscreteEvents.version
-v"0.3.1"
-```
-"""
+"Gives the package version."
 const version = v"0.3.2"
 
 using Unitful, Random, DataStructures, Logging, .Threads, Distributions
