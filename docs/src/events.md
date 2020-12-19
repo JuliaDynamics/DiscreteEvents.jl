@@ -79,7 +79,7 @@ Currently `@event` supports the following use cases (it accepts a number or a di
 @event f(clk, a, b) ()-> a≥5 && tau(clk)≥8  # on condition of an anonymous function
 ```
 
-The first call gets expanded to `event!(clk, fun(f, clk, a, b), after, 10)`.
+The first call gets expanded to `event!(clk, fun(f, clk, a, b), after, t)`.
 
 Note: the `@event` macro doesn't accept keyword arguments. If you want to use `event!` with keyword arguments, you must use it explicitly.
 

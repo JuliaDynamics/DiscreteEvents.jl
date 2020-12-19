@@ -8,3 +8,8 @@ CurrentModule = DiscreteEvents
 DiscreteEvents
 version
 ```
+
+```@repl
+using DiscreteEvents
+DiscreteEvents.version
+```

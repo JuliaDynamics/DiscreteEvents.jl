@@ -2,12 +2,10 @@
 
 A Julia package for **discrete event generation and simulation**.
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/stable/)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/dev)
-[![Build Status](https://travis-ci.com/pbayer/DiscreteEvents.jl.svg?branch=master)](https://travis-ci.com/pbayer/DiscreteEvents.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/2emtqb9auk2y1fsh/branch/master?svg=true)](https://ci.appveyor.com/project/pbayer/discreteevents-jl/branch/master)
-[![codecov](https://codecov.io/gh/pbayer/DiscreteEvents.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/DiscreteEvents.jl)
-[![Coverage Status](https://coveralls.io/repos/github/pbayer/DiscreteEvents.jl/badge.svg?branch=master)](https://coveralls.io/github/pbayer/DiscreteEvents.jl?branch=master)
+[![stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/stable/)
+[![dev docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/dev)
+![CI](https://github.com/pbayer/DiscreteEvents.jl/workflows/CI/badge.svg)
+[![Coverage](https://codecov.io/gh/JuliaActors/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/DiscreteEvents.jl)
 
 `DiscreteEvents.jl` <sup id="a1">[1](#f1)</sup>&ensp; introduces *clocks* and allows to schedule and execute arbitrary functions or expressions as *actions* on the clocks' timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
