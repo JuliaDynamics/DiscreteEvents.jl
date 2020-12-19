@@ -64,7 +64,7 @@ jobs:
           julia --project=docs -e '
             using Documenter: doctest
             using DiscreteEvents
-            doctest(Actors)' # change MYPACKAGE to the name of your package
+            doctest(DiscreteEvents)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
