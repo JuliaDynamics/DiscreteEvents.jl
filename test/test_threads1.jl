@@ -69,7 +69,7 @@ if DiscreteEvents._handle_exceptions[1]
     sleep(sleeptime)
     err = diagnose(clk, 2)
     @test err[1] isa ErrorException
-    @test occursin(r"^step\!\(\:\:DiscreteEvents.ActiveClock.+ at threads\.jl", string(err[2][2]))
+    # @test occursin(r"^step\!\(\:\:DiscreteEvents.ActiveClock.+ at threads\.jl", string(err[2][2]))
 end
 old = DiscreteEvents._handle_exceptions[1]
 DiscreteEvents._handle_exceptions[1] = false
