@@ -25,7 +25,7 @@ pkg> add("https://github.com/pbayer/DiscreteEvents.jl")
 module DiscreteEvents
 
 "Gives the package version."
-const version = v"0.3.2"
+const version = v"0.3.3"
 
 using Unitful, Random, DataStructures, Logging, .Threads, Distributions
 import Unitful: FreeUnits, Time

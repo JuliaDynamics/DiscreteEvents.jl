@@ -1,7 +1,7 @@
 name = "DiscreteEvents"
 uuid = "127e53a7-d08a-4bd9-afb0-daf0d2b65a85"
 authors = ["Paul Bayer <Paul.Bayer@gleichsam.de>"]
-version = "0.3.2"
+version = "0.3.3"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -11,7 +11,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-DataStructures = "0.17"
+DataStructures = "0.17, 0.18"
 Distributions = "0.22, 0.23, 0.24"
 Unitful = "1"
 julia = "1"
