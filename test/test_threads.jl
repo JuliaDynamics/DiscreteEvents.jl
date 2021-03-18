@@ -13,7 +13,7 @@ clk = Clock()
 if VERSION ≥ v"1.3"
     if nthreads() > 1
         include("test_threads1.jl")
-        include("test_threads2.jl")
+        # include("test_threads2.jl")
     else
         @test_warn "no parallel threads available!" fork!(clk)
     end
