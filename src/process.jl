@@ -36,7 +36,7 @@ function _loop(p::Prc, cycles::T) where {T<:Number}
             p.f(p.clk, p.arg...; p.kw...)
         catch exc
             if isa(exc, PrcException)
-                exc.ev == Stop() && break
+                exc.event == Stop() && break
             end
             rethrow(exc)
         end
