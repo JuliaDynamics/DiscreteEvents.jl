@@ -209,7 +209,7 @@ periodic!(rtc::RTClock, ex::T) where T<:Action = _assign(rtc, Sample(ex))
 # Return a random number out of the thread ids of all available parallel clocks
 function _spawnid(c::Clock) 
     if c.id == 1
-        return ifelse(isempty(c.ac), 1, rand(rng, 1:(length(c.ac)+1)))
+        return isempty(c.ac) ? 1 : rand(rng, 1:(length(c.ac)+1))
     elseif isempty(c.ac)
         return c.id
     else
@@ -221,21 +221,21 @@ _spawnid(ac::ActiveClock) = _spawnid(ac.master[])
 # return a valid clock id 
 function _cid(c::Clock, cid::Int, spawn::Bool)
     if c.id == cid
-        return ifelse(spawn, _spawnid(c), cid)
+        return spawn ? _spawnid(c) : cid
     elseif c.id == 1
         isempty(c.ac) && return 1
         cid ∈ (eachindex(c.ac).+1) && return cid
-        return ifelse(spawn, _spawnid(c), 1) 
+        return spawn ? _spawnid(c) : 1 
     else
         _cid(c.ac[], cid, spawn)
     end
 end
 function _cid(ac::ActiveClock, cid::Int, spawn::Bool) 
     if ac.id == cid
-        return ifelse(spawn, _spawnid(ac.master[]), cid)
+        return spawn ? _spawnid(ac.master[]) : cid
     else
         cid ∈ 1:(length(ac.master[].ac).+1) && return cid
-        return ifelse(spawn, _spawnid(ac.master[]), ac.id)
+        return spawn ? _spawnid(ac.master[]) : ac.id
     end
 end
 _cid(rtc::RTClock, cid::Int, spawn::Bool) = rtc.id
