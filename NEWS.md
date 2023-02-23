@@ -1,5 +1,10 @@
 # DiscreteEvents news 
 
+## v0.3.5
+(released 2023-02-23)
+- updated compat
+- removed multi-threading (parallel clocks) from export and docs
+
 ## v0.3.1
 
 (released 2020-09-16) A few days after the release of v0.3.0 Hector Perez contributed some macros to make the `DiscreteEvents` API more Julian for common cases:

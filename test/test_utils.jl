@@ -57,7 +57,7 @@ end
 input = Channel{Int}(Inf)
 output = Channel{Int}(Inf)
 
-if (VERSION ≥ v"1.3") && (nthreads() > 1)
+#= if (VERSION ≥ v"1.3") && (nthreads() > 1)
     println("... testing utilities ...")
     run_model(arrival_dist, service_dist, 10, 2, 20)
     @test length(output) == 10
@@ -68,4 +68,4 @@ if (VERSION ≥ v"1.3") && (nthreads() > 1)
     pseed!(123)
     @test x == prand(1)
 end
-
+ =#

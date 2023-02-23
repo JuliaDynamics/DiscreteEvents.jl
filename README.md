@@ -87,7 +87,7 @@ julia> include("examples/intro.jl")
 </code></pre>
 </details>
 
-For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev),  or the companion site [DiscreteEventsCompanion](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/).
+For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev).
 
 ## Installation
 

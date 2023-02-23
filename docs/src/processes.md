@@ -49,4 +49,4 @@ println(::Clock, ::IO, ::Any, ::Any)
 
 ## Examples
 
-The [A-B Call Center Problem](@ref a-b_call_center) illustrates how to implement and setup a process. You can find [more examples at `DiscreteEventsCompanion`](https://pbayer.github.io/DiscreteEventsCompanion.jl/dev/examples/examples/#Examples).
+The [A-B Call Center Problem](@ref a-b_call_center) illustrates how to implement and setup a process. 

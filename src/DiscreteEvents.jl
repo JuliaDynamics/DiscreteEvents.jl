@@ -27,7 +27,7 @@ pkg> add("https://github.com/pbayer/DiscreteEvents.jl")
 module DiscreteEvents
 
 "Gives the package version."
-const version = v"0.3.4"
+const version = v"0.3.5"
 
 using Unitful, Random, DataStructures, Logging, .Threads, Distributions
 import Unitful: FreeUnits, Time
@@ -46,17 +46,18 @@ include("resources.jl")
 include("utils.jl")
 include("macros.jl")
 
-export  Clock, PClock, RTClock, setUnit!, 𝐶,
+export  Clock, RTClock, setUnit!, 𝐶,
         Action, Timing, at, after, every, before, until,
         tau, sample_time!, fun, event!, periodic!, register!,
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
-        fork!, collapse!, pclock, diagnose, 
         createRTClock, stopRTClock, 
         PrcException, 
         Resource,
         onthread, pseed!,
         @process, @event, @periodic, @delay, @wait, @run!
+
+# 0.3.5 export no more PClock, fork!, collapse!, pclock, diagnose
 
 Random.seed!(123)
 rng = MersenneTwister(2020)

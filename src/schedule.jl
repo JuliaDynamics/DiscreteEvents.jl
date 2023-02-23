@@ -240,8 +240,24 @@ function _cid(ac::ActiveClock, cid::Int, spawn::Bool)
 end
 _cid(rtc::RTClock, cid::Int, spawn::Bool) = rtc.id
 
-# calculate the scale from a given number
-function _scale(n::T)::Float64 where {T<:Number}
+# calculate the scale of a given number
+function _scale(n::T)::T where {T<:Number}
+    i = 1
+    if n >= 1
+        while n >= 10^i 
+            i += 1
+        end
+        return 10^(i-1)
+    elseif n > 0
+        while n < 1/10^i
+            i += 1
+        end
+        return 1/10^i
+    else
+        return 1
+    end
+end
+#= function _scale(n::T)::Float64 where {T<:Number}
     if n > 0
         i = 1.0
         while !(10^i ≤ n < 10^(i+1))
@@ -252,7 +268,7 @@ function _scale(n::T)::Float64 where {T<:Number}
         return 1.0
     end
 end
-
+ =#
 # ---------------------------------------------------------------
 # assign and register events and samples to a clock
 # ---------------------------------------------------------------
