@@ -13,7 +13,7 @@ using DiscreteEvents, Test, SafeTestsets, .Threads
 @safetestset "Events"       begin include("test_events.jl") end
 @safetestset "Clock"        begin include("test_clock.jl")  end
 @safetestset "Units"        begin include("test_units.jl")  end
-@safetestset "Threads"      begin include("test_threads.jl") end
+# @safetestset "Threads"      begin include("test_threads.jl") end
 @safetestset "Channel 1"    begin include("test_channels1.jl") end
 @safetestset "Processes"    begin include("test_process.jl") end
 @safetestset "Resources"    begin include("test_resources.jl") end

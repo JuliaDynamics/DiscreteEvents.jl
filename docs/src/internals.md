@@ -27,18 +27,6 @@ LocalClock
 localClock
 ```
 
-**An example on active clocks:**
-
-```@repl
-using DiscreteEvents
-clk = Clock()         # create a clock
-fork!(clk)            # fork it to parallel threads
-clk                   # now you see parallel active clocks
-clk = PClock()        # create a parallel clock structure
-ac2 = pclock(clk, 2)  # get access to the active clock on thread 2
-ac2.clock             # access the parallel clock 2
-```
-
 `Schedule` and `ClockChannel` are two important `Clock` substructures:
 
 ```@docs
