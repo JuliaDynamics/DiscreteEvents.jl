@@ -21,7 +21,7 @@ CurrentModule = DiscreteEvents
 You can install the development version with
 
 ```julia-repl
-] add https://github.com/pbayer/DiscreteEvents.jl
+] add https://github.com/JuliaDynamics/DiscreteEvents.jl
 ```
 
 You can then load it with

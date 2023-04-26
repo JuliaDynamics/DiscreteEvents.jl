@@ -15,9 +15,9 @@ A Julia package for **discrete event generation and simulation**.
 
 ## Development
 
-`DiscreteEvents` is in development. Please use, test and help  evolve it. Its GitHub repository is at [https://github.com/pbayer/DiscreteEvents.jl](https://github.com/pbayer/DiscreteEvents.jl).
+`DiscreteEvents` is in development. Please use, test and help  evolve it. Its GitHub repository is at [https://github.com/JuliaDynamics/DiscreteEvents.jl](https://github.com/JuliaDynamics/DiscreteEvents.jl).
 
 **Author:** Paul Bayer
 **License:** MIT
 
-[^1]: `DiscreteEvents.jl` as of `v0.3` has been renamed from [`Simulate.jl`](https://github.com/pbayer/Simulate.jl/tree/v0.2.0), see [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13).
+[^1]: `DiscreteEvents.jl` as of `v0.3` has been renamed from [`Simulate.jl`](https://github.com/JuliaDynamics/DiscreteEvents.jl/tree/v0.2.0), see [issue #13](https://github.com/JuliaDynamics/DiscreteEvents.jl/issues/13).

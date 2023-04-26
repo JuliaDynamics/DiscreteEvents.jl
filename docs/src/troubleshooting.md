@@ -45,4 +45,4 @@ MethodError: no method matching round(::Float64, ::Int64)
 
 ## Report
 
-Otherwise please report your problem and open an issue or commit your solution to [the repo](https://github.com/pbayer/DiscreteEvents.jl).  
+Otherwise please report your problem and open an issue or commit your solution to [the repo](https://github.com/JuliaDynamics/DiscreteEvents.jl).  

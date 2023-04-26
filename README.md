@@ -2,10 +2,10 @@
 
 A Julia package for **discrete event generation and simulation**.
 
-[![stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/stable/)
-[![dev docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://pbayer.github.io/DiscreteEvents.jl/dev)
-![CI](https://github.com/pbayer/DiscreteEvents.jl/workflows/CI/badge.svg)
-[![Coverage](https://codecov.io/gh/JuliaActors/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/pbayer/DiscreteEvents.jl)
+[![stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliadynamics.github.io/DiscreteEvents.jl/stable/)
+[![dev docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliadynamics.github.io/DiscreteEvents.jl/dev/)
+![CI](https://github.com/JuliaDynamics/DiscreteEvents.jl/workflows/CI/badge.svg)
+[![Coverage](https://codecov.io/gh/JuliaDynamics/DiscreteEvents.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaDynamics/DiscreteEvents.jl)
 
 `DiscreteEvents.jl` <sup id="a1">[1](#f1)</sup>&ensp; introduces *clocks* and allows to schedule and execute arbitrary functions or expressions as *actions* on the clocks' timeline. It provides simple, yet powerful ways to model and simulate discrete event systems (DES).
 
@@ -87,7 +87,7 @@ julia> include("examples/intro.jl")
 </code></pre>
 </details>
 
-For further examples see the [documentation](https://pbayer.github.io/DiscreteEvents.jl/dev).
+For further examples see the [documentation](https://juliadynamics.github.io/DiscreteEvents.jl/dev/).
 
 ## Installation
 
@@ -100,7 +100,7 @@ pkg> add DiscreteEvents
 The development version can be installed with:
 
 ```julia
-pkg> add https://github.com/pbayer/DiscreteEvents.jl
+pkg> add https://github.com/JuliaDynamics/DiscreteEvents.jl
 ```
 
 Please use, test and help to develop `DiscreteEvents`! 😄
@@ -108,4 +108,4 @@ Please use, test and help to develop `DiscreteEvents`! 😄
 **Author:** Paul Bayer,\
 **License:** MIT
 
-<b id="f1">1</b> &nbsp; `DiscreteEvents.jl` as of `v0.3` has been renamed from [`Simulate.jl`](https://github.com/pbayer/Simulate.jl/tree/v0.2.0), see [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13).[↩](#a1)
+<b id="f1">1</b> &nbsp; `DiscreteEvents.jl` as of `v0.3` has been renamed from [`Simulate.jl`](https://github.com/JuliaDynamics/DiscreteEvents.jl/tree/v0.2.0), see [issue #13](https://github.com/JuliaDynamics/DiscreteEvents.jl/issues/13).[↩](#a1)

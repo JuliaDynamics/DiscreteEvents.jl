@@ -27,7 +27,7 @@ makedocs(
 )
 
 deploydocs(
-    repo   = "github.com/pbayer/DiscreteEvents.jl.git",
+    repo   = "github.com/JuliaDynamics/DiscreteEvents.jl.git",
     target = "build",
     deps   = nothing,
     make   = nothing,

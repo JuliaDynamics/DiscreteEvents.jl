@@ -23,7 +23,7 @@ The following macros provide syntactic sugar to existing functions:
 ### Breaking Name Changes
 
 - following the [advice on discourse](https://discourse.julialang.org/t/simulate-v0-2-0-a-julia-package-for-discrete-event-simulation/31822) and in
-  [issue #13](https://github.com/pbayer/DiscreteEvents.jl/issues/13) `Simulate.jl` was renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
+  [issue #13](https://github.com/JuliaDynamics/DiscreteEvents.jl/issues/13) `Simulate.jl` was renamed to `DiscreteEvents.jl`. Github maintains and forwards the links.
 - there are further renamings to make the API more consistent:
   - `Simfunction` → [`fun`](@ref), `SF` is no longer defined,
   - `SimProcess` → [`Prc`](@ref), `SP` is no longer defined,
