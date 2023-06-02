@@ -48,7 +48,7 @@ include("macros.jl")
 
 export  Clock, RTClock, setUnit!, 𝐶,
         Action, Timing, at, after, every, before, until,
-        tau, sample_time!, fun, event!, periodic!, register!,
+        tau, sample_time!, fun, event!, periodic!, 
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
         createRTClock, stopRTClock, 
