@@ -327,7 +327,7 @@ function step!(clk::Clock, ::Idle, σ::Run)
                 clk.ac[ix].load += token.t
                 break
             elseif token isa Forward
-                assign(clk, token.ev, token.id)
+                _assign(clk, token.ev, token.id)
             elseif token isa Error
                 return nothing
             else
