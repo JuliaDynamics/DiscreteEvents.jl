@@ -130,7 +130,7 @@ function fork!(master::Clock)
                         put!(master.ac[i].forth, Startup(Ref(master))) # send pointer and id
                     end
                 else
-                    println(stderr, "clock already has $(length(clk.ac)) active clocks!")
+                    println(stderr, "clock already has $(length(master.ac)) active clocks!")
                 end
             else
                 println(stderr, "no parallel threads available!")
