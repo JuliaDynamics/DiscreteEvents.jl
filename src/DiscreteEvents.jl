@@ -29,7 +29,8 @@ module DiscreteEvents
 "Gives the package version."
 const version = v"0.3.5"
 
-using Unitful, Random, DataStructures, Logging, .Threads, Distributions
+using Unitful, Random, DataStructures, Logging, .Threads
+import Distributions: Distribution
 import Unitful: FreeUnits, Time
 
 include("types.jl")
