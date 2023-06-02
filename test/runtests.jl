@@ -31,5 +31,8 @@ end
 if VERSION ≥ v"1.8"
     @safetestset "Aqua"     begin include("test_aqua.jl") end
 end
+if get(ENV,"JET_TEST","") == "true"
+    @safetestset "JET"      begin include("test_jet.jl") end
+end
 
 println(".... finished testing DiscreteEvents.jl ....")
