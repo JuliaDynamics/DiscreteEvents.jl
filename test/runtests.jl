@@ -28,4 +28,8 @@ end
 
 @safetestset "examples"     begin include("test_examples.jl") end
 
+if VERSION ≥ v"1.8"
+    @safetestset "Aqua"     begin include("test_aqua.jl") end
+end
+
 println(".... finished testing DiscreteEvents.jl ....")
