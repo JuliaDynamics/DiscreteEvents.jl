@@ -84,6 +84,15 @@ run!(𝐶, 10)
 @test c[1] == 10
 @test d[1] == 10
 
+# test No events
+resetClock!(𝐶)
+a[1] = b[1] = c[1] = d[1] = 0
+event!(fun(incr!, a), at, 5)
+
+run!(𝐶, 3)
+@test a[1] == 0
+@test 𝐶.evcount == 0
+
 println("... conditional events ...")
 is(x, y) = x[1] == y
 tim(x, clk) = x[1] = clk.time
