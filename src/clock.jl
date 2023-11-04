@@ -291,7 +291,8 @@ step!(c::Clock, ::Q, ::Step) where {Q<:Union{Idle,Halted}} = _step!(c)
 function _run!(c::Clock, Δt::Float64)
     c.end_time = c.time + Δt
     _setTimes(c)
-    while any(i->(c.time ≤ i < c.end_time), (c.tn, c.tev))
+    while c.time ≤ c.tev < c.end_time || (c.time <= c.tn < c.end_time && c.tn != 0) || 
+    (c.time <= c.tn < c.end_time && _sampling(c))
         _step!(c) == 0 || break
         if c.state == Halted()
             return c.end_time
@@ -319,7 +320,6 @@ end
 # evaluate sampling expressions at each tick in that timeframe.
 # ----------------------------------------
 function step!(clk::Clock, ::Idle, σ::Run)
-
     function handle_response(ix::Int)
         while true
             token = take!(clk.ac[ix].back)
