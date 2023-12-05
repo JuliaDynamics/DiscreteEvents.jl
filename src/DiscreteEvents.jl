@@ -29,7 +29,8 @@ module DiscreteEvents
 "Gives the package version."
 const version = v"0.3.5"
 
-using Unitful, Random, DataStructures, Logging, .Threads, Distributions
+using Unitful, Random, DataStructures, Logging, .Threads
+import Distributions: Distribution
 import Unitful: FreeUnits, Time
 
 include("types.jl")
@@ -48,7 +49,7 @@ include("macros.jl")
 
 export  Clock, RTClock, setUnit!, 𝐶,
         Action, Timing, at, after, every, before, until,
-        tau, sample_time!, fun, event!, periodic!, register!,
+        tau, sample_time!, fun, event!, periodic!, 
         incr!, run!, stop!, resume!, sync!, resetClock!,
         Prc, process!, interrupt!, delay!, wait!, now!,
         createRTClock, stopRTClock, 
